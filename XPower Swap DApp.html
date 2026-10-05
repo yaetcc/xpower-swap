@@ -81,14 +81,17 @@ main{max-width:1120px;margin:0 auto;padding:24px 20px 70px}
 @media(max-width:900px){.grid3{grid-template-columns:1fr}}
 .grid2e{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:760px){.grid2e{grid-template-columns:1fr}}
-/* Swap 双栏 */
-.swap-wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;max-width:900px;margin:0 auto;align-items:start}
-@media(max-width:720px){.swap-wrap{grid-template-columns:1fr}}
-.swap-card{padding:20px;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
-.side-card{display:grid;gap:12px}
-.side-card .panel{padding:14px 16px}
-.side-card .t{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--faint);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.side-card .t svg{color:var(--acc)}
+/* Swap 单卡（Uniswap 式） */
+.swap-center{max-width:480px;margin:0 auto}
+.swap-card{padding:20px 22px;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.swap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.swap-head b{font-size:15px}
+.swap-row{display:flex;gap:10px;align-items:flex-end;margin-top:14px}
+.swap-row .amt{flex:1;min-width:0;position:relative}
+.swap-row .amt input{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;padding:12px 58px 12px 13px;border-radius:14px;letter-spacing:-.4px;background:var(--card2)}
+.swap-row .amt .maxbtn{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10.5px;padding:4px 9px;border-radius:8px;font-weight:800;color:var(--acc);background:var(--acc-soft);border:1px solid var(--acc-line);cursor:pointer}
+.swap-row .amt .maxbtn:hover{background:rgba(245,25,123,.15)}
+.swap-row .tokbtn{width:150px;min-width:0;flex-shrink:0;margin-top:0}
 /* 控件 */
 label{font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.03em;display:block;margin-bottom:5px}
 input,select{background:var(--card2);border:1px solid var(--line);color:var(--fg);border-radius:12px;padding:9px 12px;font-size:14px;outline:none;width:100%;transition:.16s;font-family:var(--sans)}
@@ -220,58 +223,43 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
     <div class="pagehead">
       <div><h1><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg></span> Swap · 股票资产兑换</h1>
       <p>xStock 代币化股票 / XSTORK / 任意资产间兑换 · 恒定乘积 AMM · 0.3% 手续费归 LP</p></div>
-      <div class="headside"><div class="seg" id="slipSeg"><div class="on" data-s="0.5">0.5%</div><div data-s="1">1%</div><div data-s="3">3%</div></div></div>
     </div>
     <div class="stats" id="swapStats"></div>
-    <div class="swap-wrap">
-  <div class="swap-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <b style="font-size:14px">兑换</b>
-        <span class="badge x" id="swapDir">A → B</span>
-      </div>
-      <div class="amount-wrap">
-        <label>从 · 卖出</label>
-        <input id="inAmt" type="number" value="" min="0" placeholder="0.0" oninput="quoteSwap()">
-        <button class="maxbtn" onclick="setMax()">MAX</button>
-      </div>
-      <div class="balrow"><span id="inBal"></span><span style="cursor:pointer;color:var(--acc)" onclick="setMax()">余额</span></div>
-      <div class="tokbtn" id="fromBtn" style="margin-top:8px" onclick="pickToken('from')"><span class="lg" id="fromLg">?</span><span><span class="nm2" id="fromNm">选择代币</span><span class="sub2" id="fromSub">搜索 xStock 名录</span></span><span class="caret">▼</span></div>
-      <div class="arrow-mid"><button onclick="flipSwap()" title="交换方向">⇅</button></div>
-      <div class="amount-wrap">
-        <label>到 · 买入</label>
-        <input id="outAmt" type="text" readonly placeholder="0.0">
-      </div>
-      <div class="balrow" id="toBal"></div>
-      <div class="tokbtn" id="toBtn" style="margin-top:8px" onclick="pickToken('to')"><span class="lg" id="toLg">?</span><span><span class="nm2" id="toNm">选择代币</span><span class="sub2" id="toSub">选择兑换目标</span></span><span class="caret">▼</span></div>
-      <div class="info-row" style="margin-top:14px"><span>1 <span id="rFrom">—</span> ≈</span><b id="rateTxt">—</b></div>
-      <div class="info-row"><span>交易费</span><b>0.3% → 流动池</b></div>
-      <div class="info-row"><span>滑点</span><b id="slipTxt">0.5%</b></div>
-      <div id="swapErr" class="errbox"></div>
-      <button class="btn primary wide" id="btnSwap" style="margin-top:14px" onclick="doSwap()">兑换</button>
-      <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
-    </div>
-  </div>
-    <div class="side-card">
-      <div class="panel">
-        <div class="t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg> 交易规则</div>
-        <div class="info-row"><span>手续费</span><b>0.3% → 全部归 LP</b></div>
-        <div class="info-row"><span>模型</span><b>恒定乘积 AMM</b></div>
-        <div class="info-row"><span>滑点保护</span><b id="slipTxt2">0.5%</b></div>
-        <div class="info-row"><span>网络</span><b>X Layer</b></div>
-      </div>
-      <div class="panel">
-        <div class="t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> 池储备</div>
-        <div id="swapPoolInfo" class="empty" style="padding:14px 4px;font-size:12px">选择代币后显示池内储备与流动性</div>
-      </div>
-      <div class="panel">
-        <div class="t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg> 资产说明</div>
-        <div style="font-size:12px;color:var(--dim);line-height:1.75">
-          xStock 由 Backed Finance 发行，1:1 由受监管托管机构持有的真实美股背书，可自由转账与碎片化交易。<br><br>
-          XSTORK 为本平台奖励代币，通过质押 xStock / LP 获得。首次兑换某交易对时自动创建流动性池。
+    <div class="swap-center">
+      <div class="swap-card">
+        <div class="swap-head">
+          <b>兑换</b>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="badge x" id="swapDir">A → B</span>
+            <div class="seg" id="slipSeg"><div class="on" data-s="0.5">0.5%</div><div data-s="1">1%</div><div data-s="3">3%</div></div>
+          </div>
         </div>
+        <div class="swap-row">
+          <div class="amt">
+            <label>从 · 卖出</label>
+            <input id="inAmt" type="number" value="" min="0" placeholder="0.0" oninput="quoteSwap()">
+            <button class="maxbtn" onclick="setMax()">MAX</button>
+          </div>
+          <div class="tokbtn" id="fromBtn" onclick="pickToken('from')"><span class="lg" id="fromLg">?</span><span><span class="nm2" id="fromNm">选择代币</span><span class="sub2" id="fromSub">xStock 名录</span></span><span class="caret">▼</span></div>
+        </div>
+        <div class="balrow"><span id="inBal"></span><span style="cursor:pointer;color:var(--acc)" onclick="setMax()">余额</span></div>
+        <div class="arrow-mid"><button onclick="flipSwap()" title="交换方向">⇅</button></div>
+        <div class="swap-row">
+          <div class="amt">
+            <label>到 · 买入</label>
+            <input id="outAmt" type="text" readonly placeholder="0.0">
+          </div>
+          <div class="tokbtn" id="toBtn" onclick="pickToken('to')"><span class="lg" id="toLg">?</span><span><span class="nm2" id="toNm">选择代币</span><span class="sub2" id="toSub">选择目标</span></span><span class="caret">▼</span></div>
+        </div>
+        <div class="balrow" id="toBal"></div>
+        <div class="info-row" style="margin-top:14px"><span>1 <span id="rFrom">—</span> ≈</span><b id="rateTxt">—</b></div>
+        <div class="info-row"><span>交易费</span><b>0.3% → 流动池</b></div>
+        <div class="info-row"><span>滑点</span><b id="slipTxt">0.5%</b></div>
+        <div id="swapErr" class="errbox"></div>
+        <button class="btn primary wide" id="btnSwap" style="margin-top:14px" onclick="doSwap()">兑换</button>
+        <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
       </div>
     </div>
-  </div>
   </section>
 
   <!-- ===== Pool ===== -->
