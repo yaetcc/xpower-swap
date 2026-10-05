@@ -401,6 +401,8 @@ let cfg={factory:"",router:"",staking:"",xstork:""};
 try{ Object.assign(cfg, JSON.parse(localStorage.getItem(STORAGE+"cfg")||"{}")); assets=JSON.parse(localStorage.getItem(STORAGE+"assets")||"[]"); }catch(e){}
 try{ const _xm=JSON.parse(localStorage.getItem(STORAGE+"xaddrs")||"{}"); XSTOCKS.forEach(x=>{ if(_xm[x.sym]) x.addr=_xm[x.sym]; }); }catch(e){}
 let XSTOCKS=[
+  /* X Layer 原生币封装 · Wrapped OKB */
+  {sym:"OKB",name:"Wrapped OKB · X Layer 原生封装",addr:"0xe538905cf8410324e03a5a23c1c177a474d59b2b"},
   /* 科技巨头 · Magnificent 7 */
   {sym:"XAAPL",name:"苹果 · Apple",addr:"0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a"},{sym:"XNVDA",name:"英伟达 · NVIDIA",addr:"0xc845b2894dbddd03858fd2d643b4ef725fe0849d"},
   {sym:"XTSLA",name:"特斯拉 · Tesla",addr:"0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0"},{sym:"XMSFT",name:"微软 · Microsoft",addr:"0x5621737f42dae558b81269fcb9e9e70c19aa6b35"},
@@ -429,7 +431,7 @@ let XSTOCKS=[
   {sym:"XLLY",name:"礼来 · Eli Lilly",addr:"0x19c41ea77b34bbdee61c3a87a75d1abda2ed0be4"},{sym:"XWMT",name:"沃尔玛 · Walmart",addr:"0x7aefc9965699fbea943e03264d96e50cd4a97b21"}];
 const LOGO_COLORS=["#23d5ef","#f7c95f","#a78bfa","#35e0a1","#f76a6a","#f59e0b","#38bdf8","#f472b6"];
 function logoColor(sym){ let h=0; for(const c of sym) h=(h*31+c.charCodeAt(0))>>>0; return LOGO_COLORS[h%LOGO_COLORS.length]; }
-const NO_LOGO={"XSHOP":1,"XDIA":1,"XSPOT":1};
+const NO_LOGO={"OKB":1,"XSHOP":1,"XDIA":1,"XSPOT":1};
 function logoSvg(sym,id){
   const idAttr=id?` id="${id}"`:"";
   if(NO_LOGO[sym])return `<span class="lg"${idAttr} style="background:${logoColor(sym)}">${esc(String(sym||"?")).slice(0,1)}</span>`;
@@ -1012,7 +1014,7 @@ async function renderAssets(){
     $("assetStats").innerHTML=`
       <div class="stat"><div class="k">XSTORK 余额</div><div class="v g">${fmt(fromWei(rows[0]?.bal||0n,18))}</div></div>
       <div class="stat"><div class="k">已添加资产</div><div class="v c">${assets.length}</div></div>
-      <div class="stat"><div class="k">内置 xStock 名录</div><div class="v">${XSTOCKS.length}</div></div>
+      <div class="stat"><div class="k">内置资产名录</div><div class="v">${XSTOCKS.length}</div></div>
       <div class="stat"><div class="k">质押挖矿池</div><div class="v o" id="astPoolCnt">—</div></div>`;
     withRPC(async p=>{
       if(!cfg.staking)return;
