@@ -429,8 +429,10 @@ let XSTOCKS=[
   {sym:"XLLY",name:"礼来 · Eli Lilly",addr:"0x19c41ea77b34bbdee61c3a87a75d1abda2ed0be4"},{sym:"XWMT",name:"沃尔玛 · Walmart",addr:"0x7aefc9965699fbea943e03264d96e50cd4a97b21"}];
 const LOGO_COLORS=["#23d5ef","#f7c95f","#a78bfa","#35e0a1","#f76a6a","#f59e0b","#38bdf8","#f472b6"];
 function logoColor(sym){ let h=0; for(const c of sym) h=(h*31+c.charCodeAt(0))>>>0; return LOGO_COLORS[h%LOGO_COLORS.length]; }
+const NO_LOGO={"XSHOP":1,"XDIA":1,"XSPOT":1};
 function logoSvg(sym,id){
   const idAttr=id?` id="${id}"`:"";
+  if(NO_LOGO[sym])return `<span class="lg"${idAttr} style="background:${logoColor(sym)}">${esc(String(sym||"?")).slice(0,1)}</span>`;
   return `<span class="lg"${idAttr} style="position:relative;overflow:hidden;background:${logoColor(sym)}">${esc(String(sym||"?")).slice(0,1)}<img src="assets/logos/${esc(sym)}.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:50%;background:#fff" onerror="this.remove()"></span>`;
 }
 
@@ -647,6 +649,7 @@ async function quoteSwap(){
   }catch(e){el.textContent="报价失败："+(e.message||e);el.classList.add("on");$("outAmt").value="";}
 }
 async function doSwap(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(needCfg()){openCfg();return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
   if(!sA||!sB){toast("请选择兑换代币","err");return;}
@@ -704,6 +707,7 @@ async function poolQuote(){
   }catch(e){el.textContent="读取池失败："+(e.message||e);el.classList.add("on");}
 }
 async function doAddLiquidity(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(needCfg()){openCfg();return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
   if(!pA||!pB){toast("请选择交易对","err");return;}
@@ -759,6 +763,7 @@ async function removeQuote(){
   }catch(e){}
 }
 async function doRemoveLiquidity(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(needCfg()){openCfg();return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
   if(!pR){toast("请选择交易对","err");return;}
@@ -866,6 +871,7 @@ async function renderFarm(){
   }catch(e){el.innerHTML=`<div class="empty">读取失败：${esc(e.message)}<br><br><button class="btn ghost sm" onclick="renderFarm()">重试</button></div>`;}
 }
 async function doStake(pid){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
   const n=Number($("stkAmt"+pid).value);
   if(!n||n<=0){toast("请输入质押数量","err");return;}
@@ -892,6 +898,7 @@ async function doStake(pid){
   }catch(e){toast("质押失败："+(e.message||e),"err");}
 }
 async function doWithdraw(pid){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
   try{
     const signer=await getSigner();
@@ -904,6 +911,7 @@ async function doWithdraw(pid){
   }catch(e){toast("提取失败："+(e.message||e),"err");}
 }
 async function doClaim(pid){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
   try{
     const signer=await getSigner();
@@ -914,6 +922,7 @@ async function doClaim(pid){
   }catch(e){toast("领取失败："+(e.message||e),"err");}
 }
 async function createPool(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
   const tok=($("poolTok").value||"").trim(),rate=Number($("poolRate").value);
   if(!isAddr(tok)){toast("请输入有效资产地址","err");return;}
@@ -936,6 +945,7 @@ function configuredAssets(){
   return set;
 }
 async function createRecommendedPools(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
   const rate=Number($("poolRate").value);
   if(!rate||rate<=0){toast("请先在上方填写每秒奖励 XSTORK","err");return;}
@@ -974,6 +984,23 @@ async function renderAssets(){
       }
       return out;
     });
+    /* 内置 42 个 xStock 余额：分批并行查询 */
+    const xs=XSTOCKS.filter(x=>x.addr);
+    for(let i=0;i<xs.length;i+=14){
+      try{
+        const batch=await withRPC(async p=>{
+          const out=[];
+          for(const a of xs.slice(i,i+14)){
+            try{
+              const tk=new ethers.Contract(a.addr,ERC20_ABI,p);
+              out.push({sym:a.sym,name:a.name,dec:18,bal:await tk.balanceOf(walletAddr),addr:a.addr});
+            }catch(e){}
+          }
+          return out;
+        });
+        rows.push(...batch);
+      }catch(e){}
+    }
     const balEl=$("balList");
     balEl.innerHTML=rows.filter(r=>r.addr).length?rows.filter(r=>r.addr).map(r=>`
       <div class="item">
