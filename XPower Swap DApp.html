@@ -402,31 +402,31 @@ try{ Object.assign(cfg, JSON.parse(localStorage.getItem(STORAGE+"cfg")||"{}")); 
 try{ const _xm=JSON.parse(localStorage.getItem(STORAGE+"xaddrs")||"{}"); XSTOCKS.forEach(x=>{ if(_xm[x.sym]) x.addr=_xm[x.sym]; }); }catch(e){}
 let XSTOCKS=[
   /* 科技巨头 · Magnificent 7 */
-  {sym:"XAAPL",name:"苹果 · Apple",addr:""},{sym:"XNVDA",name:"英伟达 · NVIDIA",addr:""},
-  {sym:"XTSLA",name:"特斯拉 · Tesla",addr:""},{sym:"XMSFT",name:"微软 · Microsoft",addr:""},
-  {sym:"XGOOGL",name:"谷歌 · Alphabet",addr:""},{sym:"XAMZN",name:"亚马逊 · Amazon",addr:""},
-  {sym:"XMETA",name:"Meta",addr:""},
+  {sym:"XAAPL",name:"苹果 · Apple",addr:"0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a"},{sym:"XNVDA",name:"英伟达 · NVIDIA",addr:"0xc845b2894dbddd03858fd2d643b4ef725fe0849d"},
+  {sym:"XTSLA",name:"特斯拉 · Tesla",addr:"0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0"},{sym:"XMSFT",name:"微软 · Microsoft",addr:"0x5621737f42dae558b81269fcb9e9e70c19aa6b35"},
+  {sym:"XGOOGL",name:"谷歌 · Alphabet",addr:"0xe92f673ca36c5e2efd2de7628f815f84807e803f"},{sym:"XAMZN",name:"亚马逊 · Amazon",addr:"0x3557ba345b01efa20a1bddc61f573bfd87195081"},
+  {sym:"XMETA",name:"Meta",addr:"0x96702be57cd9777f835117a809c7124fe4ec989a"},
   /* 指数与 ETF */
-  {sym:"XSPY",name:"标普 500 · S&P 500",addr:""},{sym:"XQQQ",name:"纳指 100 · Nasdaq-100",addr:""},
-  {sym:"XDIA",name:"道琼斯 · Dow Jones",addr:""},{sym:"XGLD",name:"黄金 ETF · Gold",addr:""},
-  {sym:"XSLV",name:"白银 ETF · Silver",addr:""},{sym:"XIWM",name:"罗素 2000 · Russell 2000",addr:""},
-  {sym:"XVOO",name:"标普 500 Vanguard ETF",addr:""},
+  {sym:"XSPY",name:"标普 500 · S&P 500",addr:"0x90a2a4c76b5d8c0bc892a69ea28aa775a8f2dd48"},{sym:"XQQQ",name:"纳指 100 · Nasdaq-100",addr:"0xa753a7395cae905cd615da0b82a53e0560f250af"},
+  {sym:"XDIA",name:"道琼斯 · Dow Jones",addr:""},{sym:"XGLD",name:"黄金 ETF · Gold",addr:"0x2380f2673c640fb67e2d6b55b44c62f0e0e69da9"},
+  {sym:"XSLV",name:"白银 ETF · Silver",addr:"0x4833e7f4f0460f4b72a3a5879a6c9841bcc5b58b"},{sym:"XIWM",name:"罗素 2000 · Russell 2000",addr:"0xdadfb355c6110eda0908740d52c834d6c2bcddc7"},
+  {sym:"XVOO",name:"标普 500 Vanguard ETF",addr:"0xffae0b911cb2cb7b49fd75011d99d137c040a9ef"},
   /* 热门个股 */
-  {sym:"XCOIN",name:"Coinbase",addr:""},{sym:"XMSTR",name:"MicroStrategy",addr:""},
-  {sym:"XCRCL",name:"Circle",addr:""},{sym:"XPLTR",name:"Palantir",addr:""},
-  {sym:"XAMD",name:"AMD",addr:""},{sym:"XAVGO",name:"博通 · Broadcom",addr:""},
-  {sym:"XTSM",name:"台积电 · TSMC",addr:""},{sym:"XNFLX",name:"奈飞 · Netflix",addr:""},
-  {sym:"XDIS",name:"迪士尼 · Disney",addr:""},{sym:"XPYPL",name:"PayPal",addr:""},
-  {sym:"XCRM",name:"赛富时 · Salesforce",addr:""},{sym:"XORCL",name:"甲骨文 · Oracle",addr:""},
-  {sym:"XADBE",name:"Adobe",addr:""},{sym:"XINTC",name:"英特尔 · Intel",addr:""},
-  {sym:"XQCOM",name:"高通 · Qualcomm",addr:""},{sym:"XUBER",name:"Uber",addr:""},
-  {sym:"XABNB",name:"Airbnb",addr:""},{sym:"XSHOP",name:"Shopify",addr:""},
-  {sym:"XSPOT",name:"Spotify",addr:""},{sym:"XHOOD",name:"Robinhood",addr:""},
-  {sym:"XMRK",name:"默克 · Merck",addr:""},{sym:"XAZN",name:"阿斯利康 · AstraZeneca",addr:""},
-  {sym:"XMCD",name:"麦当劳 · McDonald's",addr:""},{sym:"XNKE",name:"耐克 · Nike",addr:""},
-  {sym:"XJPM",name:"摩根大通 · JPMorgan",addr:""},{sym:"XBAC",name:"美国银行 · Bank of America",addr:""},
-  {sym:"XGS",name:"高盛 · Goldman Sachs",addr:""},{sym:"XUNH",name:"联合健康 · UnitedHealth",addr:""},
-  {sym:"XLLY",name:"礼来 · Eli Lilly",addr:""},{sym:"XWMT",name:"沃尔玛 · Walmart",addr:""}];
+  {sym:"XCOIN",name:"Coinbase",addr:"0x364f210f430ec2448fc68a49203040f6124096f0"},{sym:"XMSTR",name:"MicroStrategy",addr:"0xae2f842ef90c0d5213259ab82639d5bbf649b08e"},
+  {sym:"XCRCL",name:"Circle",addr:"0xfebded1b0986a8ee107f5ab1a1c5a813491deceb"},{sym:"XPLTR",name:"Palantir",addr:"0x6d482cec5f9dd1f05ccee9fd3ff79b246170f8e2"},
+  {sym:"XAMD",name:"AMD",addr:"0x3522513e5f146a2006e2901b05f16b2821485e19"},{sym:"XAVGO",name:"博通 · Broadcom",addr:"0x38bac69cbbd28156796e4163b2b6dcb81e336565"},
+  {sym:"XTSM",name:"台积电 · TSMC",addr:"0x9e3bf4ecfc44eedd624f26656b6736a3f093b073"},{sym:"XNFLX",name:"奈飞 · Netflix",addr:"0xa6a65ac27e76cd53cb790473e4345c46e5ebf961"},
+  {sym:"XDIS",name:"迪士尼 · Disney",addr:"0xb07f6ed1496aa9bb751dc3cb901328dc08a64ac4"},{sym:"XPYPL",name:"PayPal",addr:"0xf706585e7e8900be0267bee3b9a2f70835ec6628"},
+  {sym:"XCRM",name:"赛富时 · Salesforce",addr:"0x4a4073f2eaf299a1be22254dcd2c41727f6f54a2"},{sym:"XORCL",name:"甲骨文 · Oracle",addr:"0x548308e91ec9f285c7bff05295badbd56a6e4971"},
+  {sym:"XADBE",name:"Adobe",addr:"0x16e0b579be45baae54ceddd52e742b6457a7fe12"},{sym:"XINTC",name:"英特尔 · Intel",addr:"0xf8a80d1cb9cfd70d03d655d9df42339846f3b3c8"},
+  {sym:"XQCOM",name:"高通 · Qualcomm",addr:"0x2d73ed3b4f20bd8f9abe92786740ba79e9fa0ef6"},{sym:"XUBER",name:"Uber",addr:"0xdb9783ca04bbd64fe2c6d7b9503a979b3de30729"},
+  {sym:"XABNB",name:"Airbnb",addr:"0xc1566b43ee3d9f507c75435c5eea81de7e7515f3"},{sym:"XSHOP",name:"Shopify",addr:"0xd3f90f9f3c67052578508ec08da683f4332a7c3c"},
+  {sym:"XSPOT",name:"Spotify",addr:""},{sym:"XHOOD",name:"Robinhood",addr:"0xe1385fdd5ffb10081cd52c56584f25efa9084015"},
+  {sym:"XMRK",name:"默克 · Merck",addr:"0x17d8186ed8f68059124190d147174d0f6697dc40"},{sym:"XAZN",name:"阿斯利康 · AstraZeneca",addr:"0x5d642505fe1a28897eb3baba665f454755d8daa2"},
+  {sym:"XMCD",name:"麦当劳 · McDonald's",addr:"0x80a77a372c1e12accda84299492f404902e2da67"},{sym:"XNKE",name:"耐克 · Nike",addr:"0x7c5e9e93ea0f8fe94ea94eb6283f200ba0b72be0"},
+  {sym:"XJPM",name:"摩根大通 · JPMorgan",addr:"0xd9fc3e075d45254a1d834fea18af8041207dea0a"},{sym:"XBAC",name:"美国银行 · Bank of America",addr:"0x314938c596f5ce31c3f75307d2979338c346d7f2"},
+  {sym:"XGS",name:"高盛 · Goldman Sachs",addr:"0x3ee7e9b3a992fd23cd1c363b0e296856b04ab149"},{sym:"XUNH",name:"联合健康 · UnitedHealth",addr:"0x167a6375da1efc4a5be0f470e73ecefd66245048"},
+  {sym:"XLLY",name:"礼来 · Eli Lilly",addr:"0x19c41ea77b34bbdee61c3a87a75d1abda2ed0be4"},{sym:"XWMT",name:"沃尔玛 · Walmart",addr:"0x7aefc9965699fbea943e03264d96e50cd4a97b21"}];
 const LOGO_COLORS=["#23d5ef","#f7c95f","#a78bfa","#35e0a1","#f76a6a","#f59e0b","#38bdf8","#f472b6"];
 function logoColor(sym){ let h=0; for(const c of sym) h=(h*31+c.charCodeAt(0))>>>0; return LOGO_COLORS[h%LOGO_COLORS.length]; }
 function logoSvg(sym){ return `<span class="lg" style="background:${logoColor(sym)}">${esc(sym.slice(0,1))}</span>`; }
