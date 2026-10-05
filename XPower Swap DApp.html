@@ -291,11 +291,16 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
     <div class="farm-grid" id="farmList" style="display:grid;gap:12px"></div>
     <div class="panel" id="farmAdmin" style="display:none;margin-top:16px">
       <h2><span class="bar"></span>创建质押池 · owner</h2>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
         <input id="poolTok" placeholder="质押资产地址（xStock / LP）" style="flex:2;min-width:240px">
         <input id="poolRate" type="number" placeholder="每秒奖励 XSTORK" style="flex:1;min-width:130px">
         <button class="btn primary" onclick="createPool()">创建池</button>
       </div>
+      <div class="info-row" style="border-top:1px solid var(--line);padding-top:10px">
+        <span style="color:var(--dim)">一键批量创建推荐池（为已配置地址的每个资产建池）</span>
+        <button class="btn gold sm" onclick="createRecommendedPools()">一键创建推荐池</button>
+      </div>
+      <div class="balrow" style="margin-top:6px;font-size:11px;color:var(--faint)" id="recPoolInfo">已配置地址: 0 个 · 需先到「资产」页粘贴 xStock 合约地址</div>
     </div>
   </section>
 
@@ -372,12 +377,32 @@ let assets=[];
 let cfg={factory:"",router:"",staking:"",xstork:""};
 try{ Object.assign(cfg, JSON.parse(localStorage.getItem(STORAGE+"cfg")||"{}")); assets=JSON.parse(localStorage.getItem(STORAGE+"assets")||"[]"); }catch(e){}
 const XSTOCKS=[
-  {sym:"xTSLA",name:"特斯拉 · Tesla",addr:""},{sym:"xNVDA",name:"英伟达 · NVIDIA",addr:""},
-  {sym:"xAAPL",name:"苹果 · Apple",addr:""},{sym:"xMSFT",name:"微软 · Microsoft",addr:""},
-  {sym:"xAMZN",name:"亚马逊 · Amazon",addr:""},{sym:"xGOOGL",name:"谷歌 · Alphabet",addr:""},
-  {sym:"xMETA",name:"Meta",addr:""},{sym:"xCOIN",name:"Coinbase",addr:""},
-  {sym:"xSPY",name:"标普 500 ETF",addr:""},{sym:"xQQQ",name:"纳指 100 ETF",addr:""},
-  {sym:"xDIA",name:"道琼斯 ETF",addr:""},{sym:"xGLD",name:"黄金 ETF",addr:""}];
+  /* 科技巨头 · Magnificent 7 */
+  {sym:"XAAPL",name:"苹果 · Apple",addr:""},{sym:"XNVDA",name:"英伟达 · NVIDIA",addr:""},
+  {sym:"XTSLA",name:"特斯拉 · Tesla",addr:""},{sym:"XMSFT",name:"微软 · Microsoft",addr:""},
+  {sym:"XGOOGL",name:"谷歌 · Alphabet",addr:""},{sym:"XAMZN",name:"亚马逊 · Amazon",addr:""},
+  {sym:"XMETA",name:"Meta",addr:""},
+  /* 指数与 ETF */
+  {sym:"XSPY",name:"标普 500 · S&P 500",addr:""},{sym:"XQQQ",name:"纳指 100 · Nasdaq-100",addr:""},
+  {sym:"XDIA",name:"道琼斯 · Dow Jones",addr:""},{sym:"XGLD",name:"黄金 ETF · Gold",addr:""},
+  {sym:"XSLV",name:"白银 ETF · Silver",addr:""},{sym:"XIWM",name:"罗素 2000 · Russell 2000",addr:""},
+  {sym:"XVOO",name:"标普 500 Vanguard ETF",addr:""},
+  /* 热门个股 */
+  {sym:"XCOIN",name:"Coinbase",addr:""},{sym:"XMSTR",name:"MicroStrategy",addr:""},
+  {sym:"XCRCL",name:"Circle",addr:""},{sym:"XPLTR",name:"Palantir",addr:""},
+  {sym:"XAMD",name:"AMD",addr:""},{sym:"XAVGO",name:"博通 · Broadcom",addr:""},
+  {sym:"XTSM",name:"台积电 · TSMC",addr:""},{sym:"XNFLX",name:"奈飞 · Netflix",addr:""},
+  {sym:"XDIS",name:"迪士尼 · Disney",addr:""},{sym:"XPYPL",name:"PayPal",addr:""},
+  {sym:"XCRM",name:"赛富时 · Salesforce",addr:""},{sym:"XORCL",name:"甲骨文 · Oracle",addr:""},
+  {sym:"XADBE",name:"Adobe",addr:""},{sym:"XINTC",name:"英特尔 · Intel",addr:""},
+  {sym:"XQCOM",name:"高通 · Qualcomm",addr:""},{sym:"XUBER",name:"Uber",addr:""},
+  {sym:"XABNB",name:"Airbnb",addr:""},{sym:"XSHOP",name:"Shopify",addr:""},
+  {sym:"XSPOT",name:"Spotify",addr:""},{sym:"XHOOD",name:"Robinhood",addr:""},
+  {sym:"XMRK",name:"默克 · Merck",addr:""},{sym:"XAZN",name:"阿斯利康 · AstraZeneca",addr:""},
+  {sym:"XMCD",name:"麦当劳 · McDonald's",addr:""},{sym:"XNKE",name:"耐克 · Nike",addr:""},
+  {sym:"XJPM",name:"摩根大通 · JPMorgan",addr:""},{sym:"XBAC",name:"美国银行 · Bank of America",addr:""},
+  {sym:"XGS",name:"高盛 · Goldman Sachs",addr:""},{sym:"XUNH",name:"联合健康 · UnitedHealth",addr:""},
+  {sym:"XLLY",name:"礼来 · Eli Lilly",addr:""},{sym:"XWMT",name:"沃尔玛 · Walmart",addr:""}];
 const LOGO_COLORS=["#23d5ef","#f7c95f","#a78bfa","#35e0a1","#f76a6a","#f59e0b","#38bdf8","#f472b6"];
 function logoColor(sym){ let h=0; for(const c of sym) h=(h*31+c.charCodeAt(0))>>>0; return LOGO_COLORS[h%LOGO_COLORS.length]; }
 function logoSvg(sym){ return `<span class="lg" style="background:${logoColor(sym)}">${esc(sym.slice(0,1))}</span>`; }
@@ -757,7 +782,12 @@ async function renderFarm(){
     withRPC(async p=>{
       const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
       const own=await st.owner();
-      if(walletAddr&&own.toLowerCase()===walletAddr)$("farmAdmin").style.display="block";
+      if(walletAddr&&own.toLowerCase()===walletAddr){
+        $("farmAdmin").style.display="block";
+        const n=configuredAssets().length;
+        const el=$("recPoolInfo");
+        if(el)el.textContent="已配置地址: "+n+" 个 · 将逐个创建质押池（奖励速率取上方输入）"+(n?" · 建议先为池注入 XSTORK 奖励":" · 需先到「资产」页粘贴 xStock 合约地址");
+      }
     }).catch(()=>{});
   }catch(e){el.innerHTML=`<div class="empty">读取失败：${esc(e.message)}<br><br><button class="btn ghost sm" onclick="renderFarm()">重试</button></div>`;}
 }
@@ -823,6 +853,33 @@ async function createPool(){
     });
     qRun();
   }catch(e){toast("创建失败："+(e.message||e),"err");}
+}
+function configuredAssets(){
+  const set=[];
+  const seen={};
+  for(const a of assets){ if(isAddr(a.addr)&&!seen[a.addr.toLowerCase()]){seen[a.addr.toLowerCase()]=1;set.push({addr:a.addr,sym:a.sym});} }
+  for(const x of XSTOCKS){ if(isAddr(x.addr)&&!seen[x.addr.toLowerCase()]){seen[x.addr.toLowerCase()]=1;set.push({addr:x.addr,sym:x.sym});} }
+  return set;
+}
+async function createRecommendedPools(){
+  if(!walletAddr){toast("请先连接钱包","err");return;}
+  const rate=Number($("poolRate").value);
+  if(!rate||rate<=0){toast("请先在上方填写每秒奖励 XSTORK","err");return;}
+  const list=configuredAssets();
+  if(!list.length){toast("没有已配置地址的资产 · 先到「资产」页粘贴 xStock 合约地址","err");return;}
+  const signer=await getSigner();
+  const st=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
+  const own=await st.owner();
+  if(own.toLowerCase()!==walletAddr){toast("仅 owner 可创建池","err");return;}
+  qstate.steps=[];
+  for(const t of list){
+    qAdd("创建 "+t.sym+" 质押池",async()=>{
+      const tx=await st.createPool(t.addr,toWei(rate,18));
+      await tx.wait();
+      return t.sym+" 池已建";
+    });
+  }
+  qRun();
 }
 
 /* ============ 资产 ============ */
