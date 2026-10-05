@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XPower · 股票资产 Swap & DeFi</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1220'/%3E%3Cpath d='M14 46V26l10 12 8-22 10 24 8-16v22' stroke='%2322d3ee' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#070b14; --bg2:#0d1524; --card:#101a2c; --line:#1e2b42;
+  --fg:#e6edf7; --dim:#8ea3bd; --faint:#5a6f8c;
+  --acc:#22d3ee; --acc2:#38bdf8; --gold:#f5c95c; --ok:#34d399; --err:#f87171;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,"PingFang SC","HarmonicOS Sans SC","Noto Sans SC",sans-serif;font-size:14px;line-height:1.6}
+button{font-family:inherit}
+a{color:var(--acc);text-decoration:none}
+.mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+/* ===== 顶栏 ===== */
+header{position:sticky;top:0;z-index:90;background:rgba(7,11,20,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:10px 16px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px}
+.logo svg{display:block}
+.logo .tag{font-size:10px;color:var(--dim);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.navlinks{display:flex;gap:4px;flex:1;overflow-x:auto}
+.navlinks .n{padding:7px 14px;border-radius:9px;color:var(--dim);cursor:pointer;white-space:nowrap;font-weight:600;font-size:13px;border:1px solid transparent}
+.navlinks .n:hover{color:var(--fg);background:var(--bg2)}
+.navlinks .n.on{color:var(--fg);background:var(--bg2);border-color:var(--line)}
+.wbtn{padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--fg);cursor:pointer;font-weight:600;font-size:13px}
+.wbtn:hover{border-color:var(--acc)}
+.wbtn.ok{border-color:rgba(52,211,153,.5);color:var(--ok)}
+/* ===== 布局 ===== */
+main{max-width:1060px;margin:0 auto;padding:18px 16px 60px}
+.view{display:none}
+.view.on{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+h1{font-size:20px;font-weight:800;margin-bottom:4px}
+.sub{color:var(--dim);font-size:12.5px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.row{display:flex;align-items:center;gap:8px}
+.btn{padding:10px 16px;border-radius:10px;border:1px solid transparent;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04121f;font-weight:700;font-size:14px;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--fg)}
+.btn.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.btn.err{background:linear-gradient(135deg,#f87171,#fb923c);color:#2a0a0a}
+.btn.sm{padding:6px 10px;font-size:12px;border-radius:8px}
+.btn.gold{background:linear-gradient(135deg,#f5c95c,#f59e0b);color:#2a1c02}
+input,select{background:var(--bg2);border:1px solid var(--line);color:var(--fg);border-radius:9px;padding:9px 10px;font-size:13px;outline:none;width:100%}
+input:focus,select:focus{border-color:var(--acc)}
+label{font-size:12px;color:var(--dim)}
+.statbar{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0 16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:120px}
+.stat .k{font-size:11px;color:var(--faint)}
+.stat .v{font-size:17px;font-weight:800;margin-top:2px}
+.stat .v.c{color:var(--acc)} .stat .v.g{color:var(--gold)} .stat .v.o{color:var(--ok)}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--dim)}
+.pill.on{border-color:rgba(34,211,238,.5);color:var(--acc)}
+.token-tag{display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-size:11px;color:var(--dim)}
+.empty{text-align:center;color:var(--faint);padding:36px 12px;font-size:13px}
+.empty .big{font-size:13px;color:var(--dim);margin-bottom:6px}
+.errbox{color:var(--err);font-size:12px;margin-top:6px}
+.okbox{color:var(--ok);font-size:12px;margin-top:6px}
+.list{display:grid;gap:8px}
+.item{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+.item .nm{flex:1;min-width:0}
+.item .nm b{display:block;font-size:13px}
+.item .nm span{font-size:11px;color:var(--faint)}
+.item .val{font-weight:700;font-size:13px;text-align:right}
+.item .val span{display:block;font-size:10px;color:var(--faint);font-weight:400}
+.pool-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* ===== 弹窗/队列 ===== */
+.mask{position:fixed;inset:0;z-index:130;background:rgba(2,6,16,.65);display:none;align-items:center;justify-content:center;padding:16px}
+.mask.on{display:flex}
+.box{width:min(480px,94vw);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.box h3{font-size:15px;margin-bottom:10px}
+.qpanel{position:fixed;right:14px;bottom:14px;z-index:120;width:min(330px,92vw);background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 34px rgba(0,0,0,.5);display:none}
+.qpanel.on{display:block}
+.qhead{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:700;font-size:13px}
+.qstep{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(30,43,66,.5);font-size:12px}
+.qstep .st{width:18px;height:18px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.qstep.run .st{border-color:var(--acc);color:var(--acc)}
+.qstep.done .st{background:var(--ok);border-color:var(--ok);color:#03150c}
+.qstep.err .st{background:var(--err);border-color:var(--err);color:#2a0a0a}
+.qstep .tl{flex:1;color:var(--dim)}
+.qstep.done .tl{color:var(--fg)}
+.qstep.err .tl{color:var(--err)}
+/* ===== toast ===== */
+#toasts{position:fixed;top:64px;right:14px;z-index:150;display:grid;gap:8px;width:min(320px,92vw)}
+.toast{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px;padding:10px 12px;font-size:12.5px;box-shadow:0 8px 26px rgba(0,0,0,.4);animation:fade .2s}
+.toast.err{border-left-color:var(--err)}
+.toast.ok{border-left-color:var(--ok)}
+/* ===== swap 面板 ===== */
+.swap-box{max-width:460px;margin:0 auto}
+.token-sel{display:flex;align-items:center;gap:8px}
+.tok-btn{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;min-width:150px;justify-content:space-between}
+.tok-btn:hover{border-color:var(--acc)}
+.tok-btn .nm2{font-weight:700;font-size:14px}
+.arrow{display:flex;justify-content:center;margin:8px 0}
+.arrow button{background:var(--bg2);border:1px solid var(--line);border-radius:50%;width:34px;height:34px;color:var(--acc);cursor:pointer;font-size:15px}
+.rate{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin:8px 0 2px}
+.slip{color:var(--gold);font-weight:600}
+.slip.bad{color:var(--err)}
+/* ===== farm ===== */
+.farm-grid{display:grid;gap:12px}
+.pool-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.pool-card .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.tier-t{display:inline-block;background:rgba(245,201,92,.14);border:1px solid rgba(245,201,92,.4);color:var(--gold);font-size:10px;font-weight:800;border-radius:5px;padding:1px 6px}
+footer{border-top:1px solid var(--line);padding:18px 16px 40px;text-align:center;color:var(--faint);font-size:11.5px}
+footer b{color:var(--dim)}
+.foot-links{margin-top:6px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+details{margin-top:10px}
+details summary{cursor:pointer;color:var(--dim);font-size:12.5px}
+details ol{padding-left:18px;margin-top:6px;color:var(--dim);font-size:12.5px;line-height:1.9}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="none" stroke="#22d3ee" stroke-width="3" opacity=".35"/><path d="M14 46V26l10 12 8-22 10 24 8-16v22" stroke="#22d3ee" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>XPower<div class="tag">Swap · DeFi</div></div>
+    </div>
+    <div class="navlinks" id="nav"></div>
+    <div class="row" style="gap:6px">
+      <span class="pill" id="chainPill">X Layer</span>
+      <button class="wbtn" id="wbtn" onclick="connectWallet()">连接钱包</button>
+    </div>
+  </div>
+</header>
+<div id="toasts"></div>
+
+<main>
+  <!-- ===== 视图：Swap ===== -->
+  <section class="view" id="view-swap">
+    <h1>Swap · 股票资产兑换</h1>
+    <p class="sub">xStock 代币化股票 / 平台币 XSTORK / 任意资产间兑换 · AMM 恒定乘积 · 0.3% 手续费归流动性提供者</p>
+    <div class="statbar" id="swapStats"></div>
+    <div class="card swap-box">
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <b style="font-size:13px">兑换</b>
+        <span class="pill" id="swapDir">A → B</span>
+      </div>
+      <div class="token-sel">
+        <div style="flex:1">
+          <label>从（卖出）</label>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <div class="tok-btn" id="fromBtn" onclick="pickToken('from')"><span class="nm2">—</span><span style="color:var(--faint)">▾</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <label>数量</label>
+        <input id="inAmt" type="number" value="0" min="0" placeholder="0.0" oninput="quoteSwap()">
+        <div class="row" style="justify-content:space-between;margin-top:4px">
+          <span class="sub" id="inBal"></span>
+          <button class="lbtn btn ghost sm" onclick="setMax()">最大</button>
+        </div>
+      </div>
+      <div class="arrow"><button onclick="flipSwap()" title="交换方向">⇅</button></div>
+      <div class="token-sel">
+        <div style="flex:1">
+          <label>到（买入）</label>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <div class="tok-btn" id="toBtn" onclick="pickToken('to')"><span class="nm2">—</span><span style="color:var(--faint)">▾</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <label>数量（预估）</label>
+        <input id="outAmt" type="text" readonly placeholder="0.0">
+      </div>
+      <div class="rate"><span id="rateTxt">—</span><span class="slip" id="slipTxt"></span></div>
+      <div id="swapErr" class="errbox"></div>
+      <button class="btn" id="btnSwap" style="width:100%;margin-top:12px" onclick="doSwap()">兑换</button>
+      <div class="sub" style="margin-top:10px;text-align:center">交易费 0.3% 自动进入流动池 · 价格由池内储备实时决定</div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：Pool ===== -->
+  <section class="view" id="view-pool">
+    <h1>Pool · 流动性池</h1>
+    <p class="sub">添加 / 移除双币流动性，赚取 0.3% 兑换手续费</p>
+    <div class="statbar" id="poolStats"></div>
+    <div class="grid2">
+      <div class="card">
+        <h2>添加流动性</h2>
+        <div class="token-sel" style="margin-bottom:10px">
+          <div style="flex:1">
+            <label>代币 A</label>
+            <div class="tok-btn" id="paBtn" onclick="pickToken('pa')"><span class="nm2">—</span><span style="color:var(--faint)">▾</span></div>
+          </div>
+          <div style="flex:1">
+            <label>代币 B</label>
+            <div class="tok-btn" id="pbBtn" onclick="pickToken('pb')"><span class="nm2">—</span><span style="color:var(--faint)">▾</span></div>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <label id="paLbl">A 数量</label>
+          <input id="paAmt" type="number" min="0" placeholder="0.0" oninput="poolQuote()">
+        </div>
+        <div style="margin-top:8px">
+          <label id="pbLbl">B 数量</label>
+          <input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="poolQuote()">
+        </div>
+        <div class="rate"><span id="poolRate">—</span><span id="poolShare" class="slip"></span></div>
+        <div id="poolErr" class="errbox"></div>
+        <button class="btn gold" id="btnAddLiq" style="width:100%;margin-top:12px" onclick="doAddLiquidity()">添加流动性</button>
+      </div>
+      <div class="card">
+        <h2>移除流动性</h2>
+        <div class="token-sel" style="margin-bottom:10px">
+          <div style="flex:1">
+            <label>交易对</label>
+            <div class="tok-btn" id="prBtn" onclick="pickToken('pr')"><span class="nm2">—</span><span style="color:var(--faint)">▾</span></div>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <label>我的 LP 份额</label>
+          <input id="prPct" type="range" min="0" max="100" value="0" oninput="removeQuote()" style="padding:0">
+          <div class="row" style="justify-content:space-between;margin-top:2px">
+            <span class="sub" id="prLp">LP: —</span>
+            <span class="sub" id="prPctTxt">0%</span>
+          </div>
+        </div>
+        <div class="rate"><span id="prOut">预计收到 —</span></div>
+        <div id="poolErr2" class="errbox"></div>
+        <button class="btn" id="btnRmLiq" style="width:100%;margin-top:12px" onclick="doRemoveLiquidity()">移除流动性</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>我的持仓</h2>
+      <div id="myLiq" class="empty">选择交易对后显示持仓</div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：Farm ===== -->
+  <section class="view" id="view-farm">
+    <h1>Farm · 质押挖矿</h1>
+    <p class="sub">质押 xStock 资产或 LP 凭证，按份额每秒获得 XSTORK 奖励</p>
+    <div class="statbar" id="farmStats"></div>
+    <div class="farm-grid" id="farmList"></div>
+    <div class="card" id="farmAdmin" style="display:none">
+      <h2>创建质押池（owner）</h2>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <input id="poolTok" placeholder="质押资产地址（xStock / LP）" style="flex:2;min-width:220px">
+        <input id="poolRate" type="number" placeholder="每秒奖励 XSTORK" style="flex:1;min-width:120px">
+        <button class="btn ghost sm" onclick="createPool()">创建池</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：资产 ===== -->
+  <section class="view" id="view-assets">
+    <h1>资产 · 我的持仓</h1>
+    <p class="sub">xStock 股票资产 / XSTORK / LP / 质押明细</p>
+    <div class="statbar" id="assetStats"></div>
+    <div class="card">
+      <h2>xStock 资产名录</h2>
+      <p class="sub" style="margin-bottom:10px">xStocks 由 Backed Finance 发行、1:1 真实股票背书。粘贴你的 xStock 合约地址即可加入交易；空白地址可从官方渠道获取。</p>
+      <div class="row" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input id="tokAddr" placeholder="粘贴任意资产 ERC20 地址（xStock / 平台币）" style="flex:2;min-width:240px">
+        <button class="btn ghost sm" onclick="addAsset()">+ 添加资产</button>
+      </div>
+      <div id="assetList" class="list"></div>
+    </div>
+    <div class="card">
+      <h2>我的余额</h2>
+      <div id="balList" class="empty">连接钱包后显示余额</div>
+    </div>
+  </section>
+</main>
+
+<!-- 选代币弹窗 -->
+<div class="mask" id="tokMask" onclick="if(event.target===this)hideTok()">
+  <div class="box">
+    <h3>选择代币</h3>
+    <div class="row" style="gap:8px;margin-bottom:10px">
+      <input id="tokSearch" placeholder="搜索符号 / 粘贴地址" oninput="renderTokList()">
+    </div>
+    <div id="tokList" class="list" style="max-height:340px;overflow:auto"></div>
+  </div>
+</div>
+
+<div class="qpanel" id="qpanel">
+  <div class="qhead"><span>操作队列</span><span><button class="btn ghost sm" onclick="qStop()">终止</button> <button class="btn ghost sm" onclick="qRetry()">重试失败</button> <button class="btn ghost sm" onclick="$('qpanel').classList.remove('on')">收起</button></span></div>
+  <div id="qbody"></div>
+</div>
+
+<footer>
+  <div><b>XPower</b> · 股票资产 Swap & DeFi — xStock 1:1 真实股票背书资产 · 恒定乘积 AMM · 质押挖矿</div>
+  <div class="foot-links"><span id="cfgInfo">未配置合约</span></div>
+  <details style="max-width:680px;margin:10px auto 0;text-align:left">
+    <summary>玩法说明</summary>
+    <ol>
+      <li>配置合约地址（Factory / Router / Staking / XSTORK）并连接钱包</li>
+      <li>添加 xStock 资产地址（如 xTSLA / xNVDA）到资产名录</li>
+      <li>Swap 兑换：A/B 双币池，价格由池储备实时决定，0.3% 归 LP</li>
+      <li>Pool 添加流动性赚手续费；LP 凭证可质押进 Farm 额外挖 XSTORK</li>
+      <li>Farm 按份额每秒释放 XSTORK，随时领取</li>
+    </ol>
+  </details>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>
+/* ===== 配置 ===== */
+const CHAIN_ID = 196;
+const RPCS = ["https://rpc.xlayer.tech", "https://xlayer.drpc.org", "https://x-layer.drpc.org", "https://xlayer.ondrpc.com"];
+const EXPLORER = "https://web3.okx.com/zh-hans/explorer/x-layer/evm/";
+const STORAGE = "xp4s_";
+const tokenCache = {}; // addr -> {sym,name,dec,logo}
+let walletAddr = null, chainIdOk = false;
+let rpcIdx = 0, provider = null;
+let curAsset = null; // 当前 pick 上下文
+let assets = []; // [{addr,sym,name,dec}]
+let cfg = { factory:"", router:"", staking:"", xstork:"" };
+try {
+  const c = JSON.parse(localStorage.getItem(STORAGE+"cfg") || "{}");
+  if (c.factory) cfg = Object.assign(cfg, c);
+  assets = JSON.parse(localStorage.getItem(STORAGE+"assets") || "[]");
+} catch(e){}
+
+/* 内置 xStock 名录（真实 xStocks 资产；地址需用户粘贴） */
+const XSTOCKS = [
+  {sym:"xTSLA", name:"特斯拉 · Tesla", addr:""},
+  {sym:"xNVDA", name:"英伟达 · NVIDIA", addr:""},
+  {sym:"xAAPL", name:"苹果 · Apple", addr:""},
+  {sym:"xMSFT", name:"微软 · Microsoft", addr:""},
+  {sym:"xAMZN", name:"亚马逊 · Amazon", addr:""},
+  {sym:"xGOOGL", name:"谷歌 · Alphabet", addr:""},
+  {sym:"xMETA", name:"Meta", addr:""},
+  {sym:"xCOIN", name:"Coinbase", addr:""},
+  {sym:"xSPY", name:"标普 500 ETF", addr:""},
+  {sym:"xQQQ", name:"纳指 100 ETF", addr:""},
+  {sym:"xDIA", name:"道琼斯 ETF", addr:""},
+  {sym:"xGLD", name:"黄金 ETF", addr:""},
+];
+
+/* ===== ABI（forge 编译产物精简） ===== */
+const ERC20_ABI = [
+  "function name() view returns (string)","function symbol() view returns (string)","function decimals() view returns (uint8)",
+  "function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)",
+  "function approve(address,uint256) returns (bool)","function transfer(address,uint256) returns (bool)",
+  "function transferFrom(address,address,uint256) returns (bool)"];
+const FACTORY_ABI = [
+  "function owner() view returns (address)","function feeTo() view returns (address)","function getPair(address,address) view returns (address)",
+  "function allPairs(uint256) view returns (address)","function allPairsLength() view returns (uint256)",
+  "function createPair(address,address) returns (address)","function setFeeTo(address)","function setOwner(address)"];
+const PAIR_ABI = [
+  "function token0() view returns (address)","function token1() view returns (address)","function getReserves() view returns (uint112,uint112,uint32)",
+  "function mint(address) returns (uint256)","function burn(address) returns (uint256,uint256)","function swap(uint256,uint256,address)",
+  "function sync()","function factory() view returns (address)"];
+const ROUTER_ABI = [
+  "function factory() view returns (address)",
+  "function addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256) returns (uint256,uint256,uint256)",
+  "function removeLiquidity(address,address,uint256,uint256,uint256,address,uint256) returns (uint256,uint256)",
+  "function swapExactTokensForTokens(uint256,uint256,address[],address,uint256) returns (uint256[])",
+  "function swapTokensForExactTokens(uint256,uint256,address[],address,uint256) returns (uint256[])",
+  "function getAmountsOut(uint256,address[]) view returns (uint256[])",
+  "function getAmountsIn(uint256,address[]) view returns (uint256[])",
+  "function getAmountOut(uint256,uint256,uint256) pure returns (uint256)"];
+const STAKING_ABI = [
+  "function owner() view returns (address)","function rewardToken() view returns (address)","function poolLength() view returns (uint256)",
+  "function poolInfo(uint256) view returns (address,uint256,uint256,uint256,uint256,bool)",
+  "function userInfo(uint256,address) view returns (uint256,uint256)",
+  "function pendingReward(uint256,address) view returns (uint256)",
+  "function createPool(address,uint256) returns (uint256)","function setRewardPerSec(uint256,uint256)","function setActive(uint256,bool)",
+  "function stake(uint256,uint256)","function withdraw(uint256,uint256)","function claim(uint256)","function emergencyWithdraw(uint256)"];
+
+/* ===== 工具 ===== */
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function shortAddr(a){ if(!a) return ""; a=String(a); return a.slice(0,6)+"…"+a.slice(-4); }
+function fmtPrice(n){ n=Number(n); if(!isFinite(n)) return "0"; if(n>=1000) return n.toLocaleString("en-US",{maximumFractionDigits:2}); if(n>=0.001) return n.toFixed(4).replace(/0+$/,"").replace(/\.$/,""); if(n>=1e-6) return n.toFixed(8).replace(/0+$/,"").replace(/\.$/,""); return n.toExponential(2); }
+function fmt(n, d){ n=Number(n); d=d==null?2:d; if(!isFinite(n)) return "0"; if(n>=1e6) return (n/1e6).toFixed(2)+"M"; if(n>=1e4) return (n/1e3).toFixed(2)+"k"; return n.toLocaleString("en-US",{maximumFractionDigits:d}); }
+function toast(msg, type){ const t=document.createElement("div"); t.className="toast"+(type==="err"?" err":type==="ok"?" ok":""); t.textContent=msg; $("toasts").appendChild(t); setTimeout(()=>t.remove(), type==="err"?6000:3500); }
+function copyText(t){ if(navigator.clipboard){ navigator.clipboard.writeText(t).then(()=>toast("已复制")); } else { toast("复制失败"); } }
+function fromWei(v, dec){ return Number(v) / 10 ** (dec==null?18:dec); }
+function toWei(n, dec){ return BigInt(Math.round(n * 10 ** (dec==null?18:dec))); }
+function isAddr(s){ return /^0x[0-9a-fA-F]{40}$/.test(String(s||"").trim()); }
+function deadline(){ return Math.floor(Date.now()/1000)+1800; }
+
+/* RPC 容错 */
+function pickProvider(){ return new ethers.JsonRpcProvider(RPCS[rpcIdx], CHAIN_ID, {staticNetwork:true}); }
+function withRPC(fn){
+  return new Promise((resolve, reject) => {
+    let tryN = 0;
+    const attempt = () => {
+      tryN++;
+      const p = pickProvider();
+      Promise.race([fn(p), new Promise((_,rej)=>setTimeout(()=>rej(new Error("RPC timeout")),12000))])
+        .then(resolve)
+        .catch(err => {
+          if (tryN >= 3) return reject(err);
+          rpcIdx = (rpcIdx+1) % RPCS.length;
+          toast("RPC 波动，已切换节点 (" + (rpcIdx+1) + "/" + RPCS.length + ")", "err");
+          setTimeout(attempt, 300);
+        });
+    };
+    attempt();
+  });
+}
+function getSigner(){
+  return withRPC(async p => {
+    if (!window.ethereum) throw new Error("未检测到钱包");
+    const prov = new ethers.BrowserProvider(window.ethereum);
+    return prov.getSigner();
+  });
+}
+
+/* ===== 钱包 ===== */
+async function connectWallet(){
+  if (!window.ethereum) { toast("请安装 OKX 钱包", "err"); return; }
+  try {
+    const accounts = await window.ethereum.request({ method:"eth_requestAccounts" });
+    walletAddr = accounts[0].toLowerCase();
+    const chain = await window.ethereum.request({ method:"eth_chainId" });
+    chainIdOk = parseInt(chain,16) === CHAIN_ID;
+    if (!chainIdOk) { toast("请切换网络到 X Layer", "err"); $("chainPill").textContent = "X Layer?"; }
+    else $("chainPill").textContent = "X Layer";
+    const b = $("wbtn"); b.textContent = shortAddr(walletAddr); b.classList.add("ok");
+    refreshAll();
+  } catch(e){ toast("连接失败：" + (e.message||e), "err"); }
+}
+window.ethereum && window.ethereum.on && window.ethereum.on("accountsChanged", () => { walletAddr=null; $("wbtn").textContent="连接钱包"; $("wbtn").classList.remove("ok"); refreshAll(); });
+window.ethereum && window.ethereum.on && window.ethereum.on("chainChanged", () => connectWallet());
+
+/* ===== 配置面板 ===== */
+function needCfg(){ return !cfg.factory || !cfg.router || !cfg.staking || !cfg.xstork; }
+function saveCfg(){ localStorage.setItem(STORAGE+"cfg", JSON.stringify(cfg)); }
+function openCfg(){
+  const html = `
+    <div class="mask on" id="cfgMask" onclick="if(event.target===this)this.remove()">
+      <div class="box">
+        <h3>合约配置</h3>
+        <div style="display:grid;gap:8px">
+          ${[["factory","XStorkFactory"],["router","XStorkRouter"],["staking","XStorkStaking"],["xstork","XSTORK 奖励币"]].map(([k,n])=>`
+            <label>${n}（${k}）</label>
+            <input id="cfg_${k}" value="${esc(cfg[k])}" placeholder="0x…">
+          `).join("")}
+        </div>
+        <button class="btn" style="width:100%;margin-top:12px" onclick="saveCfgBox()">保存配置</button>
+      </div>
+    </div>`;
+  const d = document.createElement("div"); d.innerHTML = html; document.body.appendChild(d);
+}
+function saveCfgBox(){
+  for (const k of ["factory","router","staking","xstork"]) cfg[k] = $("cfg_"+k).value.trim();
+  saveCfg(); const m=$("cfgMask"); if(m) m.remove();
+  toast("配置已保存", "ok"); refreshAll();
+}
+
+/* ===== 资产名录 ===== */
+function saveAssets(){ localStorage.setItem(STORAGE+"assets", JSON.stringify(assets)); }
+async function addAsset(){
+  const a = ($("tokAddr").value||"").trim();
+  if (!isAddr(a)) { toast("请输入有效合约地址", "err"); return; }
+  if (assets.some(x=>x.addr.toLowerCase()===a.toLowerCase())) { toast("已存在该资产", "err"); return; }
+  try {
+    const meta = await withRPC(async p => {
+      const tk = new ethers.Contract(a, ERC20_ABI, p);
+      const [sym, nm, dec] = await Promise.all([tk.symbol().catch(()=>"?"), tk.name().catch(()=>"?"), tk.decimals().catch(()=>18)]);
+      return { sym: String(sym).slice(0,10), name: String(nm).slice(0,24), dec: Number(dec) };
+    });
+    assets.push({ addr:a, sym:meta.sym, name:meta.name, dec:meta.dec });
+    saveAssets(); $("tokAddr").value="";
+    renderAssetList(); toast("已添加 " + meta.sym, "ok");
+  } catch(e){ toast("读取代币信息失败：" + (e.message||e), "err"); }
+}
+function removeAsset(addr){
+  assets = assets.filter(x=>x.addr.toLowerCase()!==addr.toLowerCase());
+  saveAssets(); renderAssetList();
+}
+function renderAssetList(){
+  const el = $("assetList");
+  if (!el) return;
+  const all = [...XSTOCKS.filter(x=>x.addr).map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true})), ...assets];
+  el.innerHTML = all.length ? all.map(a=>`
+    <div class="item">
+      <span class="tier-t">${esc(a.sym||"?")}</span>
+      <div class="nm"><b>${esc(a.name||"")}</b><span class="mono">${shortAddr(a.addr)} <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
+      <div class="row" style="gap:6px">
+        <button class="btn ghost sm" onclick="copyText('${a.addr}')">复制</button>
+        ${a.builtin ? "" : `<button class="btn ghost sm err" onclick="removeAsset('${a.addr}')">移除</button>`}
+      </div>
+    </div>`).join("")
+  : `<div class="empty">暂无已添加资产 · 上方粘贴 xStock 合约地址加入</div>`;
+}
+
+/* ===== 代币选择弹窗 ===== */
+let pickCtx = null;
+function pickToken(ctx){ pickCtx=ctx; renderTokList(); $("tokMask").classList.add("on"); $("tokSearch").value=""; }
+function hideTok(){ $("tokMask").classList.remove("on"); pickCtx=null; }
+function renderTokList(){
+  const q = ($("tokSearch").value||"").trim().toLowerCase();
+  const pool = [...assets, ...XSTOCKS.filter(x=>x.addr).map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18}))];
+  const uniq = {}; pool.forEach(x=>uniq[x.addr.toLowerCase()]=x);
+  const list = Object.values(uniq).filter(x=> !q || x.sym.toLowerCase().includes(q) || x.name.toLowerCase().includes(q) || x.addr.toLowerCase().includes(q));
+  $("tokList").innerHTML = list.length ? list.map(x=>`
+    <div class="item" style="cursor:pointer" onclick="selToken('${x.addr}','${esc(x.sym)}','${esc(x.name)}',${x.dec})">
+      <span class="tier-t">${esc(x.sym)}</span>
+      <div class="nm"><b>${esc(x.name)}</b><span class="mono">${shortAddr(x.addr)}</span></div>
+      <span style="color:var(--acc)">选择 →</span>
+    </div>`).join("")
+  : `<div class="empty">无匹配 · 先到「资产」页添加代币地址</div>`;
+}
+function selToken(addr,sym,name,dec){
+  if (!pickCtx) return;
+  const ctx = pickCtx;
+  if (ctx==="from"||ctx==="to") swapSel(ctx,{addr,sym,name,dec});
+  else if (ctx==="pa"||ctx==="pb") poolSelA(ctx,{addr,sym,name,dec});
+  else if (ctx==="pr") poolSelR({addr,sym,name,dec});
+  hideTok();
+}
+
+/* ===== Swap 视图 ===== */
+let sA=null, sB=null;
+function swapSel(k, t){ if(k==="from") sA=t; else sB=t; renderSwapSel(); quoteSwap(); }
+function flipSwap(){ const t=sA; sA=sB; sB=t; renderSwapSel(); quoteSwap(); }
+function renderSwapSel(){
+  const fa=$("fromBtn"), tb=$("toBtn");
+  if(fa) fa.innerHTML = sA ? `<span class="nm2">${esc(sA.sym)}</span><span style="color:var(--faint)">${sA.name?"":"▾"}</span>` : `<span class="nm2">—</span><span style="color:var(--faint)">▾</span>`;
+  if(tb) tb.innerHTML = sB ? `<span class="nm2">${esc(sB.sym)}</span><span style="color:var(--faint)">▾</span>` : `<span class="nm2">—</span><span style="color:var(--faint)">▾</span>`;
+  if(sA&&sB) $("swapDir").textContent = sA.sym + " → " + sB.sym;
+}
+function setMax(){
+  if(!walletAddr||!sA){ toast("请先选择卖出代币并连接钱包","err"); return; }
+  withRPC(async p=>{
+    const bal = await new ethers.Contract(sA.addr, ERC20_ABI, p).balanceOf(walletAddr);
+    $("inAmt").value = fmtPrice(fromWei(bal, sA.dec));
+    quoteSwap();
+  }).catch(e=>toast("读取余额失败："+(e.message||e),"err"));
+}
+async function quoteSwap(){
+  const el=$("swapErr"), slip=$("slipTxt"), rate=$("rateTxt");
+  el.textContent=""; slip.textContent=""; rate.textContent="";
+  if(!sA||!sB){ $("outAmt").value=""; return; }
+  if(sA.addr.toLowerCase()===sB.addr.toLowerCase()){ el.textContent="不能兑换同一代币"; $("outAmt").value=""; return; }
+  const n = Number($("inAmt").value);
+  if(!n||n<=0){ $("outAmt").value=""; return; }
+  try {
+    const out = await withRPC(async p=>{
+      const r = new ethers.Contract(cfg.router, ROUTER_ABI, p);
+      const path=[sA.addr, sB.addr];
+      const amounts = await r.getAmountsOut(toWei(n,sA.dec), path);
+      return fromWei(amounts[1], sB.dec);
+    });
+    $("outAmt").value = fmtPrice(out);
+    if (out>0) rate.textContent = "1 " + sA.sym + " ≈ " + fmtPrice(out/n) + " " + sB.sym;
+    // 滑点：按当前价 1:1 粗略估算（简化提示）
+  } catch(e){ el.textContent="报价失败："+(e.message||e); $("outAmt").value=""; }
+}
+async function doSwap(){
+  if(needCfg()){ openCfg(); return; }
+  if(!walletAddr){ toast("请先连接钱包","err"); return; }
+  if(!sA||!sB){ toast("请选择兑换代币","err"); return; }
+  const n = Number($("inAmt").value);
+  if(!n||n<=0){ toast("请输入数量","err"); return; }
+  try {
+    const prov = await withRPC(p=>Promise.resolve(p));
+    const signer = await getSigner();
+    const tk = new ethers.Contract(sA.addr, ERC20_ABI, signer);
+    const bal = await tk.balanceOf(walletAddr);
+    const amt = toWei(n,sA.dec);
+    if (bal < amt) { toast(sA.sym+" 余额不足","err"); return; }
+    const allw = await tk.allowance(walletAddr, cfg.router);
+    qstate.steps=[];
+    if (allw < amt) qAdd("授权 "+sA.sym, async()=>{ const r=await tk.approve(cfg.router, ethers.MaxUint256); await r.wait(); return "已授权"; });
+    qAdd("兑换 "+fmtPrice(n)+" "+sA.sym, async()=>{
+      const r = new ethers.Contract(cfg.router, ROUTER_ABI, signer);
+      const path=[sA.addr,sB.addr];
+      const amounts = await r.getAmountsOut(amt, path);
+      const minOut = amounts[1] * 98n / 100n;
+      const tx = await r.swapExactTokensForTokens(amt, minOut, path, walletAddr, deadline());
+      await tx.wait();
+      return "成交 " + fmtPrice(fromWei(minOut,sB.dec)) + " " + sB.sym;
+    });
+    qRun();
+  } catch(e){ toast("兑换失败："+(e.message||e),"err"); }
+}
+
+/* ===== Pool 视图 ===== */
+let pA=null, pB=null, pR=null;
+function poolSelA(k,t){ if(k==="pa") pA=t; else pB=t; renderPoolSel(); poolQuote(); }
+function poolSelR(t){ pR=t; renderPoolSel(); removeQuote(); }
+function renderPoolSel(){
+  const pa=$("paBtn"), pb=$("pbBtn"), pr=$("prBtn");
+  if(pa) pa.innerHTML = pA?`<span class="nm2">${esc(pA.sym)}</span><span style="color:var(--faint)">▾</span>`:`<span class="nm2">—</span><span style="color:var(--faint)">▾</span>`;
+  if(pb) pb.innerHTML = pB?`<span class="nm2">${esc(pB.sym)}</span><span style="color:var(--faint)">▾</span>`:`<span class="nm2">—</span><span style="color:var(--faint)">▾</span>`;
+  if(pr) pr.innerHTML = pR?`<span class="nm2">${esc(pR.sym)}</span><span style="color:var(--faint)">▾</span>`:`<span class="nm2">—</span><span style="color:var(--faint)">▾</span>`;
+  if(pA&&pB) { $("paLbl").textContent=pA.sym+" 数量"; $("pbLbl").textContent=pB.sym+" 数量"; }
+}
+async function poolQuote(){
+  if(!pA||!pB) return;
+  const a=Number($("paAmt").value), b=Number($("pbAmt").value);
+  const el=$("poolErr"); el.textContent="";
+  try {
+    const info = await withRPC(async p=>{
+      const f = new ethers.Contract(cfg.factory, FACTORY_ABI, p);
+      const pair = await f.getPair(pA.addr, pB.addr);
+      if (pair === ethers.ZeroAddress) return null;
+      const pc = new ethers.Contract(pair, PAIR_ABI, p);
+      const [t0, r] = await Promise.all([pc.token0(), pc.getReserves()]);
+      return { pair, t0, r0: Number(r[0]), r1: Number(r[1]) };
+    });
+    if (!info) { $("poolRate").textContent="新交易对（首次添加定价）"; $("poolShare").textContent=""; return; }
+    const [rA, rB] = info.t0.toLowerCase()===pA.addr.toLowerCase() ? [info.r0, info.r1] : [info.r1, info.r0];
+    $("poolRate").textContent = "池储备 " + fmtPrice(fromWei(rA,pA.dec)) + " " + pA.sym + " / " + fmtPrice(fromWei(rB,pB.dec)) + " " + pB.sym;
+    if (a>0 && b>0 && rA>0) {
+      const need = a * (rB / rA);
+      const share = a / (rA+a);
+      $("poolShare").textContent = "你提供 " + fmtPrice(a) + " " + pA.sym + " + " + fmtPrice(need) + " " + pB.sym + " · 份额约 " + (share*100).toFixed(2) + "%";
+    }
+  } catch(e){ el.textContent="读取池失败："+(e.message||e); }
+}
+async function doAddLiquidity(){
+  if(needCfg()){ openCfg(); return; }
+  if(!walletAddr){ toast("请先连接钱包","err"); return; }
+  if(!pA||!pB){ toast("请选择交易对","err"); return; }
+  const a=Number($("paAmt").value), b=Number($("pbAmt").value);
+  if(!a||!b||a<=0||b<=0){ toast("请输入双方数量","err"); return; }
+  try {
+    const signer = await getSigner();
+    const amtA=toWei(a,pA.dec), amtB=toWei(b,pB.dec);
+    qstate.steps=[];
+    for (const [t,amt] of [[pA,amtA],[pB,amtB]]) {
+      const tk = new ethers.Contract(t.addr, ERC20_ABI, signer);
+      const bal = await tk.balanceOf(walletAddr);
+      if (bal < amt) { toast(t.sym+" 余额不足","err"); return; }
+      const allw = await tk.allowance(walletAddr, cfg.router);
+      if (allw < amt) qAdd("授权 "+t.sym, async()=>{ const r=await tk.approve(cfg.router, ethers.MaxUint256); await r.wait(); return "已授权"; });
+    }
+    qAdd("添加流动性", async()=>{
+      const r = new ethers.Contract(cfg.router, ROUTER_ABI, signer);
+      const tx = await r.addLiquidity(pA.addr, pB.addr, amtA, amtB, 0, 0, walletAddr, deadline());
+      await tx.wait();
+      return "已添加 " + fmtPrice(a) + " " + pA.sym + " / " + fmtPrice(b) + " " + pB.sym;
+    });
+    qRun();
+  } catch(e){ toast("添加失败："+(e.message||e),"err"); }
+}
+async function removeQuote(){
+  if(!pR||!walletAddr) return;
+  const pct=Number($("prPct").value)/100;
+  $("prPctTxt").textContent = (pct*100).toFixed(0)+"%";
+  $("prOut").textContent="预计收到 —";
+  try {
+    await withRPC(async p=>{
+      const fc = new ethers.Contract(cfg.factory, FACTORY_ABI, p);
+      const len = await fc.allPairsLength();
+      for (let i=0;i<Number(len);i++){
+        const pa = await fc.allPairs(i);
+        const pc = new ethers.Contract(pa, [...PAIR_ABI, ...ERC20_ABI], p);
+        const [t0,t1] = await Promise.all([pc.token0(), pc.token1()]);
+        if (t0.toLowerCase()!==pR.addr.toLowerCase() && t1.toLowerCase()!==pR.addr.toLowerCase()) continue;
+        const lpBal = await pc.balanceOf(walletAddr);
+        const lpTot = await pc.totalSupply();
+        const r = await pc.getReserves();
+        $("prLp").textContent = "LP: " + fmt(fromWei(lpBal,18));
+        const amt = pct>0 ? lpBal * BigInt(Math.round(pct*1000))/1000n : 0n;
+        if (amt>0n && lpTot>0n){
+          const share = Number(amt) / Number(lpTot);
+          const aOut = fromWei(BigInt(Math.floor(Number(r[0])*share)), pR.dec);
+          const bOut = fromWei(BigInt(Math.floor(Number(r[1])*share)), 18);
+          $("prOut").textContent = "预计收到 ≈ " + fmtPrice(aOut) + " " + pR.sym + " + " + fmtPrice(bOut) + " 另一币";
+        }
+        return;
+      }
+      $("prLp").textContent = "LP: —（未找到该资产的交易对）";
+    });
+  } catch(e){}
+}
+async function doRemoveLiquidity(){
+  if(needCfg()){ openCfg(); return; }
+  if(!walletAddr){ toast("请先连接钱包","err"); return; }
+  if(!pR){ toast("请选择交易对","err"); return; }
+  const pct=Number($("prPct").value)/100;
+  if(pct<=0){ toast("请选择移除比例","err"); return; }
+  try {
+    const signer = await getSigner();
+    const f = new ethers.Contract(cfg.factory, FACTORY_ABI, signer);
+    // 需对端代币：用 XSTORK 兜底显示，实际从池查询
+    const pairInfo = await withRPC(async p=>{
+      const fc = new ethers.Contract(cfg.factory, FACTORY_ABI, p);
+      const len = await fc.allPairsLength();
+      for (let i=0;i<Number(len);i++){
+        const pa = await fc.allPairs(i);
+        const pc = new ethers.Contract(pa, PAIR_ABI, p);
+        const [t0,t1] = await Promise.all([pc.token0(), pc.token1()]);
+        if (t0.toLowerCase()===pR.addr.toLowerCase() || t1.toLowerCase()===pR.addr.toLowerCase()){
+          return { pair:pa, t0, t1, pc };
+        }
+      }
+      return null;
+    });
+    if(!pairInfo){ toast("未找到该资产的交易对（先从 Swap 创建）","err"); return; }
+    const lp = new ethers.Contract(pairInfo.pair, [...PAIR_ABI, ...ERC20_ABI], signer);
+    const lpBal = await lp.balanceOf(walletAddr);
+    if (lpBal <= 0n) { toast("无 LP 持仓","err"); return; }
+    const amt = lpBal * BigInt(Math.round(pct*1000)) / 1000n;
+    if (amt<=0n){ toast("数量过小","err"); return; }
+    const other = pairInfo.t0.toLowerCase()===pR.addr.toLowerCase() ? pairInfo.t1 : pairInfo.t0;
+    qstate.steps=[];
+    const allw = await lp.allowance(walletAddr, cfg.router);
+    if (allw < amt) qAdd("授权 LP", async()=>{ const r=await lp.approve(cfg.router, ethers.MaxUint256); await r.wait(); return "已授权"; });
+    qAdd("移除流动性", async()=>{
+      const r = new ethers.Contract(cfg.router, ROUTER_ABI, signer);
+      const tx = await r.removeLiquidity(pR.addr, other, amt, 0, 0, walletAddr, deadline());
+      await tx.wait();
+      return "已移除 " + (pct*100).toFixed(0) + "%";
+    });
+    qRun();
+  } catch(e){ toast("移除失败："+(e.message||e),"err"); }
+}
+
+/* ===== Farm 视图 ===== */
+async function renderFarm(){
+  const el=$("farmList");
+  if(!cfg.staking){ el.innerHTML=`<div class="empty">未配置 Staking 合约 · <button class="btn ghost sm" onclick="openCfg()">去配置</button></div>`; return; }
+  el.innerHTML = `<div class="empty">读取质押池…</div>`;
+  try {
+    const data = await withRPC(async p=>{
+      const st = new ethers.Contract(cfg.staking, STAKING_ABI, p);
+      const len = await st.poolLength();
+      const pools=[];
+      for (let i=0;i<Number(len);i++){
+        const info = await st.poolInfo(i);
+        let meta = tokenCache[info[0]];
+        if (!meta) {
+          const tk = new ethers.Contract(info[0], ERC20_ABI, p);
+          meta = { sym: await tk.symbol().catch(()=>"?"), name: await tk.name().catch(()=>"?"), dec: await tk.decimals().catch(()=>18) };
+          tokenCache[info[0]]=meta;
+        }
+        pools.push({ pid:i, tok:info[0], sym:meta.sym, name:meta.name, dec:Number(meta.dec), rate:Number(info[1]), acc:info[2], last:info[3], total:Number(info[4]), active:info[5] });
+      }
+      return pools;
+    });
+    if(!data.length){ el.innerHTML=`<div class="empty">暂无质押池 · 池由平台 owner 创建</div>`; return; }
+    el.innerHTML = data.map(p=>`
+      <div class="pool-card">
+        <div class="top">
+          <div class="row"><span class="tier-t">池 #${p.pid}</span><b>${esc(p.sym)}</b><span class="sub mono">${shortAddr(p.tok)}</span></div>
+          <span class="pill ${p.active?"on":""}">${p.active?"挖矿中":"已暂停"}</span>
+        </div>
+        <div class="statbar" style="margin:6px 0 10px">
+          <div class="stat"><div class="k">总质押</div><div class="v">${fmt(fromWei(p.total,p.dec))} ${esc(p.sym)}</div></div>
+          <div class="stat"><div class="k">每秒奖励</div><div class="v c">${fmtPrice(fromWei(BigInt(p.rate),18))} XSTORK</div></div>
+          <div class="stat"><div class="k">我的质押</div><div class="v g" id="myStk${p.pid}">—</div></div>
+          <div class="stat"><div class="k">待领取</div><div class="v o" id="pend${p.pid}">—</div></div>
+        </div>
+        <div class="row" style="flex-wrap:wrap;gap:8px">
+          <input id="stkAmt${p.pid}" type="number" min="0" placeholder="质押数量" style="flex:1;min-width:140px">
+          <button class="btn sm" onclick="doStake(${p.pid})">质押</button>
+          <button class="btn ghost sm" onclick="doWithdraw(${p.pid})">提取</button>
+          <button class="btn gold sm" onclick="doClaim(${p.pid})">领取奖励</button>
+        </div>
+      </div>`).join("");
+    if(walletAddr){
+      withRPC(async p=>{
+        const st = new ethers.Contract(cfg.staking, STAKING_ABI, p);
+        for (const pg of data){
+          const u = await st.userInfo(pg.pid, walletAddr);
+          const pend = await st.pendingReward(pg.pid, walletAddr);
+          const e1=$("myStk"+pg.pid), e2=$("pend"+pg.pid);
+          if(e1) e1.textContent = fmt(fromWei(u[0],pg.dec)) + " " + pg.sym;
+          if(e2) e2.textContent = fmt(fromWei(pend,18)) + " XSTORK";
+        }
+      }).catch(()=>{});
+    }
+    // owner 面板
+    withRPC(async p=>{
+      const st = new ethers.Contract(cfg.staking, STAKING_ABI, p);
+      const own = await st.owner();
+      if (walletAddr && own.toLowerCase()===walletAddr) $("farmAdmin").style.display="block";
+    }).catch(()=>{});
+  } catch(e){ el.innerHTML=`<div class="empty">读取失败：${esc(e.message)}</div>`; }
+}
+async function doStake(pid){
+  if(!walletAddr){ toast("请先连接钱包","err"); return; }
+  const n=Number($("stkAmt"+pid).value);
+  if(!n||n<=0){ toast("请输入质押数量","err"); return; }
+  try {
+    const signer=await getSigner();
+    const pool = await withRPC(async p=>{
+      const st=new ethers.Contract(cfg.staking, STAKING_ABI, p);
+      const info=await st.poolInfo(pid);
+      const tk=new ethers.Contract(info[0], ERC20_ABI, p);
+      return { tok: info[0], dec: await tk.decimals().catch(()=>18), sym: await tk.symbol().catch(()=>"?") };
+    });
+    const amt=toWei(n,pool.dec);
+    const tk=new ethers.Contract(pool.tok, ERC20_ABI, signer);
+    const bal=await tk.balanceOf(walletAddr);
+    if(bal<amt){ toast(pool.sym+" 余额不足","err"); return; }
+    qstate.steps=[];
+    const allw=await tk.allowance(walletAddr, cfg.staking);
+    if(allw<amt) qAdd("授权 "+pool.sym, async()=>{ const r=await tk.approve(cfg.staking, ethers.MaxUint256); await r.wait(); return "已授权"; });
+    qAdd("质押 "+fmtPrice(n)+" "+pool.sym, async()=>{
+      const st=new ethers.Contract(cfg.staking, STAKING_ABI, signer);
+      const tx=await st.stake(pid, amt); await tx.wait(); return "质押成功";
+    });
+    qRun();
+  } catch(e){ toast("质押失败："+(e.message||e),"err"); }
+}
+async function doWithdraw(pid){
+  if(!walletAddr){ toast("请先连接钱包","err"); return; }
+  try {
+    const signer=await getSigner();
+    const st=new ethers.Contract(cfg.staking, STAKING_ABI, signer);
+    const u=await st.userInfo(pid, walletAddr);
+    if(u[0]<=0n){ toast("无质押","err"); return; }
+    qstate.steps=[];
+    qAdd("提取质押", async()=>{ const tx=await st.withdraw(pid, u[0]); await tx.wait(); return "已提取"; });
+    qRun();
+  } catch(e){ toast("提取失败："+(e.message||e),"err"); }
+}
+async function doClaim(pid){
+  if(!walletAddr){ toast("请先连接钱包","err"); return; }
+  try {
+    const signer=await getSigner();
+    const st=new ethers.Contract(cfg.staking, STAKING_ABI, signer);
+    qstate.steps=[];
+    qAdd("领取奖励", async()=>{ const tx=await st.claim(pid); await tx.wait(); return "已领取"; });
+    qRun();
+  } catch(e){ toast("领取失败："+(e.message||e),"err"); }
+}
+async function createPool(){
+  if(!walletAddr){ toast("请先连接钱包","err"); return; }
+  const tok=($("poolTok").value||"").trim(), rate=Number($("poolRate").value);
+  if(!isAddr(tok)){ toast("请输入有效资产地址","err"); return; }
+  if(!rate||rate<=0){ toast("请输入每秒奖励","err"); return; }
+  try {
+    const signer=await getSigner();
+    qstate.steps=[];
+    qAdd("创建质押池", async()=>{
+      const st=new ethers.Contract(cfg.staking, STAKING_ABI, signer);
+      const tx=await st.createPool(tok, toWei(rate,18)); await tx.wait(); return "池已创建";
+    });
+    qRun();
+  } catch(e){ toast("创建失败："+(e.message||e),"err"); }
+}
+
+/* ===== 资产视图 ===== */
+async function renderAssets(){
+  if(!walletAddr){
+    $("assetStats").innerHTML="";
+    $("balList").innerHTML=`<div class="empty">连接钱包后查看余额</div>`;
+    return;
+  }
+  $("balList").innerHTML=`<div class="empty">读取中…</div>`;
+  try {
+    const rows = await withRPC(async p=>{
+      const out=[];
+      const xstork = cfg.xstork ? await new ethers.Contract(cfg.xstork, ERC20_ABI, p).balanceOf(walletAddr) : 0n;
+      out.push({ sym:"XSTORK", name:"平台奖励币", dec:18, bal:xstork, addr:cfg.xstork });
+      for (const a of assets){
+        const tk=new ethers.Contract(a.addr, ERC20_ABI, p);
+        const bal=await tk.balanceOf(walletAddr);
+        if (bal>0n) out.push({ sym:a.sym, name:a.name, dec:a.dec, bal, addr:a.addr });
+      }
+      return out;
+    });
+    const balEl=$("balList");
+    balEl.innerHTML = rows.filter(r=>r.addr).length ? rows.filter(r=>r.addr).map(r=>`
+      <div class="item">
+        <span class="tier-t">${esc(r.sym)}</span>
+        <div class="nm"><b>${esc(r.name)}</b><span class="mono">${shortAddr(r.addr)}</span></div>
+        <div class="val">${fmt(fromWei(r.bal,r.dec))}<span>${esc(r.sym)}</span></div>
+      </div>`).join("")
+    : `<div class="empty">钱包中暂无资产</div>`;
+    $("assetStats").innerHTML = `
+      <div class="stat"><div class="k">XSTORK 余额</div><div class="v g">${fmt(fromWei(rows[0]?.bal||0n,18))}</div></div>
+      <div class="stat"><div class="k">已添加资产</div><div class="v c">${assets.length}</div></div>
+      <div class="stat"><div class="k">内置 xStock 名录</div><div class="v">${XSTOCKS.length}</div></div>`;
+  } catch(e){ $("balList").innerHTML=`<div class="empty">读取失败：${esc(e.message)}<br><br><button class="btn ghost sm" onclick="renderAssets()">重试</button></div>`; }
+}
+
+/* ===== 队列执行器 ===== */
+let qstate={steps:[],running:false,stopped:false,idx:0};
+function qAdd(label,fn){ qstate.steps.push({label,status:"wait",fn}); }
+async function qRun(){
+  if(qstate.running) return;
+  qstate.running=true; qstate.stopped=false; qstate.idx=0;
+  $("qpanel").classList.add("on"); qRender();
+  for(let i=0;i<qstate.steps.length;i++){
+    if(qstate.stopped) break;
+    const s=qstate.steps[i];
+    if(s.status==="done"){ qstate.idx=i; continue; }
+    qstate.idx=i; s.status="run"; s.extra=""; qRender();
+    try{ const r=await s.fn(); s.status="done"; s.extra=r||""; }
+    catch(e){ s.status="err"; s.extra=e.message||"失败"; qRender(); toast("第 "+(i+1)+" 步失败："+(e.message||"未知错误"),"err"); }
+    qRender();
+  }
+  qstate.running=false;
+  const failed=qstate.steps.some(s=>s.status==="err");
+  const done=qstate.steps.filter(s=>s.status==="done").length;
+  toast(failed?`队列完成，${done}/${qstate.steps.length} 成功`:`队列完成 ${done}/${qstate.steps.length} 全部成功`, failed?"err":"ok");
+  qRender();
+}
+function qStop(){ qstate.stopped=true; toast("已终止后续任务"); }
+function qRetry(){ const fails=qstate.steps.filter(s=>s.status==="err"); if(!fails.length){ toast("没有失败任务"); return; } qstate.steps=fails.map(s=>({label:s.label,status:"wait",fn:s.fn})); qRun(); }
+function qRender(){
+  const b=$("qbody");
+  if(!b) return;
+  b.innerHTML=qstate.steps.map((s,i)=>{
+    const st=s.status==="done"?"done":s.status==="err"?"err":(qstate.running&&i===qstate.idx)?"run":"";
+    return `<div class="qstep ${st}"><div class="st">${s.status==="done"?"✓":s.status==="err"?"✕":i+1}</div><div class="tl">${esc(s.label)}${s.extra?"<br><span style='font-size:10px;color:var(--faint)'>"+esc(s.extra)+"</span>":""}</div></div>`;
+  }).join("");
+}
+
+/* ===== 路由 ===== */
+const VIEWS=["swap","pool","farm","assets"];
+let curView="swap";
+function route(){
+  let h=location.hash.replace("#","").split("?")[0];
+  if(!VIEWS.includes(h)) h="swap";
+  curView=h;
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
+  const v=$("view-"+h); if(v) v.classList.add("on");
+  document.querySelectorAll(".navlinks .n").forEach(n=>n.classList.toggle("on", n.dataset.v===h));
+  refreshView();
+}
+function go(v){ location.hash=v; }
+function refreshView(){
+  if(curView==="swap") renderSwapSel();
+  if(curView==="pool") renderPoolSel();
+  if(curView==="farm") renderFarm();
+  if(curView==="assets"){ renderAssetList(); renderAssets(); }
+  renderCfgInfo();
+}
+function refreshAll(){ if(curView==="swap") quoteSwap(); refreshView(); }
+function renderCfgInfo(){
+  const el=$("cfgInfo");
+  if(el) el.innerHTML = needCfg()
+    ? `<button class="btn ghost sm" onclick="openCfg()">未配置合约 · 点击配置</button>`
+    : `<span class="mono">F ${shortAddr(cfg.factory)} · R ${shortAddr(cfg.router)} · S ${shortAddr(cfg.staking)} · X ${shortAddr(cfg.xstork)} <button class="btn ghost sm" onclick="openCfg()" style="margin-left:6px">改</button></span>`;
+}
+
+/* ===== 初始化 ===== */
+window.addEventListener("load", () => {
+  if (window.ethereum) connectWallet().catch(()=>{});
+  renderAssetList();
+  $("nav").innerHTML = VIEWS.map(v=>({
+    swap:["Swap","兑换"], pool:["Pool","流动性"], farm:["Farm","质押"], assets:["资产","资产"]
+  })[v]).map(([en,zh],i)=>`<div class="n" data-v="${VIEWS[i]}" onclick="go('${VIEWS[i]}')">${zh}</div>`).join("");
+  route();
+  window.addEventListener("hashchange", route);
+  if (needCfg()) setTimeout(openCfg, 600);
+});
+</script>
+</body>
+</html>
