@@ -7,181 +7,177 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23060a14'/%3E%3Cpath d='M14 46V26l10 12 8-22 10 24 8-16v22' stroke='%2322d3ee' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 :root{
-  --bg:#0b0e13; --bg2:#11151d; --panel:#121722; --panel2:#161d2b;
-  --line:rgba(255,255,255,.075); --line2:rgba(255,255,255,.15);
-  --fg:#eef2f8; --dim:#9aa7bd; --faint:#68748f;
-  --acc:#2ce8c0; --acc-ink:#04231b; --acc-dim:rgba(44,232,192,.13); --acc-line:rgba(44,232,192,.42);
-  --gold:#f0b429; --err:#f0616d; --ok:#34d399;
-  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
-  --sans:-apple-system,"PingFang SC","HarmonicOS Sans SC","Noto Sans SC","Segoe UI",sans-serif;
-  --r:16px;
+  --bg:#05070d; --bg2:#0a0f1c; --panel:#0d1526; --panel2:#111c33;
+  --line:rgba(94,130,180,.22); --line2:rgba(94,130,180,.4);
+  --fg:#e9f0fb; --dim:#93a7c4; --faint:#5b7094;
+  --acc:#23d5ef; --acc-d:#0891b2; --cyan-glow:rgba(35,213,239,.16);
+  --gold:#f7c95f; --gold-glow:rgba(247,201,95,.15);
+  --ok:#35e0a1; --err:#f76a6a;
+  --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:-apple-system,"PingFang SC","HarmonicOS Sans SC","Noto Sans SC",sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh;
-  background-image:radial-gradient(1100px 480px at 18% -10%,rgba(44,232,192,.055),transparent 60%)}
+  background-image:
+    radial-gradient(900px 480px at 12% -8%, rgba(35,213,239,.10), transparent 60%),
+    radial-gradient(820px 460px at 95% 8%, rgba(167,139,250,.09), transparent 62%),
+    linear-gradient(rgba(94,130,180,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94,130,180,.045) 1px, transparent 1px);
+  background-size:auto,auto,44px 44px,44px 44px;background-attachment:fixed}
 a{color:var(--acc);text-decoration:none}
 button{font-family:inherit}
 .mono{font-family:var(--mono)}
-::selection{background:rgba(44,232,192,.25)}
+::selection{background:rgba(35,213,239,.3)}
 ::-webkit-scrollbar{width:9px;height:9px}
 ::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px}
 ::-webkit-scrollbar-track{background:transparent}
 /* ===== 顶栏 ===== */
-header{position:sticky;top:0;z-index:90;background:rgba(11,14,19,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.nav{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:10px 20px}
-.logo{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;flex-shrink:0}
-.logo .mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--acc),#0ea37f);display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(44,232,192,.25)}
-.logo .nm{font-weight:800;font-size:16.5px;letter-spacing:.1px;line-height:1.15}
-.logo .nm small{display:block;font-size:8.5px;font-weight:700;color:var(--dim);letter-spacing:.24em;text-transform:uppercase;margin-top:1px}
-.navlinks{display:flex;gap:4px;flex:1;justify-content:center}
-.navlinks .n{display:flex;align-items:center;gap:7px;padding:7px 15px;border-radius:11px;color:var(--dim);cursor:pointer;white-space:nowrap;font-weight:600;font-size:13px;transition:.16s;border:1px solid transparent}
-.navlinks .n svg{opacity:.75}
+header{position:sticky;top:0;z-index:90;background:rgba(5,7,13,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:20px;padding:11px 20px}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.logo .mark{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--acc),#0e7490);display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px var(--cyan-glow)}
+.logo .nm{font-weight:800;font-size:17px;letter-spacing:.2px}
+.logo .nm small{display:block;font-size:9.5px;font-weight:700;color:var(--dim);letter-spacing:.22em;text-transform:uppercase;margin-top:1px}
+.navlinks{display:flex;gap:6px;flex:1}
+.navlinks .n{display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:11px;color:var(--dim);cursor:pointer;white-space:nowrap;font-weight:600;font-size:13px;border:1px solid transparent;transition:.18s}
+.navlinks .n svg{opacity:.7}
 .navlinks .n:hover{color:var(--fg);background:var(--bg2)}
-.navlinks .n.on{color:var(--acc-ink);background:var(--acc);border-color:transparent;box-shadow:0 4px 18px rgba(44,232,192,.28)}
-.navlinks .n.on svg{opacity:1;color:var(--acc-ink)}
-.wbtn{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:11px;border:1px solid var(--line);background:var(--bg2);color:var(--fg);cursor:pointer;font-weight:600;font-size:13px;transition:.16s;flex-shrink:0}
-.wbtn:hover{border-color:var(--acc-line)}
+.navlinks .n.on{color:var(--fg);background:linear-gradient(180deg,rgba(35,213,239,.13),rgba(35,213,239,.05));border-color:rgba(35,213,239,.28);box-shadow:inset 0 0 14px rgba(35,213,239,.07)}
+.navlinks .n.on svg{opacity:1;color:var(--acc)}
+.wbtn{display:flex;align-items:center;gap:8px;padding:8px 15px;border-radius:11px;border:1px solid var(--line);background:var(--bg2);color:var(--fg);cursor:pointer;font-weight:600;font-size:13px;transition:.18s}
+.wbtn:hover{border-color:var(--acc);box-shadow:0 0 16px var(--cyan-glow)}
 .wbtn .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
 .wbtn.ok .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
-.chainpill{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:20px;border:1px solid var(--line);font-size:11px;color:var(--dim);background:var(--bg2);font-weight:600;flex-shrink:0}
+.chainpill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1px solid var(--line);font-size:11.5px;color:var(--dim);background:var(--bg2);font-weight:600}
 .chainpill i{width:6px;height:6px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc)}
 /* ===== 主区 ===== */
-main{max-width:1120px;margin:0 auto;padding:24px 20px 70px}
+main{max-width:1120px;margin:0 auto;padding:26px 20px 70px}
 .view{display:none}
-.view.on{display:block;animation:rise .28s cubic-bezier(.2,.7,.2,1)}
+.view.on{display:block;animation:rise .3s cubic-bezier(.2,.7,.2,1)}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
-.pagehead h1{font-size:23px;font-weight:800;letter-spacing:.1px;display:flex;align-items:center;gap:10px}
-.pagehead h1 .ico{width:34px;height:34px;border-radius:10px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--acc)}
-.pagehead p{color:var(--dim);font-size:12.5px;margin-top:3px}
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.pagehead h1{font-size:24px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+.pagehead h1 .ico{width:34px;height:34px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--acc)}
+.pagehead p{color:var(--dim);font-size:13px;margin-top:3px}
 .headside{display:flex;gap:8px}
 /* 统计条 */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
 @media(max-width:860px){.stats{grid-template-columns:repeat(2,1fr)}}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 15px}
-.stat .k{font-size:10.5px;color:var(--faint);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-.stat .v{font-size:22px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:-.4px}
+.stat{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:15px;padding:14px 16px}
+.stat::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(35,213,239,.5),transparent)}
+.stat .k{font-size:11px;color:var(--faint);font-weight:600;letter-spacing:.06em}
+.stat .v{font-size:22px;font-weight:800;margin-top:4px;font-family:var(--mono);letter-spacing:-.3px}
 .stat .v small{font-size:11px;color:var(--dim);font-weight:600;margin-left:4px}
 .stat .v.g{color:var(--gold)} .stat .v.c{color:var(--acc)} .stat .v.o{color:var(--ok)}
 .stat .d{font-size:10.5px;color:var(--faint);margin-top:2px}
 /* 面板 */
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
-.panel h2{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--dim);text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:8px}
-.panel h2 .bar{width:3px;height:12px;border-radius:2px;background:var(--acc)}
+.panel{background:linear-gradient(180deg,var(--panel),rgba(13,21,38,.6));border:1px solid var(--line);border-radius:18px;padding:18px;position:relative}
+.panel::before{content:"";position:absolute;top:-1px;left:18px;right:18px;height:1px;background:linear-gradient(90deg,transparent,rgba(35,213,239,.55),transparent);pointer-events:none}
+.panel h2{font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--dim);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.panel h2 .bar{width:3px;height:13px;border-radius:2px;background:linear-gradient(180deg,var(--acc),var(--acc-d))}
 .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
 @media(max-width:900px){.grid2{grid-template-columns:1fr}}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:900px){.grid3{grid-template-columns:1fr}}
 .grid2e{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:760px){.grid2e{grid-template-columns:1fr}}
-/* Swap 双栏 */
-.swap-wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;max-width:900px;margin:0 auto;align-items:start}
-@media(max-width:720px){.swap-wrap{grid-template-columns:1fr}}
-.swap-card{padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:18px}
-.side-card{display:grid;gap:12px}
-.side-card .panel{padding:14px 16px}
-.side-card .t{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--faint);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.side-card .t svg{color:var(--acc)}
 /* 控件 */
-label{font-size:11px;color:var(--faint);font-weight:600;letter-spacing:.03em;display:block;margin-bottom:5px}
-input,select{background:var(--bg2);border:1px solid var(--line);color:var(--fg);border-radius:11px;padding:9px 12px;font-size:14px;outline:none;width:100%;transition:.16s;font-family:var(--sans)}
-input:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-dim)}
-input[type=range]{padding:0;height:6px;appearance:none;background:var(--panel2);border:1px solid var(--line);border-radius:6px;cursor:pointer}
-input[type=range]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:var(--acc);border:3px solid var(--bg);box-shadow:0 0 10px rgba(44,232,192,.45);cursor:pointer}
-.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 17px;border-radius:12px;border:none;font-weight:700;font-size:13.5px;cursor:pointer;transition:.16s}
-.btn.primary{background:var(--acc);color:var(--acc-ink);box-shadow:0 4px 20px rgba(44,232,192,.22)}
-.btn.primary:hover{filter:brightness(1.07);box-shadow:0 6px 26px rgba(44,232,192,.32)}
-.btn.gold{background:var(--gold);color:#221602;box-shadow:0 4px 20px rgba(240,180,41,.2)}
+label{font-size:11.5px;color:var(--faint);font-weight:600;letter-spacing:.04em;display:block;margin-bottom:5px}
+input,select{background:var(--bg2);border:1px solid var(--line);color:var(--fg);border-radius:11px;padding:10px 12px;font-size:14px;outline:none;width:100%;transition:.18s;font-family:var(--sans)}
+input:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(35,213,239,.12)}
+input[type=range]{padding:0;height:6px;appearance:none;background:linear-gradient(90deg,var(--acc),var(--acc-d));border:none;border-radius:6px;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#eaf6ff;border:3px solid var(--acc);box-shadow:0 0 12px rgba(35,213,239,.5);cursor:pointer}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;transition:.18s;overflow:hidden}
+.btn.primary{background:linear-gradient(135deg,#2adcf6,#0891b2);color:#03202b;box-shadow:0 4px 22px rgba(35,213,239,.3)}
+.btn.primary:hover{filter:brightness(1.08);box-shadow:0 6px 30px rgba(35,213,239,.4)}
+.btn.gold{background:linear-gradient(135deg,#ffd97a,#e2a72e);color:#2b1c02;box-shadow:0 4px 22px var(--gold-glow)}
 .btn.gold:hover{filter:brightness(1.06)}
 .btn.ghost{background:var(--bg2);border:1px solid var(--line);color:var(--fg)}
-.btn.ghost:hover{border-color:var(--acc-line);color:var(--acc)}
-.btn.danger{background:rgba(240,97,109,.1);border:1px solid rgba(240,97,109,.35);color:var(--err)}
-.btn.sm{padding:5px 10px;font-size:11.5px;border-radius:9px}
+.btn.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.btn.danger{background:rgba(247,106,106,.1);border:1px solid rgba(247,106,106,.4);color:var(--err)}
+.btn.sm{padding:6px 11px;font-size:12px;border-radius:9px}
 .btn:disabled{opacity:.4;cursor:not-allowed;filter:none;box-shadow:none}
 .btn.wide{width:100%}
 /* 代币选择 */
-.tokbtn{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer;min-width:158px;transition:.16s;width:100%}
-.tokbtn:hover{border-color:var(--acc-line)}
-.tokbtn .lg{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#04121f;flex-shrink:0;font-variant-numeric:tabular-nums}
+.tokbtn{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer;min-width:158px;transition:.18s;width:100%}
+.tokbtn:hover{border-color:var(--acc)}
+.tokbtn .lg{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#04121f;flex-shrink:0}
 .tokbtn .nm2{font-weight:700;font-size:14.5px}
 .tokbtn .sub2{font-size:10px;color:var(--faint);display:block}
 .tokbtn .caret{margin-left:auto;color:var(--faint);font-size:11px}
 .amount-wrap{position:relative;margin-top:12px}
-.amount-wrap input{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;padding:13px 88px 13px 14px;border-radius:14px;letter-spacing:-.5px}
-.amount-wrap .maxbtn{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10.5px;padding:4px 9px;border-radius:8px;font-weight:700;color:var(--acc);background:var(--acc-dim);border:1px solid var(--acc-line);cursor:pointer}
-.amount-wrap .maxbtn:hover{background:rgba(44,232,192,.22)}
+.amount-wrap input{font-size:26px;font-weight:700;font-family:var(--mono);padding:14px 90px 14px 14px;border-radius:14px;letter-spacing:-.5px}
+.amount-wrap .maxbtn{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10.5px;padding:5px 9px;border-radius:8px;font-weight:700;color:var(--acc);background:rgba(35,213,239,.1);border:1px solid rgba(35,213,239,.3);cursor:pointer}
+.amount-wrap .maxbtn:hover{background:rgba(35,213,239,.2)}
 .balrow{display:flex;justify-content:space-between;margin-top:5px;font-size:11.5px;color:var(--faint)}
 .arrow-mid{display:flex;justify-content:center;position:relative;margin:2px 0}
-.arrow-mid button{width:38px;height:38px;border-radius:50%;background:var(--panel2);border:1px solid var(--line2);color:var(--acc);cursor:pointer;transition:.25s;box-shadow:0 2px 14px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
+.arrow-mid button{width:38px;height:38px;border-radius:50%;background:var(--panel2);border:1px solid var(--line2);color:var(--acc);cursor:pointer;font-size:16px;transition:.25s;box-shadow:0 2px 14px rgba(0,0,0,.4)}
 .arrow-mid button:hover{transform:rotate(180deg);border-color:var(--acc)}
 .info-row{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);padding:6px 2px}
-.info-row b{font-family:var(--mono);color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.info-row b{font-family:var(--mono);color:var(--fg);font-weight:600}
 .info-row .good{color:var(--ok)} .info-row .warn{color:var(--gold)} .info-row .bad{color:var(--err)}
 .seg{display:inline-flex;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
 .seg div{padding:6px 12px;border-radius:8px;font-size:12px;color:var(--dim);cursor:pointer;font-weight:600;transition:.15s}
 .seg div.on{background:var(--panel2);color:var(--fg);box-shadow:0 0 10px rgba(0,0,0,.35)}
 /* 列表 */
-.list{display:grid;gap:8px}
-.th-row{display:flex;align-items:center;gap:11px;padding:0 14px 6px;font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
-.th-row .nm{flex:1}
-.item{display:flex;align-items:center;gap:11px;background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:10px 13px;transition:.15s}
+.list{display:grid;gap:9px}
+.item{display:flex;align-items:center;gap:11px;background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:11px 13px;transition:.16s}
 .item:hover{border-color:var(--line2);transform:translateY(-1px)}
-.item .lg{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#04121f;flex-shrink:0;font-variant-numeric:tabular-nums}
+.item .lg{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#04121f;flex-shrink:0}
 .item .nm{flex:1;min-width:0}
 .item .nm b{display:block;font-size:13.5px;font-weight:700}
 .item .nm span{font-size:11px;color:var(--faint);font-family:var(--mono)}
-.item .val{font-weight:800;font-size:15px;text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.item .val{font-weight:800;font-size:15px;text-align:right;font-family:var(--mono)}
 .item .val span{display:block;font-size:10.5px;color:var(--faint);font-weight:600;font-family:var(--sans)}
 /* 池卡 */
-.poolcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;transition:.16s}
-.poolcard:hover{border-color:var(--line2)}
+.poolcard{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:15px}
 .poolcard .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:11px;flex-wrap:wrap}
 .poolcard .pair{display:flex;align-items:center;gap:9px}
-.poolcard .pair .lg{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#04121f;font-variant-numeric:tabular-nums}
+.poolcard .pair .lg{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#04121f}
 .poolcard .pair b{font-size:14.5px}
 .apr{text-align:right}
 .apr .k{font-size:10px;color:var(--faint);letter-spacing:.08em}
-.apr .v{font-size:19px;font-weight:800;color:var(--gold);font-family:var(--mono);font-variant-numeric:tabular-nums}
+.apr .v{font-size:19px;font-weight:800;color:var(--gold);font-family:var(--mono)}
 .poolmeta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .poolmeta .m{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .poolmeta .m .k{font-size:10px;color:var(--faint)}
-.poolmeta .m .v{font-size:13.5px;font-weight:700;font-family:var(--mono);font-variant-numeric:tabular-nums;margin-top:1px}
+.poolmeta .m .v{font-size:13.5px;font-weight:700;font-family:var(--mono);margin-top:1px}
 .poolacts{display:flex;gap:8px;flex-wrap:wrap}
 .poolacts input{flex:1;min-width:130px}
 /* 徽标 */
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.03em}
-.badge.live{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.4);color:var(--ok)}
+.badge.live{background:rgba(53,224,161,.12);border:1px solid rgba(53,224,161,.4);color:var(--ok)}
 .badge.pause{background:rgba(93,111,148,.12);border:1px solid rgba(93,111,148,.4);color:var(--dim)}
-.badge.x{background:var(--acc-dim);border:1px solid var(--acc-line);color:var(--acc)}
-.empty{text-align:center;color:var(--faint);padding:36px 12px;font-size:13px}
-.empty .big{width:34px;height:34px;margin:0 auto 10px;opacity:.55;color:var(--dim);display:flex;align-items:center;justify-content:center}
-.errbox{color:var(--err);font-size:12px;margin-top:8px;background:rgba(240,97,109,.07);border:1px solid rgba(240,97,109,.25);border-radius:9px;padding:8px 10px;display:none}
+.badge.x{background:var(--gold-glow);border:1px solid rgba(247,201,95,.45);color:var(--gold)}
+.empty{text-align:center;color:var(--faint);padding:40px 12px;font-size:13px}
+.empty .big{font-size:30px;opacity:.5;margin-bottom:8px}
+.errbox{color:var(--err);font-size:12px;margin-top:8px;background:rgba(247,106,106,.07);border:1px solid rgba(247,106,106,.25);border-radius:9px;padding:8px 10px;display:none}
 .errbox.on{display:block}
 /* 弹窗 */
-.mask{position:fixed;inset:0;z-index:130;background:rgba(3,5,9,.74);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;animation:fade .18s}
+.mask{position:fixed;inset:0;z-index:130;background:rgba(2,5,12,.72);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;animation:fade .18s}
 .mask.on{display:flex}
 @keyframes fade{from{opacity:0}}
-.box{width:min(480px,94vw);background:var(--panel2);border:1px solid var(--line2);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);position:relative}
+.box{width:min(480px,94vw);background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line2);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);position:relative}
 .box h3{font-size:15px;margin-bottom:13px;display:flex;align-items:center;gap:8px}
 .box .x{position:absolute;right:14px;top:14px;background:none;border:none;color:var(--faint);font-size:16px;cursor:pointer}
 /* 队列 */
-.qpanel{position:fixed;right:16px;bottom:16px;z-index:120;width:min(340px,94vw);background:var(--panel2);border:1px solid var(--line2);border-radius:16px;box-shadow:0 14px 44px rgba(0,0,0,.55);display:none;overflow:hidden}
+.qpanel{position:fixed;right:16px;bottom:16px;z-index:120;width:min(340px,94vw);background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line2);border-radius:16px;box-shadow:0 14px 44px rgba(0,0,0,.55);display:none;overflow:hidden}
 .qpanel.on{display:block}
 .qhead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);font-weight:800;font-size:13px}
 .qhead .ctrl{display:flex;gap:6px}
-.qstep{display:flex;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;align-items:center}
+.qstep{display:flex;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(30,43,66,.4);font-size:12px;align-items:center}
 .qstep .st{width:20px;height:20px;border-radius:50%;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;font-weight:700}
 .qstep.run .st{border-color:var(--acc);color:var(--acc);animation:pulse 1.2s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(44,232,192,.3)}50%{box-shadow:0 0 0 6px rgba(44,232,192,0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(35,213,239,.3)}50%{box-shadow:0 0 0 6px rgba(35,213,239,0)}}
 .qstep.done .st{background:var(--ok);border-color:var(--ok);color:#03150c}
 .qstep.err .st{background:var(--err);border-color:var(--err);color:#2a0a0a}
 .qstep .tl{flex:1;color:var(--dim)}
 .qstep.done .tl{color:var(--fg)} .qstep.err .tl{color:var(--err)}
 .qstep .tl small{display:block;font-size:10px;color:var(--faint)}
 /* toast */
-#toasts{position:fixed;top:64px;right:16px;z-index:150;display:grid;gap:8px;width:min(330px,92vw)}
-.toast{background:var(--panel2);border:1px solid var(--line2);border-left:3px solid var(--acc);border-radius:11px;padding:11px 13px;font-size:12.5px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:rise .2s}
+#toasts{position:fixed;top:66px;right:16px;z-index:150;display:grid;gap:8px;width:min(330px,92vw)}
+.toast{background:var(--panel);border:1px solid var(--line2);border-left:3px solid var(--acc);border-radius:11px;padding:11px 13px;font-size:12.5px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:rise .2s}
 .toast.err{border-left-color:var(--err)} .toast.ok{border-left-color:var(--ok)}
 footer{border-top:1px solid var(--line);padding:22px 20px 46px;text-align:center;color:var(--faint);font-size:11.5px;margin-top:20px}
 footer b{color:var(--dim)}
@@ -212,13 +208,12 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
   <!-- ===== Swap ===== -->
   <section class="view" id="view-swap">
     <div class="pagehead">
-      <div><h1><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg></span> Swap · 股票资产兑换</h1>
+      <div><h1><span class="ico">⇄</span> Swap · 股票资产兑换</h1>
       <p>xStock 代币化股票 / XSTORK / 任意资产间兑换 · 恒定乘积 AMM · 0.3% 手续费归 LP</p></div>
       <div class="headside"><div class="seg" id="slipSeg"><div class="on" data-s="0.5">0.5%</div><div data-s="1">1%</div><div data-s="3">3%</div></div></div>
     </div>
     <div class="stats" id="swapStats"></div>
-    <div class="swap-wrap">
-  <div class="swap-card">
+    <div class="panel" style="max-width:520px;margin:0 auto;padding:22px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <b style="font-size:14px">兑换</b>
         <span class="badge x" id="swapDir">A → B</span>
@@ -244,34 +239,12 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
       <button class="btn primary wide" id="btnSwap" style="margin-top:14px" onclick="doSwap()">兑换</button>
       <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
     </div>
-  </div>
-    <div class="side-card">
-      <div class="panel">
-        <div class="t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg> 交易规则</div>
-        <div class="info-row"><span>手续费</span><b>0.3% → 全部归 LP</b></div>
-        <div class="info-row"><span>模型</span><b>恒定乘积 AMM</b></div>
-        <div class="info-row"><span>滑点保护</span><b id="slipTxt2">0.5%</b></div>
-        <div class="info-row"><span>网络</span><b>X Layer</b></div>
-      </div>
-      <div class="panel">
-        <div class="t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> 池储备</div>
-        <div id="swapPoolInfo" class="empty" style="padding:14px 4px;font-size:12px">选择代币后显示池内储备与流动性</div>
-      </div>
-      <div class="panel">
-        <div class="t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg> 资产说明</div>
-        <div style="font-size:12px;color:var(--dim);line-height:1.75">
-          xStock 由 Backed Finance 发行，1:1 由受监管托管机构持有的真实美股背书，可自由转账与碎片化交易。<br><br>
-          XSTORK 为本平台奖励代币，通过质押 xStock / LP 获得。首次兑换某交易对时自动创建流动性池。
-        </div>
-      </div>
-    </div>
-  </div>
   </section>
 
   <!-- ===== Pool ===== -->
   <section class="view" id="view-pool">
     <div class="pagehead">
-      <div><h1><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg></span> Pool · 流动性池</h1>
+      <div><h1><span class="ico">▦</span> Pool · 流动性池</h1>
       <p>添加 / 移除双币流动性，赚取 0.3% 兑换手续费</p></div>
       <div class="headside"><button class="btn ghost sm" onclick="openCfg()">配置</button></div>
     </div>
@@ -304,14 +277,14 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
     </div>
     <div class="panel" style="margin-top:16px">
       <h2><span class="bar"></span>我的持仓</h2>
-      <div id="myLiq" class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg></div>连接钱包并添加流动性后显示持仓</div>
+      <div id="myLiq" class="empty"><div class="big">▦</div>连接钱包并添加流动性后显示持仓</div>
     </div>
   </section>
 
   <!-- ===== Farm ===== -->
   <section class="view" id="view-farm">
     <div class="pagehead">
-      <div><h1><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg></span> Farm · 质押挖矿</h1>
+      <div><h1><span class="ico">◈</span> Farm · 质押挖矿</h1>
       <p>质押 xStock 资产或 LP 凭证，按份额每秒获得 XSTORK 奖励</p></div>
     </div>
     <div class="stats" id="farmStats"></div>
@@ -334,18 +307,17 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
   <!-- ===== 资产 ===== -->
   <section class="view" id="view-assets">
     <div class="pagehead">
-      <div><h1><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg></span> 资产 · 我的持仓</h1>
+      <div><h1><span class="ico">◉</span> 资产 · 我的持仓</h1>
       <p>xStock 股票资产 / XSTORK / LP / 质押明细</p></div>
     </div>
     <div class="stats" id="assetStats"></div>
     <div class="panel">
       <h2><span class="bar"></span>xStock 资产名录</h2>
-      <p style="font-size:12px;color:var(--dim);margin-bottom:12px">xStocks 由 Backed Finance 发行、1:1 真实股票背书。粘贴合约地址即可加入交易；已内置 44 个主流标的（含 Magnificent 7 与指数 ETF）。</p>
+      <p style="font-size:12px;color:var(--dim);margin-bottom:12px">xStocks 由 Backed Finance 发行、1:1 真实股票背书。粘贴合约地址即可加入交易；已内置 12 个主流标的。</p>
       <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
         <input id="tokAddr" placeholder="粘贴任意资产 ERC20 地址（xStock / 平台币）" style="flex:2;min-width:250px">
         <button class="btn primary" onclick="addAsset()">+ 添加资产</button>
       </div>
-      <div class="th-row"><span class="lg" style="width:34px"></span><span class="nm">资产 / 地址</span><span>操作</span></div>
       <div id="assetList" class="list"></div>
     </div>
     <div class="panel" style="margin-top:16px">
@@ -368,7 +340,7 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
 </div>
 
 <div class="qpanel" id="qpanel">
-  <div class="qhead"><span style="display:flex;align-items:center;gap:7px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg> 操作队列</span><span class="ctrl">
+  <div class="qhead"><span>◈ 操作队列</span><span class="ctrl">
     <button class="btn ghost sm" onclick="qStop()">终止</button>
     <button class="btn ghost sm" onclick="qRetry()">重试失败</button>
     <button class="btn ghost sm" onclick="$('qpanel').classList.remove('on')">收起</button></span></div>
@@ -523,7 +495,7 @@ function renderAssetList(){
         ${a.builtin?"":`<button class="btn danger sm" onclick="removeAsset('${a.addr}')">移除</button>`}
       </div>
     </div>`).join("")
-  :`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg></div>暂无已添加资产 · 上方粘贴 xStock 合约地址加入</div>`;
+  :`<div class="empty"><div class="big">◉</div>暂无已添加资产 · 上方粘贴 xStock 合约地址加入</div>`;
 }
 
 /* ============ 代币选择 ============ */
@@ -540,7 +512,7 @@ function renderTokList(){
       <div class="nm"><b>${esc(x.sym)}</b><span>${esc(x.name)}</span></div>
       <span style="color:var(--acc);font-size:13px">选择 →</span>
     </div>`).join("")
-  :`<div class="empty"><div class="big"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg></div>无匹配 · 先到「资产」页添加代币地址</div>`;
+  :`<div class="empty"><div class="big">?</div>无匹配 · 先到「资产」页添加代币地址</div>`;
 }
 function selToken(addr,sym,name,dec){
   const ctx=pickCtx;if(!ctx)return;
@@ -773,7 +745,7 @@ async function renderFarm(){
       }
       return pools;
     });
-    if(!data.length){el.innerHTML=`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg></div>暂无质押池 · 池由平台 owner 创建</div>`;return;}
+    if(!data.length){el.innerHTML=`<div class="empty"><div class="big">◈</div>暂无质押池 · 池由平台 owner 创建</div>`;return;}
     el.innerHTML=data.map(p=>`
       <div class="poolcard">
         <div class="top">
@@ -1056,7 +1028,7 @@ window.addEventListener("load",()=>{
   if(window.ethereum)connectWallet().catch(()=>{});
   renderAssetList();
   initSlip();
-$("nav").innerHTML=[["swap",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg>',"兑换"],["pool",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg>',"流动性"],["farm",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg>',"质押"],["assets",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg>',"资产"]].map(([v,ic,zh])=>`<div class="n" data-v="${v}" onclick="go('${v}')">${ic}${zh}</div>`).join("");
+  $("nav").innerHTML=[["swap","⇄","兑换"],["pool","▦","流动性"],["farm","◈","质押"],["assets","◉","资产"]].map(([v,ic,zh])=>`<div class="n" data-v="${v}" onclick="go('${v}')"><span>${ic}</span>${zh}</div>`).join("");
   route();
   window.addEventListener("hashchange",route);
   if(needCfg())setTimeout(openCfg,600);
