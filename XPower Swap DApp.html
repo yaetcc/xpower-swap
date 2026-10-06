@@ -278,6 +278,30 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .seg div{padding:4px 9px;border-radius:8px;font-size:11.5px;font-weight:800;color:var(--dim);cursor:pointer;transition:.15s}
 .seg div:hover{color:var(--acc)}
 .seg div.on{background:var(--acc-grad);color:#fff;box-shadow:0 3px 10px rgba(245,25,123,.3)}
+/* ===== 兑换页专业视觉 v3 ===== */
+.swap-card{overflow:hidden;border:1px solid var(--line2);border-radius:20px;background:linear-gradient(180deg,#fff 0%,#fff8fb 100%);box-shadow:var(--shadow)}
+.amt-in{background:rgba(245,25,123,.05);border:1px solid var(--line);border-radius:16px;padding:12px 14px 10px;display:grid;gap:8px;transition:border-color .18s,box-shadow .18s}
+.amt-in:focus-within{border-color:var(--acc-line);box-shadow:0 0 0 3px rgba(245,25,123,.09)}
+.amt-head{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--dim);font-weight:700}
+.amt-head .bal{color:var(--faint);font-weight:600;font-size:11px}
+.amt-body{display:flex;align-items:center;gap:10px}
+.amt-body input{flex:1;min-width:0;border:none!important;background:transparent;font-size:22px!important;font-weight:900;font-family:var(--mono);outline:none;color:var(--fg);letter-spacing:-.5px;padding:0}
+.amt-body .tokbtn{flex-shrink:0;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:7px 12px;box-shadow:0 2px 8px rgba(20,20,43,.06);min-width:118px}
+.amt-body .tokbtn:hover{border-color:var(--acc-line)}
+.amt-body .tokbtn .lg{width:26px;height:26px;font-size:11px}
+.amt-body .tokbtn .nm2{font-size:13px;font-weight:800}
+.amt-body .tokbtn .sub2{font-size:10px}
+.pct-row{display:flex;gap:6px}
+.pct-row button{flex:1;padding:5px 0;border-radius:8px;border:none;background:rgba(245,25,123,.08);color:var(--acc);font-size:11.5px;font-weight:800;cursor:pointer;transition:.15s}
+.pct-row button:hover{background:var(--acc-grad);color:#fff;box-shadow:0 3px 10px rgba(245,25,123,.3)}
+.arrow-mid{display:flex;justify-content:center;margin:-11px 0;position:relative;z-index:2}
+.arrow-mid button{width:38px;height:38px;border-radius:50%;border:none;background:var(--acc-grad);color:#fff;font-size:16px;cursor:pointer;box-shadow:0 5px 16px rgba(245,25,123,.4);display:flex;align-items:center;justify-content:center;transition:transform .3s cubic-bezier(.2,.8,.3,1)}
+.arrow-mid button:hover{transform:scale(1.08)}
+.arrow-mid button.flip{transform:rotate(180deg)}
+.swap-cta{margin-top:14px;padding:14px!important;font-size:15px!important;font-weight:800;border-radius:14px!important;box-shadow:0 8px 22px rgba(245,25,123,.32);transition:.18s}
+.swap-cta:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(245,25,123,.42)}
+#outAmt{color:var(--acc)!important}
+#outAmt.grad{background:var(--acc-grad);-webkit-background-clip:text;background-clip:text;color:transparent!important}
 </style>
 </head>
 <body>
@@ -315,30 +339,27 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
             <div id="slipCustom" style="display:none;align-items:center;gap:8px;margin-top:8px"><input id="slipInput" type="number" step="0.1" min="0.01" max="10" placeholder="0.01–10" style="flex:1;min-width:0;font-family:var(--mono)"><button class="btn sm" onclick="applySlip()">应用</button></div>
           </div>
         </div>
-        <div class="swap-row">
-          <div class="amt">
-            <label style="display:flex;justify-content:space-between;align-items:center;width:100%">从 · 卖出 <button type="button" class="mini-btn" onclick="swapPct(100)">MAX</button></label>
+        <div class="amt-in">
+          <div class="amt-head"><span>从 · 卖出</span><span class="bal" id="fromBal"></span></div>
+          <div class="amt-body">
             <input id="inAmt" type="number" value="" min="0" placeholder="0.0" oninput="dqSwap()" onkeydown="if(event.key==='Enter')swapCta()">
-            <div class="balrow" id="fromBal"></div>
-            <div style="display:flex;gap:6px;margin-top:6px">
-              <button type="button" class="pct-btn" onclick="swapPct(25)">25%</button>
-              <button type="button" class="pct-btn" onclick="swapPct(50)">50%</button>
-              <button type="button" class="pct-btn" onclick="swapPct(75)">75%</button>
-              <button type="button" class="pct-btn" onclick="swapPct(100)">MAX</button>
-            </div>
-            <button class="maxbtn" onclick="setMax()">MAX</button>
+            <div class="tokbtn" id="fromBtn" onclick="pickToken('from')"><span class="lg" id="fromLg">?</span><span><span class="nm2" id="fromNm">选择代币</span><span class="sub2" id="fromSub">xStock 名录</span></span><span class="caret">▼</span></div>
           </div>
-          <div class="tokbtn" id="fromBtn" onclick="pickToken('from')"><span class="lg" id="fromLg">?</span><span><span class="nm2" id="fromNm">选择代币</span><span class="sub2" id="fromSub">xStock 名录</span></span><span class="caret">▼</span></div>
+          <div class="pct-row">
+            <button type="button" onclick="swapPct(25)">25%</button>
+            <button type="button" onclick="swapPct(50)">50%</button>
+            <button type="button" onclick="swapPct(75)">75%</button>
+            <button type="button" onclick="swapPct(100)">MAX</button>
+          </div>
         </div>
         <div class="arrow-mid"><button onclick="flipSwap()" title="交换方向">⇅</button></div>
-        <div class="swap-row">
-          <div class="amt">
-            <label>到 · 买入</label>
+        <div class="amt-in">
+          <div class="amt-head"><span>到 · 买入</span><span class="bal" id="toBal"></span></div>
+          <div class="amt-body">
             <input id="outAmt" type="text" readonly placeholder="0.0">
+            <div class="tokbtn" id="toBtn" onclick="pickToken('to')"><span class="lg" id="toLg">?</span><span><span class="nm2" id="toNm">选择代币</span><span class="sub2" id="toSub">选择目标</span></span><span class="caret">▼</span></div>
           </div>
-          <div class="tokbtn" id="toBtn" onclick="pickToken('to')"><span class="lg" id="toLg">?</span><span><span class="nm2" id="toNm">选择代币</span><span class="sub2" id="toSub">选择目标</span></span><span class="caret">▼</span></div>
         </div>
-        <div class="balrow" id="toBal"></div>
         <div class="pricebar"><span>1 <span id="rFrom">—</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--acc)"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b id="rateBig">—</b><span id="rTo" style="color:var(--dim)">—</span><span class="pflip" onclick="flipSwap()">⇅ 反向</span></div>
         <div class="info-grid">
           <div class="info-row"><span>最少获得</span><b id="minTxt" style="font-family:var(--mono)">—</b></div>
@@ -348,7 +369,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
         </div>
         <span id="rateTxt" style="display:none">—</span>
         <div id="swapErr" class="errbox"></div>
-        <button class="btn primary wide" id="btnSwap" style="margin-top:14px" onclick="swapCta()">兑换</button>
+        <button class="btn primary wide swap-cta" id="btnSwap" onclick="swapCta()">兑换</button>
         <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
       </div>
       </section>
