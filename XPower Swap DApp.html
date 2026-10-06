@@ -215,7 +215,11 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
     </div>
   </div>
 </header>
-<div id="toasts"></div>
+<div id="chainWarn" style="display:none;align-items:center;justify-content:center;gap:8px;background:#fff7e6;color:#b45309;font-size:13px;font-weight:600;padding:9px 16px;border-bottom:1px solid #fcd34d">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.86L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+    <span>当前网络不是 X Layer（chainId 196）—— 兑换 / 添加流动性 / 质押均无法正常提交，请切换网络</span>
+  </div>
+  <div id="toasts"></div>
 
 <main>
   <!-- ===== Swap ===== -->
@@ -237,7 +241,7 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
         <div class="swap-row">
           <div class="amt">
             <label>从 · 卖出</label>
-            <input id="inAmt" type="number" value="" min="0" placeholder="0.0" oninput="quoteSwap()">
+            <input id="inAmt" type="number" value="" min="0" placeholder="0.0" oninput="quoteSwap()" onkeydown="if(event.key==='Enter')swapCta()">
             <button class="maxbtn" onclick="setMax()">MAX</button>
           </div>
           <div class="tokbtn" id="fromBtn" onclick="pickToken('from')"><span class="lg" id="fromLg">?</span><span><span class="nm2" id="fromNm">选择代币</span><span class="sub2" id="fromSub">xStock 名录</span></span><span class="caret">▼</span></div>
@@ -256,7 +260,7 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
         <div class="info-row"><span>交易费</span><b>0.3% → 流动池</b></div>
         <div class="info-row"><span>滑点</span><b id="slipTxt">0.5%</b></div>
         <div id="swapErr" class="errbox"></div>
-        <button class="btn primary wide" id="btnSwap" style="margin-top:14px" onclick="doSwap()">兑换</button>
+        <button class="btn primary wide" id="btnSwap" style="margin-top:14px" onclick="swapCta()">兑换</button>
         <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
       </div>
     </div>
@@ -278,11 +282,11 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
           <div><label>代币 B</label><div class="tokbtn" id="pbBtn" onclick="pickToken('pb')"><span class="lg" id="pbLg">?</span><span><span class="nm2" id="pbNm">选择</span></span><span class="caret">▼</span></div></div>
         </div>
         <div class="amount-wrap"><label id="paLbl">A 数量</label><input id="paAmt" type="number" min="0" placeholder="0.0" oninput="poolQuote()"></div>
-        <div class="amount-wrap"><label id="pbLbl">B 数量</label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="poolQuote()"></div>
+        <div class="amount-wrap"><label id="pbLbl">B 数量</label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="pbTouched=true;poolQuote()"></div>
         <div class="info-row"><span>池状态</span><b id="poolRate">—</b></div>
         <div class="info-row"><span>你的份额</span><b id="poolShare" class="good">—</b></div>
         <div id="poolErr" class="errbox"></div>
-        <button class="btn gold wide" id="btnAddLiq" style="margin-top:14px" onclick="doAddLiquidity()">添加流动性</button>
+        <button class="btn gold wide" id="btnAddLiq" style="margin-top:14px" onclick="addLiqCta()">添加流动性</button>
       </div>
       <div class="panel">
         <h2><span class="bar"></span>移除流动性</h2>
@@ -293,7 +297,7 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
         </div>
         <div class="info-row" style="margin-top:10px"><span>预计收到</span><b id="prOut" class="good">—</b></div>
         <div id="poolErr2" class="errbox"></div>
-        <button class="btn wide" id="btnRmLiq" style="margin-top:14px" onclick="doRemoveLiquidity()">移除流动性</button>
+        <button class="btn wide" id="btnRmLiq" style="margin-top:14px" onclick="rmLiqCta()">移除流动性</button>
       </div>
     </div>
     <div class="panel" style="margin-top:16px">
@@ -334,11 +338,15 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
     <div class="stats" id="assetStats"></div>
     <div class="panel">
       <h2><span class="bar"></span>xStock 资产名录</h2>
-      <p style="font-size:12px;color:var(--dim);margin-bottom:12px">xStocks 由 Backed Finance 发行、1:1 真实股票背书。粘贴合约地址即可加入交易；已内置 44 个主流标的（含 Magnificent 7 与指数 ETF）。</p>
-      <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
+      <p style="font-size:12px;color:var(--dim);margin-bottom:12px">xStocks 由 Backed Finance 发行、1:1 真实股票背书。粘贴合约地址即可加入交易；已内置 125 个标的：美股科技巨头 / 指数 ETF / 港股全量（腾讯 · 美团 · 四大行 · 港交所等）。</p>
+      <div style="display:flex;gap:9px;margin-bottom:10px;flex-wrap:wrap">
         <input id="tokAddr" placeholder="粘贴任意资产 ERC20 地址（xStock / 平台币）" style="flex:2;min-width:250px">
         <button class="btn primary" onclick="addAsset()">+ 添加资产</button>
         <button class="btn ghost" onclick="openBulkImport()">批量导入 xStock</button>
+      </div>
+      <div style="display:flex;gap:9px;align-items:center;margin-bottom:10px">
+        <input id="assetSearch" placeholder="搜索 125 个内置资产：符号 / 名称 / 地址" oninput="renderAssetList()" style="flex:1;min-width:220px">
+        <span id="assetCnt" style="font-size:12px;color:var(--dim);white-space:nowrap"></span>
       </div>
       <div class="th-row"><span class="lg" style="width:34px"></span><span class="nm">资产 / 地址</span><span>操作</span></div>
       <div id="assetList" class="list"></div>
@@ -510,14 +518,19 @@ async function connectWallet(){
     const acc=await window.ethereum.request({method:"eth_requestAccounts"});
     walletAddr=acc[0].toLowerCase();
     const ch=await window.ethereum.request({method:"eth_chainId"});
-    if(parseInt(ch,16)!==CHAIN_ID){toast("请切换网络到 X Layer","err");}
+    chainOk=parseInt(ch,16)===CHAIN_ID;
+    updateChainWarn();
+    if(!chainOk){toast("当前网络不是 X Layer，请切换网络","err");}
     $("wbtnTxt").textContent=shortAddr(walletAddr);
     $("wbtn").classList.add("ok");
     refreshAll();
   }catch(e){toast("连接失败："+(e.message||e),"err");}
 }
+function updateChainWarn(){
+  const e=$("chainWarn");if(e)e.style.display=(walletAddr&&!chainOk)?"flex":"none";
+}
 if(window.ethereum&&window.ethereum.on){
-  window.ethereum.on("accountsChanged",()=>{walletAddr=null;$("wbtnTxt").textContent="连接钱包";$("wbtn").classList.remove("ok");refreshAll();});
+  window.ethereum.on("accountsChanged",()=>{walletAddr=null;chainOk=true;updateChainWarn();$("wbtnTxt").textContent="连接钱包";$("wbtn").classList.remove("ok");refreshAll();});
   window.ethereum.on("chainChanged",()=>connectWallet());
 }
 
@@ -558,8 +571,11 @@ async function addAsset(){
 function removeAsset(a){assets=assets.filter(x=>x.addr.toLowerCase()!==a.toLowerCase());saveAssets();renderAssetList();}
 function renderAssetList(){
   const el=$("assetList");if(!el)return;
+  const q=($("assetSearch").value||"").trim().toLowerCase();
   const all=[...assets,...XSTOCKS.map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true}))];
-  el.innerHTML=all.length?all.map(a=>a.addr?`
+  const list=all.filter(a=>!q||(a.sym||"").toLowerCase().includes(q)||(a.name||"").toLowerCase().includes(q)||(a.addr||"").toLowerCase().includes(q));
+  const cnt=$("assetCnt");if(cnt)cnt.textContent=list.length+"/"+all.length+" 项";
+  el.innerHTML=list.length?list.map(a=>a.addr?`
     <div class="item">
       ${logoSvg(a.sym||"?")}
       <div class="nm"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")} · ${shortAddr(a.addr)} · <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
@@ -668,10 +684,10 @@ async function setMax(){
 async function quoteSwap(){
   const el=$("swapErr"),rate=$("rateTxt");
   el.classList.remove("on");rate.textContent="—";
-  if(!sA||!sB){$("outAmt").value="";return;}
-  if(sA.addr.toLowerCase()===sB.addr.toLowerCase()){el.textContent="不能兑换同一代币";el.classList.add("on");$("outAmt").value="";return;}
+  if(!sA||!sB){$("outAmt").value="";updateSwapCta();return;}
+  if(sA.addr.toLowerCase()===sB.addr.toLowerCase()){el.textContent="不能兑换同一代币";el.classList.add("on");$("outAmt").value="";updateSwapCta();return;}
   const n=Number($("inAmt").value);
-  if(!n||n<=0){$("outAmt").value="";return;}
+  if(!n||n<=0){$("outAmt").value="";updateSwapCta();return;}
   try{
     const out=await withRPC(async p=>{
       const r=new ethers.Contract(cfg.router,ROUTER_ABI,p);
@@ -691,14 +707,35 @@ async function quoteSwap(){
       }).catch(()=>{});
     }
   }catch(e){el.textContent="报价失败："+(e.message||e);el.classList.add("on");$("outAmt").value="";}
+  updateSwapCta();
+}
+function updateSwapCta(){
+  const b=$("btnSwap");if(!b)return;
+  let t="兑换",dis=false;
+  if(qstate.running){t="执行中…";dis=true;}
+  else if(!walletAddr){t="连接钱包";}
+  else if(needCfg()){t="配置合约";}
+  else if(!sA||!sB){t="选择代币";dis=true;}
+  else if(sA.addr.toLowerCase()===sB.addr.toLowerCase()){t="无法兑换同一代币";dis=true;}
+  else{const n=Number($("inAmt").value);if(!n||n<=0){t="输入卖出数量";dis=true;}}
+  b.textContent=t;b.disabled=dis;
+}
+function swapCta(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!walletAddr){connectWallet();return;}
+  if(needCfg()){openCfg();return;}
+  if(!sA||!sB){toast("请选择兑换代币","err");return;}
+  const n=Number($("inAmt").value);
+  if(!n||n<=0){toast("请输入卖出数量","err");$("inAmt").focus();return;}
+  doSwap();
 }
 async function doSwap(){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!walletAddr){connectWallet();return;}
   if(needCfg()){openCfg();return;}
-  if(!walletAddr){toast("请先连接钱包","err");return;}
   if(!sA||!sB){toast("请选择兑换代币","err");return;}
   const n=Number($("inAmt").value);
-  if(!n||n<=0){toast("请输入数量","err");return;}
+  if(!n||n<=0){toast("请输入卖出数量","err");return;}
   try{
     const signer=await getSigner();
     const tk=new ethers.Contract(sA.addr,ERC20_ABI,signer);
@@ -721,11 +758,12 @@ async function doSwap(){
 }
 
 /* ============ Pool ============ */
-function poolSelA(k,t){if(k==="pa")pA=t;else pB=t;renderPoolSel();poolQuote();}
+function poolSelA(k,t){if(k==="pa"){pA=t;}else{pB=t;}pbTouched=false;renderPoolSel();poolQuote();}
 function poolSelR(t){pR=t;renderPoolSel();removeQuote();}
 function renderPoolSel(){
   setTokBtn("paBtn","paLg","paNm",pA);setTokBtn("pbBtn","pbLg","pbNm",pB);setTokBtn("prBtn","prLg","prNm",pR);
   if(pA&&pB){$("paLbl").textContent=pA.sym+" 数量";$("pbLbl").textContent=pB.sym+" 数量";}
+  updateAddLiqCta();updateRmLiqCta();
 }
 async function poolQuote(){
   if(!pA||!pB)return;
@@ -740,20 +778,43 @@ async function poolQuote(){
       const[t0,r]=await Promise.all([pc.token0(),pc.getReserves()]);
       return{pair,t0,r0:Number(r[0]),r1:Number(r[1])};
     });
-    if(!info){$("poolRate").textContent="新交易对 · 首次添加定价";$("poolShare").textContent="—";return;}
+    if(!info){$("poolRate").textContent="新交易对 · 首次添加定价";$("poolShare").textContent="—";pbTouched=false;updateAddLiqCta();return;}
     const[rA,rB]=info.t0.toLowerCase()===pA.addr.toLowerCase()?[info.r0,info.r1]:[info.r1,info.r0];
     $("poolRate").textContent=fmtPrice(fromWei(rA,pA.dec))+" "+pA.sym+" / "+fmtPrice(fromWei(rB,pB.dec))+" "+pB.sym;
     if(a>0&&rA>0){
       const need=a*(rB/rA);
       const share=a/(rA+a);
+      if(!pbTouched)$("pbAmt").value=fmtPrice(need);
       $("poolShare").textContent=fmtPrice(a)+" "+pA.sym+" + "+fmtPrice(need)+" "+pB.sym+" · 份额≈"+(share*100).toFixed(2)+"%";
     }
   }catch(e){el.textContent="读取池失败："+(e.message||e);el.classList.add("on");}
+  updateAddLiqCta();
+}
+function updateAddLiqCta(){
+  const b=$("btnAddLiq");if(!b)return;
+  let t="添加流动性",dis=false;
+  if(qstate.running){t="执行中…";dis=true;}
+  else if(!walletAddr){t="连接钱包";}
+  else if(needCfg()){t="配置合约";}
+  else if(!pA||!pB){t="选择交易对";dis=true;}
+  else{const a=Number($("paAmt").value),b=Number($("pbAmt").value);
+    if(!a||a<=0||!b||b<=0){t="输入双方数量";dis=true;}}
+  b.textContent=t;b.disabled=dis;
+}
+function addLiqCta(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!walletAddr){connectWallet();return;}
+  if(needCfg()){openCfg();return;}
+  if(!pA||!pB){toast("请选择交易对","err");return;}
+  const a=Number($("paAmt").value),b=Number($("pbAmt").value);
+  if(!a||a<=0){toast("请输入 A 数量","err");return;}
+  if(!b||b<=0){toast("请输入 B 数量","err");return;}
+  doAddLiquidity();
 }
 async function doAddLiquidity(){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!walletAddr){connectWallet();return;}
   if(needCfg()){openCfg();return;}
-  if(!walletAddr){toast("请先连接钱包","err");return;}
   if(!pA||!pB){toast("请选择交易对","err");return;}
   const a=Number($("paAmt").value),b=Number($("pbAmt").value);
   if(!a||!b||a<=0||b<=0){toast("请输入双方数量","err");return;}
@@ -805,11 +866,29 @@ async function removeQuote(){
       $("prLp").textContent="LP: —（未找到交易对）";
     });
   }catch(e){}
+  updateRmLiqCta();
+}
+function updateRmLiqCta(){
+  const b=$("btnRmLiq");if(!b)return;
+  let t="移除流动性",dis=false;
+  if(qstate.running){t="执行中…";dis=true;}
+  else if(!walletAddr){t="连接钱包";}
+  else if(!pR){t="选择资产";dis=true;}
+  else{const pct=Number($("prPct").value)/100;if(pct<=0){t="选择移除比例";dis=true;}}
+  b.textContent=t;b.disabled=dis;
+}
+function rmLiqCta(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!walletAddr){connectWallet();return;}
+  if(!pR){toast("请选择交易对资产","err");return;}
+  const pct=Number($("prPct").value)/100;
+  if(pct<=0){toast("请选择移除比例","err");return;}
+  doRemoveLiquidity();
 }
 async function doRemoveLiquidity(){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!walletAddr){connectWallet();return;}
   if(needCfg()){openCfg();return;}
-  if(!walletAddr){toast("请先连接钱包","err");return;}
   if(!pR){toast("请选择交易对","err");return;}
   const pct=Number($("prPct").value)/100;
   if(pct<=0){toast("请选择移除比例","err");return;}
@@ -868,7 +947,7 @@ async function renderFarm(){
       }
       return pools;
     });
-    if(!data.length){el.innerHTML=`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg></div>暂无质押池 · 池由平台 owner 创建</div>`;return;}
+    if(!data.length){el.innerHTML=`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg></div>暂无质押池 · 由平台 owner 在下方面板一键创建</div>`;return;}
     el.innerHTML=data.map(p=>`
       <div class="poolcard">
         <div class="top">
@@ -1102,6 +1181,8 @@ async function renderStats(){
 
 /* ============ 队列 ============ */
 let qstate={steps:[],running:false,stopped:false,idx:0};
+let chainOk=true;
+let pbTouched=false;
 function qAdd(label,fn){qstate.steps.push({label,status:"wait",fn});}
 async function qRun(){
   if(qstate.running)return;
