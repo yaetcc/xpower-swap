@@ -451,6 +451,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
     <div class="navlinks" id="nav"></div>
     <div style="display:flex;gap:8px;align-items:center">
       <div class="chainpill"><i></i>X Layer</div>
+      <span id="hdrBal" style="display:none;padding:6px 11px;border-radius:20px;border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--dim);background:var(--card);font-family:var(--mono)"></span>
       <button class="wbtn" id="wbtn" onclick="connectWallet()"><span class="dot"></span><span id="wbtnTxt">连接钱包</span></button>
     </div>
   </div>
@@ -528,9 +529,9 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
           <div class="amount-wrap"><label id="pbLbl" style="display:flex;justify-content:space-between;align-items:center;width:100%">代币 B <button type="button" class="mini-btn" onclick="maxPb()">MAX</button></label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="pbTouched=true;dqPool()" onkeydown="if(event.key==='Enter')addLiqCta()"></div>
           <div class="tokbtn" id="pbBtn" onclick="pickToken('pb')"><span class="lg" id="pbLg">?</span><span><span class="nm2" id="pbNm">选择</span></span><span class="caret">▼</span></div>
         </div>
-        <div class="info-row"><span>池状态</span><b id="poolStatus">—</b></div>
-        <div class="info-row"><span>你的份额</span><b id="poolShare" class="good">—</b></div>
-        <div class="info-row"><span>我的 LP</span><b id="poolLp" class="mono" style="color:var(--gold)">—</b></div>
+        <div class="info-row"><span>池状态</span><b id="poolStatus">${walletAddr?"—":"连接钱包后预估"}</b></div>
+        <div class="info-row"><span>你的份额</span><b id="poolShare" class="good">${walletAddr?"—":"连接钱包后显示"}</b></div>
+        <div class="info-row"><span>我的 LP</span><b id="poolLp" class="mono" style="color:var(--gold)">${walletAddr?"—":"连接钱包后显示"}</b></div>
         <div id="poolErr" class="errbox"></div>
         <button class="btn gold wide" id="btnAddLiq" style="margin-top:14px" onclick="addLiqCta()">添加流动性</button>
       </div>
@@ -545,7 +546,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
             <button type="button" class="pct-btn" onclick="setRmPct(75)">75%</button>
             <button type="button" class="pct-btn" data-v="100" onclick="setRmPct(100)">MAX</button>
           </div>
-          <div class="balrow"><span id="prLp">LP: —</span><b id="prPctTxt">0%</b></div>
+          <div class="balrow"><span id="prLp">LP: ${walletAddr?"—":"连接钱包后查询"}</span><b id="prPctTxt">0%</b></div>
         </div>
         <div class="info-row" style="margin-top:10px"><span>预计收到</span><b id="prOut" class="good">—</b></div>
         <div id="poolErr2" class="errbox"></div>
@@ -856,7 +857,7 @@ const OFFICIAL_XSTOCK={
   "wWMTXx":{addr:"0x3b4336e3958913984c2e36b8ed0e7c87a5bdee33",logo:"https://static.okx.com/cdn/web3/currency/token/large/196-0x3b4336e3958913984c2e36b8ed0e7c87a5bdee33-999/type=default_90_0?v=1787214672411&x-oss-process=image/resize,w_72,h_72,type_6/ignore-error,1"},
 };
 /* XPRS 分红合约标准接口：XPRS 持币 → 按持仓比例累积 XPR 分红 → 手动 claim */
-const DIV_ABI=["function userPending(address) view returns (uint256)","function claim() returns (uint256)","function stakedToken() view returns (address)","function rewardToken() view returns (address)","function totalStaked() view returns (uint256)"];
+const DIV_ABI=["function userPending(address) view returns (uint256)","function claim() returns (uint256)","function stakedToken() view returns (address)","function rewardToken() view returns (address)","function totalStaked() view returns (uint256)","function rewardPerSecond() view returns (uint256)","function rewardBalance() view returns (uint256)"];
 function setCfgF(k,v){
   v=(v||"").trim();
   cfg[k]=isAddr(v)?v.toLowerCase():(v?v:"");
@@ -934,6 +935,7 @@ async function connectWallet(){
     $("wbtnTxt").textContent=shortAddr(walletAddr);
     $("wbtn").classList.add("ok");
     refreshAll();
+    loadHdrBal();
   }catch(e){toast("连接失败："+(e.message||e),"err");}
   finally{wConnectBusy=false;if(wb)wb.classList.remove("busy");if(wt)wt.textContent=walletAddr?shortAddr(walletAddr):"连接钱包";}
 }
@@ -941,8 +943,18 @@ function updateChainWarn(){
   const e=$("chainWarn");if(e)e.style.display=(walletAddr&&!chainOk)?"flex":"none";
 }
 if(window.ethereum&&window.ethereum.on){
-  window.ethereum.on("accountsChanged",()=>{walletAddr=null;chainOk=true;updateChainWarn();$("wbtnTxt").textContent="连接钱包";$("wbtn").classList.remove("ok");refreshAll();});
+  window.ethereum.on("accountsChanged",()=>{walletAddr=null;chainOk=true;updateChainWarn();$("wbtnTxt").textContent="连接钱包";$("wbtn").classList.remove("ok");const hb=$("hdrBal");if(hb){hb.style.display="none";hb.textContent="";}refreshAll();});
   window.ethereum.on("chainChanged",()=>connectWallet());
+}
+/* 头部钱包 OKB 余额（连接后显示） */
+async function loadHdrBal(){
+  const hb=$("hdrBal");if(!hb)return;
+  if(!walletAddr){hb.style.display="none";hb.textContent="";return;}
+  try{await withRPC(async p=>{
+    const b=await p.getBalance(walletAddr);
+    hb.textContent=`${fmt(fromWei(b,18))} OKB`;
+    hb.style.display="inline-flex";
+  });}catch(e){hb.style.display="none";}
 }
 
 /* ============ 配置 ============ */
@@ -2069,7 +2081,7 @@ async function claimXprs(){
 async function renderXprsDivCard(){
   const host=$("farmDivCard");if(!host)return;
   if(!isAddr(cfg.xprs)&&!isAddr(cfg.xprsDiv)){host.innerHTML="";return;}
-  let pend=0n,totalStaked=0n,xprsB=0n;
+  let pend=0n,totalStaked=0n,xprsB=0n,rate=0n,divBal=0n;
   if(!walletAddr){host.innerHTML=`<div class="panel" style="padding:14px;text-align:center;color:var(--faint);font-size:12.5px">${logoSvg("XPRS","",XPRS_LOGO)} <b>XPRS 分红</b> · 持币分红 XPR · 连接钱包查看分红${isAddr(cfg.xprs)?`<div style="display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;font-size:11px"><span class="mono cp" data-copy="${cfg.xprs}" title="点击复制合约地址">合约 ${shortAddr(cfg.xprs)}</span><a href="https://ignix.bot/launch?token=${cfg.xprs}" target="_blank" rel="noopener" style="color:var(--acc)">ignix 购买 ↗</a><a href="https://web3.okx.com/zh-hans/token/x-layer/${cfg.xprs.toLowerCase()}" target="_blank" rel="noopener" style="color:var(--acc)">OKX 行情 ↗</a></div>`:""}</div>`;return;}
   if(isAddr(cfg.xprs)){try{xprsB=await withRPC(async p=>new ethers.Contract(cfg.xprs,ERC20_ABI,p).balanceOf(walletAddr));}catch(e){}}
   if(isAddr(cfg.xprsDiv)){
@@ -2077,6 +2089,8 @@ async function renderXprsDivCard(){
       const dv=new ethers.Contract(cfg.xprsDiv,DIV_ABI,p);
       pend=await dv.userPending(walletAddr);
       try{totalStaked=await dv.totalStaked();}catch(e){}
+      try{rate=await dv.rewardPerSecond();}catch(e){}
+      try{divBal=await dv.rewardBalance();}catch(e){}
     });}catch(e){}
   }
   host.innerHTML=`
@@ -2088,6 +2102,9 @@ async function renderXprsDivCard(){
           <span style="font-size:12px"><span style="color:var(--faint)">我的持仓 </span><b>${fmt(fromWei(xprsB,18))} XPRS</b></span>
           <span style="font-size:12px"><span style="color:var(--faint)">可领分红 </span><b class="grad-txt">${fmt(fromWei(pend,18))} XPR</b></span>
           ${totalStaked>0n?`<span style="font-size:12px"><span style="color:var(--faint)">分红池 </span>${fmt(fromWei(totalStaked,18))} XPRS</span>`:""}
+          ${rate>0n?`<span style="font-size:12px"><span style="color:var(--faint)">每秒释放 </span><b>${fmtPrice(fromWei(rate,18))} XPR</b> <span style="color:var(--gold);font-weight:800">≈ ${fmtPrice(fromWei(rate*31536000n,18))}/年</span></span>`:""}
+          ${divBal>0n?`<span style="font-size:12px"><span style="color:var(--faint)">池内储备 </span><b class="good">${fmt(fromWei(divBal,18))} XPR</b></span>`:""}
+          ${totalStaked>0n&&xprsB>0n?`<span style="font-size:12px"><span style="color:var(--faint)">占比 </span><b>${((Number(xprsB)/Number(totalStaked))*100).toFixed(2)}%</b></span>`:""}
         </div>
       </div>
       <button class="btn gold sm" onclick="claimXprs()" ${pend>0n?"":"disabled"}>${pend>0n?`领取 ${fmt(fromWei(pend,18))} XPR`:"暂无待领"}</button>
@@ -2282,6 +2299,7 @@ window.addEventListener("load",()=>{
   const okbDef=XSTOCKS.find(x=>x.nat);if(okbDef&&!pA)pA=okbDef;
   if(okbDef&&!sA)sA=okbDef;
   if(!sB)sB={addr:cfg.xstork||"",sym:"XPR",name:"平台奖励币",dec:18,logo:XPR_LOGO,nat:0};
+  if(!pB){const xaapl=XSTOCKS.find(x=>x.sym==="wAAPLx");if(xaapl)pB=xaapl;}
   renderSwapSel();
   renderPoolSel();
 $("nav").innerHTML=[["swap",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg>',"兑换"],["pool",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg>',"流动性"],["farm",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg>',"质押"],["assets",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg>',"资产"]].map(([v,ic,zh])=>`<div class="n" data-v="${v}" onclick="go('${v}')">${ic}${zh}</div>`).join("");
