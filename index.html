@@ -29,6 +29,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px
 a{color:var(--acc);text-decoration:none}
 button{font-family:inherit}
 .mono{font-family:var(--mono)}
+.cp{cursor:pointer;border-bottom:1px dashed transparent;transition:color .15s,border-color .15s}
+.cp:hover{color:var(--acc);border-bottom-color:var(--acc)}
+.cp:active{opacity:.6}
 ::selection{background:rgba(245,25,123,.18)}
 ::-webkit-scrollbar{width:9px;height:9px}
 ::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px}
@@ -1695,6 +1698,11 @@ function fmtPrice(n){n=Number(n);if(!isFinite(n)||n===0)return"0";if(n<1e-6)retu
 function fmt(n,d){n=Number(n);d=d==null?2:d;if(!isFinite(n))return"0";if(n>=1e6)return(n/1e6).toFixed(2)+"M";if(n>=1e4)return(n/1e3).toFixed(2)+"k";return n.toLocaleString("en-US",{maximumFractionDigits:d});}
 function toast(m,t){const e=document.createElement("div");e.className="toast"+(t==="err"?" err":t==="ok"?" ok":"");e.textContent=m;$("toasts").appendChild(e);setTimeout(()=>e.remove(),t==="err"?6000:3500);}
 function copyText(t){navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast("已复制"),()=>{});}
+/* 全局地址点击复制：任何带 data-copy 的元素点击即复制完整地址 */
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-copy]");
+  if(el&&!el.closest("a"))copyAddr(el.getAttribute("data-copy"));
+});
 function fromWei(v,d){return Number(v)/10**(d==null?18:d);}
 function toWei(n,d){return BigInt(Math.round(n*10**(d==null?18:d)));}
 function isAddr(s){return/^0x[0-9a-fA-F]{40}$/.test(String(s||"").trim());}
@@ -1851,7 +1859,7 @@ async function launchAll(){
         pair=await f.getPair(tok.addr,WOKB_ADDR);
       }
       pairAddr=pair;
-      return"LP 合约 "+shortAddr(pair);
+      return`<span class="cp" data-copy="${pair}" title="点击复制 LP 地址">LP 合约 ${shortAddr(pair)}</span>`;
     });
     qAdd("创建质押池（质押 LP 凭证）",async()=>{
       const tx=await st.createPool(pairAddr,toWei(rate,18));await tx.wait();
@@ -1884,7 +1892,7 @@ function renderAssetList(){
   el.innerHTML=shown.length?shown.map(a=>a.addr?`
     <div class="item">
       ${logoSvg(a.sym||"?","",a.logo)}
-      <div class="nm"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")} · ${a.nat?"原生 Gas · X Layer":shortAddr(a.addr)} · <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
+      <div class="nm"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")} · ${a.nat?"原生 Gas · X Layer":`<span class="cp" data-copy="${a.addr}" title="点击复制合约地址">${shortAddr(a.addr)}</span>`} · <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
       <div style="display:flex;gap:6px">
         <button class="btn ghost sm" onclick="copyText('${a.addr}')">复制</button>
         ${a.builtin?"":`<button class="btn danger sm" onclick="removeAsset('${a.addr}')">移除</button>`}
@@ -2495,7 +2503,7 @@ async function renderFarm(){
     el.innerHTML=data.map(p=>`
       <div class="poolcard">
         <div class="top">
-          <div class="pair">${logoSvg(p.lpLg?p.lpLg.sym:p.sym,"",p.lpLg?p.lpLg.logo:p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?"XLP · ":""}#${p.pid} · ${shortAddr(p.tok)}</div></div></div>
+          <div class="pair">${logoSvg(p.lpLg?p.lpLg.sym:p.sym,"",p.lpLg?p.lpLg.logo:p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?"XLP · ":""}#${p.pid} · <span class="cp" data-copy="${p.tok}" title="点击复制代币地址">${shortAddr(p.tok)}</span></div></div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
             <span class="badge ${p.active?"live":"pause"}">${p.active?"挖矿中":"已暂停"}</span>
             <div class="apr" style="text-align:right"><div class="k">每秒奖励</div><div class="v">${fmtPrice(fromWei(BigInt(p.rate),18))} <span style="font-size:11px;color:var(--gold)">XPR</span></div></div>
@@ -2743,7 +2751,9 @@ async function createRecommendedPools(){
 
 /* ============ 资产 ============ */
 function copyAddr(a){
-  try{navigator.clipboard.writeText(a);toast("合约地址已复制： "+a,"ok");}catch(e){toast("复制失败，请手动复制： "+a,"err");}
+  if(!a)return;
+  const t=async()=>{try{await navigator.clipboard.writeText(a);toast("已复制 "+shortAddr(a),"ok");}catch(e){toast("复制失败 · 长按手动复制","err");}};
+  t();
 }
 async function renderAssets(){
   if(!walletAddr){$("assetStats").innerHTML="";$("balList").innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="big">◉</div>连接钱包后查看余额</div>`;return;}
@@ -2807,7 +2817,7 @@ async function renderAssets(){
       <div class="bal-card">
         <div class="symrow">${logoSvg(r.sym,"",r.logo)}<b>${esc(r.sym)}</b><span style="color:var(--faint);font-size:11.5px">${esc(r.name||"")}</span></div>
         <div class="amt ${r.sym==="XPR"?"grad-txt":""}">${fmt(fromWei(r.bal,r.dec))}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--faint)"><span>${esc(r.sym)} 余额</span>${r.addr?`<span class="mono">${shortAddr(r.addr)}</span>`:"<span>原生币 · 无需合约</span>"}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--faint)"><span>${esc(r.sym)} 余额</span>${r.addr?`<span class="mono cp" data-copy="${r.addr}" title="点击复制合约地址">${shortAddr(r.addr)}</span>`:"<span>原生币 · 无需合约</span>"}</div>
         ${r.addr&&r.sym==="XPR"?`<button class="btn ghost sm" style="margin-top:4px" onclick="copyAddr('${r.addr}')">${r.bal>0n?"复制合约地址":"复制地址 · 钱包若未显示 XPR 请手动添加代币"}</button>`:""}
       </div>`).join("")
     :`<div class="empty" style="grid-column:1/-1"><div class="big">◉</div>钱包中暂无资产 · 可在「名录」中选择交易或到 Pool 添加流动性</div>`;
@@ -2846,17 +2856,17 @@ async function renderStats(){
     <div class="stat"><div class="k">交易对</div><div class="v c">${d.pairs}</div><div class="d">Factory 登记</div></div>
     <div class="stat"><div class="k">质押池</div><div class="v o">${d.pools}</div><div class="d">Staking 池</div></div>
     <div class="stat"><div class="k">内置资产</div><div class="v">1001</div><div class="d">X Layer 可交易 xStock</div></div>
-    <div class="stat"><div class="k">钱包</div><div class="v g" style="font-size:15px">${walletAddr?shortAddr(walletAddr):"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
+    <div class="stat"><div class="k">钱包</div><div class="v g" style="font-size:15px">${walletAddr?`<span class="cp" data-copy="${walletAddr}" title="点击复制">${shortAddr(walletAddr)}</span>`:"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
   if(pv)pv.innerHTML=`
     <div class="stat"><div class="k">交易对</div><div class="v c">${d.pairs}</div><div class="d">Factory 登记</div></div>
     <div class="stat"><div class="k">池手续费</div><div class="v g">0.3%</div><div class="d">全部归 LP</div></div>
-    <div class="stat"><div class="k">我的地址</div><div class="v" style="font-size:15px">${walletAddr?shortAddr(walletAddr):"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>
+    <div class="stat"><div class="k">我的地址</div><div class="v" style="font-size:15px">${walletAddr?`<span class="cp" data-copy="${walletAddr}" title="点击复制">${shortAddr(walletAddr)}</span>`:"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>
     <div class="stat"><div class="k">滑点模式</div><div class="v">${slipPct*100}%</div><div class="d">Swap 保护</div></div>`;
   if(fv)fv.innerHTML=`
     <div class="stat"><div class="k">质押池</div><div class="v o">${d.pools}</div><div class="d">Staking 池</div></div>
     <div class="stat"><div class="k">奖励代币</div><div class="v" style="display:flex;align-items:center;justify-content:center;gap:5px">${logoSvg("XPR","")}<span class="g">XPR</span></div><div class="d">按秒释放</div></div>
     <div class="stat"><div class="k">XPR 池余额</div><div class="v" id="farmXprBal">—</div><div class="d">Staking 持有</div></div>
-    <div class="stat"><div class="k">我的地址</div><div class="v" style="font-size:15px">${walletAddr?shortAddr(walletAddr):"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
+    <div class="stat"><div class="k">我的地址</div><div class="v" style="font-size:15px">${walletAddr?`<span class="cp" data-copy="${walletAddr}" title="点击复制">${shortAddr(walletAddr)}</span>`:"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
   if(fv&&cfg.xstork){
     withRPC(async p=>{
       const xb=await new ethers.Contract(cfg.xstork,ERC20_ABI,p).balanceOf(cfg.staking);
@@ -2958,7 +2968,7 @@ async function renderMyLiq(){
           </div>
           <div class="lp-row"><span>LP 凭证</span><b class="mono">${fmtPrice(fromWei(r.lpBal,18))} XLP</b></div>
           <div class="lp-row"><span>池占比</span><b>${r.share.toFixed(4)}%</b></div>
-          <div class="lp-row"><span>池地址</span><span class="mono" style="color:var(--faint);font-size:11px">${shortAddr(r.pa)}</span></div>
+          <div class="lp-row"><span>池地址</span><span class="mono cp" data-copy="${r.pa}" title="点击复制池地址" style="color:var(--faint);font-size:11px">${shortAddr(r.pa)}</span></div>
           <div class="prog"><i style="width:${Math.min(r.share,100).toFixed(2)}%"></i></div>
         </div>`).join("");
     });
@@ -2978,7 +2988,7 @@ function renderCfgInfo(){
   const el=$("cfgInfo");if(!el)return;
   el.innerHTML=needCfg()
     ?`<button class="btn ghost sm" onclick="openCfg()">未配置合约 · 点击配置</button>`
-    :`<span class="mono" style="font-size:11px">F ${shortAddr(cfg.factory)} · R ${shortAddr(cfg.router)} · S ${shortAddr(cfg.staking)} · X ${shortAddr(cfg.xstork)} <button class="btn ghost sm" onclick="openCfg()" style="margin-left:6px">改</button></span>`;
+    :`<span class="mono" style="font-size:11px">F <span class="cp" data-copy="${cfg.factory}" title="点击复制">${shortAddr(cfg.factory)}</span> · R <span class="cp" data-copy="${cfg.router}" title="点击复制">${shortAddr(cfg.router)}</span> · S <span class="cp" data-copy="${cfg.staking}" title="点击复制">${shortAddr(cfg.staking)}</span> · X <span class="cp" data-copy="${cfg.xstork}" title="点击复制">${shortAddr(cfg.xstork)}</span> <button class="btn ghost sm" onclick="openCfg()" style="margin-left:6px">改</button></span>`;
 }
 
 /* 滑点选择 */
