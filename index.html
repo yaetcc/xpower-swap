@@ -641,7 +641,7 @@ async function loadRemoteCfg(){
     let changed=false;
     for(const k of ["factory","router","staking","xstork","xprs","xprsDiv"]){
       const v=d[k];
-      if(v&&/^0x[a-fA-F0-9]{40}$/.test(v)&&!cfg[k]){cfg[k]=v.toLowerCase();changed=true;}
+      if(v&&/^0x[a-fA-F0-9]{40}$/.test(v)&&cfg[k]!==v.toLowerCase()){cfg[k]=v.toLowerCase();changed=true;}
     }
     if(changed){try{localStorage.setItem(STORAGE+"cfg",JSON.stringify(cfg));}catch(e){} refreshView();}
   }catch(e){}
