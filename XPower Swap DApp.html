@@ -235,7 +235,8 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
           <b>兑换</b>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="badge x" id="swapDir">A → B</span>
-            <div class="seg" id="slipSeg"><div class="on" data-s="0.5">0.5%</div><div data-s="1">1%</div><div data-s="3">3%</div></div>
+            <div class="seg" id="slipSeg"><div class="on" data-s="0.5">0.5%</div><div data-s="1">1%</div><div data-s="3">3%</div><div id="slipCus" style="color:var(--acc);cursor:pointer">自定义</div></div>
+            <div id="slipCustom" style="display:none;align-items:center;gap:8px;margin-top:8px"><input id="slipInput" type="number" step="0.1" min="0.01" max="10" placeholder="0.01–10" style="flex:1;min-width:0;font-family:var(--mono)"><button class="btn sm" onclick="applySlip()">应用</button></div>
           </div>
         </div>
         <div class="swap-row">
@@ -1119,6 +1120,7 @@ function openCfg(){
   d.innerHTML=`<div class="mask on" id="cfgMask" onclick="if(event.target===this)this.remove()">
     <div class="box"><button class="x" onclick="this.parentElement.parentElement.remove()">✕</button>
     <h3>◈ 合约配置</h3>
+    <details style="font-size:12px;color:var(--dim);margin:6px 0 10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px"><summary style="cursor:pointer;font-weight:700">如何部署合约？</summary><div style="margin-top:6px;line-height:1.7">项目含 5 个合约（XPower 奖励币 / Factory / Pair / Router / Staking），部署顺序：<b class="mono">XPR → Factory → Router(Factory) → Staking(XPR)</b>；flat 源码与部署脚本在 <b class="mono">deploy/</b>，链上验证用 <b class="mono">verify-flat</b>。部署完成后把各合约地址粘贴到下方对应字段保存即可。</div></details>
     <div style="display:grid;gap:9px">
       ${[["factory","XStorkFactory · 交易对工厂"],["router","XStorkRouter · 兑换路由"],["staking","XStorkStaking · 质押矿池"],["xstork","XPR · 奖励币"]].map(([k,n])=>`<div><label>${n}</label><input id="cfg_${k}" value="${esc(cfg[k])}" placeholder="0x…" class="mono" style="font-size:12.5px"></div>`).join("")}
     </div>
@@ -1261,7 +1263,7 @@ async function setMax(){
 async function quoteSwap(){
   const el=$("swapErr"),rate=$("rateTxt");
   el.classList.remove("on");rate.textContent="—";
-  if(!cfg.router){$("outAmt").value="";rate.textContent="未配置 Router 合约 · 点击下方按钮配置";updateSwapCta();return;}
+  if(!cfg.router){$("outAmt").value="";rate.textContent=walletAddr?"未配置 Router 合约 · 点击下方按钮配置":"连接钱包后即可配置 Router 合约";updateSwapCta();return;}
   if(!sA||!sB){$("outAmt").value="";updateSwapCta();return;}
   if(sA.addr.toLowerCase()===sB.addr.toLowerCase()){el.textContent="不能兑换同一代币";el.classList.add("on");$("outAmt").value="";updateSwapCta();return;}
   const n=Number($("inAmt").value);
@@ -1344,7 +1346,7 @@ function renderPoolSel(){
   updateAddLiqCta();updateRmLiqCta();
 }
 async function poolQuote(){
-  if(!cfg.factory){const el=$("poolRate");if(el)el.textContent="未配置 Factory 合约";updateAddLiqCta();return;}
+  if(!cfg.factory){const el=$("poolRate");if(el)el.textContent=walletAddr?"未配置 Factory 合约 · 点击下方按钮配置":"连接钱包后即可配置 Factory 合约";updateAddLiqCta();return;}
   if(!pA||!pB)return;
   const a=Number($("paAmt").value),b=Number($("pbAmt").value);
   const el=$("poolErr");el.classList.remove("on");
@@ -1419,7 +1421,7 @@ async function doAddLiquidity(){
 }
 async function removeQuote(){
   if(!pR||!walletAddr)return;
-  if(!cfg.factory){$("prLp").textContent="LP: —（未配置 Factory 合约）";$("prOut").textContent="—";updateRmLiqCta();return;}
+  if(!cfg.factory){$("prLp").textContent=walletAddr?"LP: —（未配置 Factory 合约）":"LP: —（连接钱包后配置 Factory 合约）";$("prOut").textContent="—";updateRmLiqCta();return;}
   const pct=Number($("prPct").value)/100;
   $("prPctTxt").textContent=(pct*100).toFixed(0)+"%";
   $("prOut").textContent="—";
@@ -1846,8 +1848,19 @@ function renderCfgInfo(){
 /* 滑点选择 */
 function initSlip(){
   const seg=$("slipSeg");if(!seg)return;
+  const sc=$("slipCustom"),si=$("slipInput");
+  const hideSlipCustom=()=>{if(sc)sc.style.display="none";};
+  window.showSlipCustom=()=>{if(sc)sc.style.display="flex";if(si)setTimeout(()=>si.focus(),50);};
+  window.applySlip=()=>{
+    const v=parseFloat(si.value);
+    if(!v||v<0.01||v>10){toast("滑点需在 0.01%–10% 之间","err");return;}
+    slipPct=v/100;hideSlipCustom();
+    seg.querySelectorAll("div").forEach(x=>x.classList.remove("on"));
+    const t=$("slipTxt");if(t)t.textContent=(slipPct*100)+"%";
+    quoteSwap();renderStats();
+  };
   seg.querySelectorAll("div").forEach(d=>{
-    d.onclick=()=>{seg.querySelectorAll("div").forEach(x=>x.classList.remove("on"));d.classList.add("on");slipPct=Number(d.dataset.s)/100;quoteSwap();renderStats();};
+    d.onclick=()=>{if(d.id==="slipCus"){window.showSlipCustom();return;}hideSlipCustom();seg.querySelectorAll("div").forEach(x=>x.classList.remove("on"));d.classList.add("on");slipPct=Number(d.dataset.s)/100;const t=$("slipTxt");if(t)t.textContent=(slipPct*100)+"%";quoteSwap();renderStats();};
   });
 }
 
