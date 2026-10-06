@@ -299,6 +299,20 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .seg div{padding:4px 9px;border-radius:8px;font-size:11.5px;font-weight:800;color:var(--dim);cursor:pointer;transition:.15s;box-sizing:border-box}
 .seg div:hover{color:var(--acc)}
 .seg div.on{background:var(--acc-grad);color:#fff;box-shadow:0 3px 10px rgba(245,25,123,.3)}
+/* ===== 兑换页移动端适配 v5 ===== */
+@media(max-width:640px){
+  .swap-center{max-width:100%}
+  .swap-card{padding:16px 12px 18px;border-radius:20px}
+  .amt-body{height:50px;gap:8px}
+  .amt-body input{font-size:23px!important;height:50px}
+  .amt-body .tokbtn{flex:0 0 112px;width:112px;min-width:112px;max-width:112px;padding:3px 8px;gap:6px;height:44px}
+  .amt-body .tokbtn .nm2{max-width:50px;font-size:13.5px}
+  .amt-body .tokbtn .sub2{max-width:50px;font-size:9px}
+  .amt-body .tokbtn .lg{width:24px;height:24px;font-size:10.5px}
+  .info-grid{gap:6px}
+  .pct-row button{padding:5px 0;font-size:11px}
+  .pricebar{flex-wrap:wrap}
+}
 /* ===== 兑换页专业视觉 v5 ===== */
 body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),transparent 62%),radial-gradient(900px 520px at 92% 6%,rgba(168,85,247,.10),transparent 62%),linear-gradient(180deg,#fffdfe 0%,#fdf5fa 100%)!important}
 .swap-center{max-width:472px;margin:0 auto;width:100%}
@@ -1486,7 +1500,7 @@ function setTokBtn(btnId,lgId,nmId,t){
   const b=$(btnId),l=$(lgId),n=$(nmId);if(!b)return;
   const sub=b.querySelector(".sub2");
   if(t){l.outerHTML=logoSvg(t.sym,lgId,t.logo);n.textContent=t.sym;
-    if(sub)sub.textContent=t.nat?"原生 Gas · 自动包装":(t.name||"").slice(0,10)||"代币";}
+    if(sub)sub.textContent=t.nat?"原生 Gas":(t.name||"").slice(0,10)||"代币";}
   else{n.textContent="选择代币";l.outerHTML=`<span class="lg" id="${lgId}">?</span>`;
     if(sub)sub.textContent="点击选择";}
 }
