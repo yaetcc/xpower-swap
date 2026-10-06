@@ -1195,6 +1195,7 @@ function openCfg(){
         <input id="lgRate" type="number" placeholder="每秒奖励（如 0.000001）" style="font-size:12.5px">
         <input id="lgFund" type="number" placeholder="冲入奖励数量 · 从钱包转入矿池（如 100000）" style="font-size:12.5px">
         <button class="btn gold wide" onclick="launchAll()">⚡ 一键起盘：部署合约 → 组 LP 交易对 → 质押池 → 冲入奖励</button>
+        <button class="btn wide" onclick="deployOnlyCta()" style="margin-top:8px">仅部署 4 合约（先上链合约层，之后随时起盘）</button>
       </div>
       <div id="lgLog" style="display:grid;gap:6px;margin-top:8px;font-size:12px"></div>
     </div>
@@ -1452,6 +1453,15 @@ function txHistSave(x){
 function tokAddr(t){return t&&t.nat?WOKB_ADDR:t.addr;}
 function wSigner(){return new ethers.BrowserProvider(window.ethereum).getSigner();}
 /* ============ 一键部署 4 合约 ============ */
+function deployOnlyCta(){
+  if(!walletAddr){toast("请先连接钱包","err");return;}
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!needCfg()){
+    toast("4 合约已部署：XPR "+shortAddr(cfg.xstork)+" · Factory "+shortAddr(cfg.factory)+" · Router "+shortAddr(cfg.router)+" · Staking "+shortAddr(cfg.staking),"ok");
+    return;
+  }
+  deployAll();
+}
 async function deployAll(){
   if(!walletAddr){toast("请先连接钱包","err");return;}
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
