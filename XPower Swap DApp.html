@@ -282,34 +282,37 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),transparent 62%),radial-gradient(900px 520px at 92% 6%,rgba(168,85,247,.10),transparent 62%),linear-gradient(180deg,#fffdfe 0%,#fdf5fa 100%)!important}
 .swap-center{max-width:464px;margin:0 auto;width:100%}
 .swap-card{overflow:hidden;border:1px solid #f2e7ef;border-radius:24px;background:linear-gradient(180deg,#ffffff 0%,#fff7fc 130%);box-shadow:0 16px 46px rgba(245,25,123,.12),0 3px 12px rgba(20,20,43,.05);padding:20px 20px 22px}
-.swap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:8px}
+.swap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
 .swap-head b{font-size:22px;font-weight:900;letter-spacing:-.3px;background:linear-gradient(90deg,#f5197b,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent}
-.amt-in{background:#f7f5f9;border:1px solid #efe9f1;border-radius:18px;padding:13px 15px;display:grid;gap:10px;transition:border-color .18s,box-shadow .18s}
-.amt-in:focus-within{border-color:#f6a9d2;box-shadow:0 0 0 4px rgba(245,25,123,.10)}
-.amt-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#8f8b9b;font-weight:700;letter-spacing:.3px}
-.amt-head .bal{color:#a9a5b4;font-weight:600;font-size:11px}
-.amt-body{display:flex;align-items:center;gap:10px}
-.amt-body input{flex:1 1 auto;min-width:0;width:auto;max-width:none;background:#fff;border:1px solid #ece6ee!important;border-radius:14px;font-size:24px!important;font-weight:900;font-family:var(--mono);outline:none;color:#1a1726;letter-spacing:-.5px;padding:11px 16px;height:54px;box-sizing:border-box;transition:border-color .15s,box-shadow .15s;box-shadow:0 1px 4px rgba(20,20,43,.05)}
-.amt-body input:focus{border-color:#f6a9d2!important;box-shadow:0 0 0 3px rgba(245,25,123,.12)}
-.amt-body input::placeholder{color:#cbc7d4;font-weight:700}
-.amt-body .tokbtn{flex-shrink:0;width:auto;max-width:none;flex-basis:auto;background:#fff;border:1px solid #ece6ee;border-radius:14px;padding:8px 14px;box-shadow:0 2px 8px rgba(20,20,43,.06);min-width:122px}
-.amt-body .tokbtn:hover{border-color:#f6a9d2}
-.amt-body .tokbtn .lg{width:26px;height:26px;font-size:11px}
-.amt-body .tokbtn .nm2{font-size:13px;font-weight:800}
-.amt-body .tokbtn .sub2{font-size:10px}
-.pct-row{display:flex;gap:6px;margin-top:2px}
-.pct-row button{flex:1;padding:6px 0;border-radius:10px;border:none;background:rgba(245,25,123,.07);color:var(--acc);font-size:11.5px;font-weight:800;cursor:pointer;transition:.15s}
+.amt-in{background:#f6f5f9;border:1px solid #eee9f1;border-radius:20px;padding:7px 13px 11px;display:grid;gap:3px;transition:border-color .18s,box-shadow .18s}
+.amt-in:focus-within{border-color:#f2b4d8;box-shadow:0 0 0 4px rgba(245,25,123,.08)}
+.amt-head{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#9a94a6;font-weight:700;letter-spacing:.3px}
+.amt-head .bal{color:#b0aaba;font-weight:600;font-size:11px}
+.amt-body{display:flex;align-items:center;gap:8px;height:52px}
+.amt-body input{flex:1 1 auto;min-width:0;width:auto;background:transparent;border:none!important;border-radius:0;font-size:24px!important;font-weight:900;font-family:var(--mono);outline:none;color:#16131f;letter-spacing:-.5px;padding:0;height:52px;box-sizing:border-box;box-shadow:none!important}
+.amt-body input:focus{border:none!important;box-shadow:none!important}
+.amt-body input::placeholder{color:#c9c3d2;font-weight:700}
+.amt-body input[type=number]::-webkit-inner-spin-button,.amt-body input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.amt-body input[type=number]{-moz-appearance:textfield}
+.amt-body .tokbtn{flex-shrink:0;width:auto;max-width:none;flex-basis:auto;background:transparent;border:1px solid transparent;border-radius:14px;padding:4px 10px;min-width:0;display:flex;align-items:center;gap:7px;height:46px;transition:.16s}
+.amt-body .tokbtn:hover{background:#fff;border-color:#eee9f1;box-shadow:0 2px 10px rgba(20,20,43,.07)}
+.amt-body .tokbtn .lg{width:28px;height:28px;font-size:12px}
+.amt-body .tokbtn .nm2{font-size:15px;font-weight:900;letter-spacing:-.2px}
+.amt-body .tokbtn .sub2{display:none}
+.amt-body .tokbtn .caret{color:#8f8b9b;font-size:10px;margin-left:1px}
+.pct-row{display:flex;gap:6px;margin-top:6px}
+.pct-row button{flex:1;padding:5px 0;border-radius:9px;border:none;background:rgba(245,25,123,.08);color:#f5197b;font-size:11px;font-weight:800;cursor:pointer;transition:.15s}
 .pct-row button:hover{background:linear-gradient(90deg,#f5197b,#a855f7);color:#fff;box-shadow:0 3px 10px rgba(245,25,123,.3)}
 .arrow-mid{display:flex;justify-content:center;margin:-12px 0;position:relative;z-index:2}
 .arrow-mid button{width:40px;height:40px;border-radius:50%;border:3px solid #fff;background:linear-gradient(135deg,#f5197b,#a855f7);color:#fff;font-size:16px;cursor:pointer;box-shadow:0 6px 18px rgba(245,25,123,.38);display:flex;align-items:center;justify-content:center;transition:transform .3s cubic-bezier(.2,.8,.3,1)}
 .arrow-mid button:hover{transform:scale(1.08)}
-.pricebar{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 4px;padding:10px 14px;background:linear-gradient(90deg,rgba(245,25,123,.06),rgba(168,85,247,.06));border-radius:12px;font-size:13px;font-weight:600;color:#6f6a7a}
+.pricebar{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0 4px;padding:9px 12px;background:#faf9fc;border:1px solid #f1ebf1;border-radius:12px;font-size:12.5px;font-weight:600;color:#6f6a7a}
 .pricebar b{font-size:16px;font-weight:900;font-family:var(--mono);background:linear-gradient(90deg,#f5197b,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent}
 .pflip{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--acc);cursor:pointer}
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .info-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#faf9fc;border:1px solid #f2ecf2;border-radius:12px;font-size:12px;color:#8f8b9b;font-weight:600}
 .info-row b{color:#1a1726;font-weight:800}
-.swap-cta{margin-top:14px;padding:16px!important;font-size:16px!important;font-weight:900;border-radius:16px!important;box-shadow:0 10px 26px rgba(245,25,123,.34);transition:.18s}
+.swap-cta{margin-top:13px;padding:15px!important;font-size:16px!important;font-weight:900;border-radius:16px!important;box-shadow:0 8px 22px rgba(245,25,123,.28);transition:.18s}
 .swap-cta:hover{transform:translateY(-1px);box-shadow:0 14px 32px rgba(245,25,123,.46);filter:brightness(1.05)}
 </style>
 </head>
@@ -352,7 +355,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
           <div class="amt-head"><span>从 · 卖出</span><span class="bal" id="fromBal"></span></div>
           <div class="amt-body">
             <input id="inAmt" type="number" value="" min="0" placeholder="0.0" oninput="dqSwap()" onkeydown="if(event.key==='Enter')swapCta()">
-            <div class="tokbtn" id="fromBtn" onclick="pickToken('from')"><span class="lg" id="fromLg">?</span><span><span class="nm2" id="fromNm">选择代币</span><span class="sub2" id="fromSub">xStock 名录</span></span><span class="caret">▼</span></div>
+            <div class="tokbtn" id="fromBtn" onclick="pickToken('from')"><span class="lg" id="fromLg">?</span><span><span class="nm2" id="fromNm">选择代币</span><span class="sub2" id="fromSub">点击选择</span></span><span class="caret">▼</span></div>
           </div>
           <div class="pct-row">
             <button type="button" onclick="swapPct(25)">25%</button>
@@ -366,7 +369,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
           <div class="amt-head"><span>到 · 买入</span><span class="bal" id="toBal"></span></div>
           <div class="amt-body">
             <input id="outAmt" type="text" readonly placeholder="0.0">
-            <div class="tokbtn" id="toBtn" onclick="pickToken('to')"><span class="lg" id="toLg">?</span><span><span class="nm2" id="toNm">选择代币</span><span class="sub2" id="toSub">选择目标</span></span><span class="caret">▼</span></div>
+            <div class="tokbtn" id="toBtn" onclick="pickToken('to')"><span class="lg" id="toLg">?</span><span><span class="nm2" id="toNm">选择代币</span><span class="sub2" id="toSub">点击选择</span></span><span class="caret">▼</span></div>
           </div>
         </div>
         <div class="pricebar"><span>1 <span id="rFrom">—</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--acc)"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b id="rateBig">—</b><span id="rTo" style="color:var(--dim)">—</span><span class="pflip" onclick="flipSwap()">⇅ 反向</span></div>
@@ -1467,8 +1470,11 @@ function flipSwap(){
 }
 function setTokBtn(btnId,lgId,nmId,t){
   const b=$(btnId),l=$(lgId),n=$(nmId);if(!b)return;
-  if(t){l.outerHTML=logoSvg(t.sym,lgId,t.logo);n.textContent=t.sym;}
-  else{n.textContent="选择代币";l.outerHTML=`<span class="lg" id="${lgId}">?</span>`;}
+  const sub=b.querySelector(".sub2");
+  if(t){l.outerHTML=logoSvg(t.sym,lgId,t.logo);n.textContent=t.sym;
+    if(sub)sub.textContent=(t.name||"").slice(0,10)||"代币";}
+  else{n.textContent="选择代币";l.outerHTML=`<span class="lg" id="${lgId}">?</span>`;
+    if(sub)sub.textContent="点击选择";}
 }
 function renderSwapSel(){
   setTokBtn("fromBtn","fromLg","fromNm",sA);setTokBtn("toBtn","toLg","toNm",sB);
