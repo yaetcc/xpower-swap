@@ -1153,13 +1153,8 @@ function openCfg(){
   d.innerHTML=`<div class="mask on" id="cfgMask" onclick="if(event.target===this)this.remove()">
     <div class="box"><button class="x" onclick="this.parentElement.parentElement.remove()">✕</button>
     <h3>◈ 合约配置</h3>
-    <details style="font-size:12px;color:var(--dim);margin:6px 0 10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px"><summary style="cursor:pointer;font-weight:700">如何部署合约？</summary><div style="margin-top:6px;line-height:1.7">项目含 5 个合约（XPower 奖励币 / Factory / Pair / Router / Staking），部署顺序：<b class="mono">XPR → Factory → Router(Factory) → Staking(XPR)</b>；flat 源码与部署脚本在 <b class="mono">deploy/</b>，链上验证用 <b class="mono">verify-flat</b>。部署完成后把各合约地址粘贴到下方对应字段保存即可。</div></details>
-    <div style="display:grid;gap:9px">
-      ${[["factory","XStorkFactory · 交易对工厂"],["router","XStorkRouter · 兑换路由"],["staking","XStorkStaking · 质押矿池"],["xstork","XPR · 奖励币"]].map(([k,n])=>`<div><label>${n}</label><input id="cfg_${k}" value="${esc(cfg[k])}" placeholder="0x…" class="mono" style="font-size:12.5px"></div>`).join("")}
-    </div>
-    <div id="deploySteps" style="display:grid;gap:6px;margin-top:10px"></div>
-    <button class="btn primary wide" style="margin-top:14px" onclick="saveCfgBox()">保存配置</button>
-    <button class="btn wide" style="margin-top:8px;border:1px solid var(--acc-line);color:var(--acc)" onclick="deployAll()">⚡ 一键部署 4 合约（连接钱包后 · 约 4 笔签名）</button>
+    <div id="deploySteps" style="display:grid;gap:6px;margin-top:4px"></div>
+    <button class="btn primary wide" style="margin-top:14px" onclick="deployAll()">⚡ 一键部署 4 合约（连接钱包后 · 自动回填地址）</button>
     <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
       <div style="font-weight:700;font-size:13px;margin-bottom:4px">⚡ 一键起盘 · OKB × xStock 组 LP</div>
       <div style="font-size:11.5px;color:var(--dim);margin-bottom:8px;line-height:1.6">默认 OKB + 你指定的 xStock 资产组成 LP 交易对；注入奖励从你的钱包直接冲入矿池（奖励币默认 XPR，可指定其他 ERC-20）</div>
@@ -1177,7 +1172,7 @@ function openCfg(){
   document.body.appendChild(d);
   fillTokList();
 }
-function saveCfgBox(){for(const k of["factory","router","staking","xstork"])cfg[k]=$("cfg_"+k).value.trim();saveCfg();const m=$("cfgMask");if(m)m.remove();toast("配置已保存","ok");refreshAll();}
+
 
 /* ============ 一键起盘：交易对 → 质押池 → 注入奖励 ============ */
 function fillTokList(){
@@ -1535,7 +1530,7 @@ async function deployAll(){
   }catch(e){
     const msg=e.shortMessage||e.message||"部署失败";
     toast("部署中断："+msg,"err");
-    if(box)box.innerHTML+=`<div style="color:var(--err);font-size:12px;padding:6px">部署失败：${esc(msg)}（已完成步骤已保存，可在下方手动补全剩余地址）</div>`;
+    if(box)box.innerHTML+=`<div style="color:var(--err);font-size:12px;padding:6px">部署失败：${esc(msg)}（已完成步骤已保存，可重新点击一键部署续跑）</div>`;
   }
 }
 
