@@ -315,28 +315,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
         <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
         <details style="margin-top:12px;font-size:12px"><summary style="cursor:pointer;color:var(--dim);font-weight:700;user-select:none">最近交易 · 本机记录</summary><div id="txHist" style="margin-top:6px"></div></details>
       </div>
-      <div class="swap-card card-lift" style="margin-top:14px">
-        <div class="swap-head"><b>价格图表</b><span class="badge">链上实时采样</span></div>
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap">
-          <div>
-            <div id="chartPair" style="font-size:14px;font-weight:800">选择交易对后显示</div>
-            <div id="chartPrice" style="font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-.5px">—</div>
-          </div>
-          <div style="text-align:right">
-            <div id="chartChg" style="font-size:14px;font-weight:800;color:var(--dim)">—</div>
-            <div id="chartRange" style="display:flex;gap:5px;margin-top:8px">
-              <button style="padding:2px 9px;font-size:11px;border-radius:7px;border:1px solid var(--acc-line);background:var(--card);cursor:pointer;font-weight:700;color:var(--acc)" onclick="setChartRange('1H')">1H</button>
-              <button style="padding:2px 9px;font-size:11px;border-radius:7px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:700;color:var(--dim)" onclick="setChartRange('6H')">6H</button>
-              <button style="padding:2px 9px;font-size:11px;border-radius:7px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:700;color:var(--dim)" onclick="setChartRange('1D')">1D</button>
-              <button style="padding:2px 9px;font-size:11px;border-radius:7px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:700;color:var(--dim)" onclick="setChartRange('ALL')">全部</button>
-            </div>
-          </div>
-        </div>
-        <div id="chartSvg" style="margin-top:10px;border-radius:12px;background:var(--card2);padding:8px"></div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:4px"><span id="chartLow">—</span><span id="chartHi">—</span></div>
-      </div>
-    </div>
-  </section>
+      </section>
 
   <!-- ===== Pool ===== -->
   <section class="view" id="view-pool">
@@ -1548,88 +1527,6 @@ async function deployAll(){
   }
 }
 
-/* ============ 价格图表 · 链上实时采样 ============ */
-let CHART_RANGE="1H";
-const PH_KEY=STORAGE+"ph";
-function phLoad(){try{return JSON.parse(localStorage.getItem(PH_KEY)||"{}");}catch(e){return{};}}
-function phSave(h){try{localStorage.setItem(PH_KEY,JSON.stringify(h));}catch(e){}}
-async function samplePrice(){
-  if(!sA||!sB||needCfg()||!cfg.factory)return;
-  try{
-    const hist=phLoad();
-    const key=[tokAddr(sA),tokAddr(sB)].map(x=>x.toLowerCase()).sort().join("|");
-    const now=Date.now();
-    let price=null;
-    await withRPC(async p=>{
-      const f=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
-      const pair=await f.getPair(tokAddr(sA),tokAddr(sB));
-      if(pair===ethers.ZeroAddress)return;
-      const pc=new ethers.Contract(pair,PAIR_ABI,p);
-      const[t0,r]=await Promise.all([pc.token0(),pc.getReserves()]);
-      const pa=Number(r[0])/Number(r[1])*10**(sB.dec-sA.dec);
-      const pb=Number(r[1])/Number(r[0])*10**(sA.dec-sB.dec);
-      price=t0===tokAddr(sA).toLowerCase()?pb:pa;
-    });
-    if(price==null||!isFinite(price)||price<=0)return;
-    const arr=hist[key]||[];
-    arr.push([now,price]);
-    const cut=now-30*864e5;
-    hist[key]=arr.filter(x=>x[0]>=cut&&x[0]<=now).slice(-2000);
-    phSave(hist);
-    renderPriceChart();
-  }catch(e){}
-}
-function setChartRange(r){
-  CHART_RANGE=r;
-  document.querySelectorAll("#chartRange button").forEach(b=>{const on=b.textContent===r;b.style.color=on?"var(--acc)":"var(--dim)";b.style.borderColor=on?"var(--acc-line)":"var(--line)";});
-  renderPriceChart();
-}
-function renderPriceChart(){
-  const pairEl=$("chartPair"),pxEl=$("chartPrice"),chgEl=$("chartChg"),svgEl=$("chartSvg");
-  if(!pairEl||!svgEl)return;
-  if(!sA||!sB){pairEl.textContent="选择交易对后显示";pxEl.textContent="—";chgEl.textContent="—";svgEl.innerHTML="";return;}
-  pairEl.textContent=sA.sym+" / "+sB.sym;
-  const hist=phLoad();
-  const key=[tokAddr(sA),tokAddr(sB)].map(x=>x.toLowerCase()).sort().join("|");
-  const arr=hist[key]||[];
-  const now=Date.now();
-  const ranges={"1H":36e5,"6H":216e5,"1D":864e5,"ALL":30*864e5};
-  const pts=arr.filter(x=>now-x[0]<=(ranges[CHART_RANGE]||36e5));
-  if(pts.length<2){
-    pxEl.textContent=pts.length?fmtPrice(pts[pts.length-1][1]):"—";
-    chgEl.textContent=pts.length?"数据积累中":"等待采样…";
-    svgEl.innerHTML=`<div style="padding:36px;text-align:center;color:var(--dim);font-size:12px;line-height:1.8">等待链上采样 · 池子产生交易后自动绘制走势<br>（本机记录 · 不伪造历史行情）</div>`;
-    $("chartLow").textContent="—";$("chartHi").textContent="—";
-    return;
-  }
-  const vals=pts.map(x=>x[1]);
-  const cur=vals[vals.length-1],first=vals[0];
-  const lo=Math.min(...vals),hi=Math.max(...vals);
-  pxEl.textContent=fmtPrice(cur);
-  const chg=(cur-first)/first*100;
-  chgEl.textContent=(chg>=0?"+":"")+chg.toFixed(2)+"%";
-  chgEl.style.color=chg>=0?"var(--ok)":"var(--err)";
-  $("chartLow").textContent="低 "+fmtPrice(lo);$("chartHi").textContent="高 "+fmtPrice(hi);
-  const W=640,H=220,pad=8;
-  const rng=hi-lo||1;
-  const step=Math.max(1,Math.floor(pts.length/140));
-  const sm=pts.filter((_,i)=>i%step===0);
-  const xs=i=>pad+(W-2*pad)*i/(sm.length-1);
-  const ys=v=>H-pad-(H-2*pad)*(v-lo)/rng;
-  let path="",area="";
-  sm.forEach((pt,i)=>{const x=xs(i).toFixed(1),y=ys(pt[1]).toFixed(1);path+=(i?"L":"M")+x+" "+y+" ";area+=(i?"L":"M")+x+" "+y+" ";});
-  const up=cur>=first,col=up?"#22c55e":"#ef4444";
-  const gid="pg"+(Math.random()*1e6|0);
-  svgEl.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
-    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${col}" stop-opacity="0.26"/><stop offset="100%" stop-color="${col}" stop-opacity="0.02"/>
-    </linearGradient></defs>
-    <path d="${area}L ${W-pad} ${H-pad} L ${pad} ${H-pad} Z" fill="url(#${gid})"/>
-    <path d="${path}" fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="${pad}" y1="${ys(cur).toFixed(1)}" x2="${W-pad}" y2="${ys(cur).toFixed(1)}" stroke="${col}" stroke-width="1" stroke-dasharray="4 4" opacity="0.5"/>
-  </svg>`;
-}
-
 async function doSwap(){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!walletAddr){connectWallet();return;}
@@ -2350,8 +2247,7 @@ $("nav").innerHTML=[["swap",'<svg width="16" height="16" viewBox="0 0 24 24" fil
   window.addEventListener("hashchange",route);
   updateStatusBar();
   if(needCfg())toast("未配置合约 · 点击下方「配置」按钮或 Swap/Pool 主按钮即可配置","warn");
-  setTimeout(samplePrice,1500);
-  setInterval(()=>{if(curView==="swap")samplePrice();},20000);
+
 });
 </script>
 </body>
