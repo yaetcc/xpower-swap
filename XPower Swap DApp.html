@@ -2018,16 +2018,15 @@ async function renderFarm(){
       const pools=[];
       for(let i=0;i<Number(len);i++){
         const info=await st.poolInfo(i);
-        let meta=tokenCache[info[0]];
+        const known=XSTOCKS.find(x=>x.addr&&x.addr.toLowerCase()===info[0].toLowerCase());
+        let meta=known?{sym:known.sym,name:known.name,dec:18,logo:known.logo}:tokenCache[info[0]];
         if(!meta){
           const tk=new ethers.Contract(info[0],ERC20_ABI,p);
           meta={sym:await tk.symbol().catch(()=>"?"),name:await tk.name().catch(()=>"?"),dec:await tk.decimals().catch(()=>18)};
-          const known=XSTOCKS.find(x=>x.addr&&x.addr.toLowerCase()===info[0].toLowerCase());
-          if(known)meta.logo=known.logo;
           if(info[0].toLowerCase()===WOKB_ADDR){meta.sym="OKB";meta.nat=1;}
           if(cfg.xstork&&info[0].toLowerCase()===cfg.xstork.toLowerCase())meta.sym="XPR";
-          tokenCache[info[0]]=meta;
         }
+        tokenCache[info[0]]=meta;
         pools.push({pid:i,tok:info[0],sym:meta.sym,name:meta.name,dec:Number(meta.dec),rate:Number(info[1]),total:Number(info[4]),active:info[5],logo:meta.logo});
       }
       return pools;
