@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>XPower · 股票资产 Swap & DeFi</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23060a14'/%3E%3Cpath d='M14 46V26l10 12 8-22 10 24 8-16v22' stroke='%2322d3ee' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F5197B'/%3E%3Cstop offset='1' stop-color='%237C3AED'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M26 14h6l-14 36h-6z' fill='%23fff'/%3E%3Cpath d='M38 14h14l-14 36h-14z' fill='%23fff' opacity='.92'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#f6f6f8; --card:#ffffff; --card2:#fbfbfc; --panel:#ffffff;
@@ -83,6 +83,9 @@ main{max-width:1120px;margin:0 auto;padding:24px 20px 70px}
 @media(max-width:760px){.grid2e{grid-template-columns:1fr}}
 /* Swap 单卡（Uniswap 式） */
 .swap-center{max-width:460px;margin:0 auto}
+.liq-row{display:flex;align-items:flex-end;gap:10px;margin-top:12px}
+.liq-row .amount-wrap{flex:1;min-width:0}
+.liq-row .tokbtn{width:150px;flex-shrink:0;margin-top:0}
 #view-swap .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;margin-top:8px;padding-top:6px;border-top:1px dashed var(--line)}
 #view-swap .info-grid .info-row{padding:5px 2px}
 #view-swap .swap-head b{font-size:15px}
@@ -309,12 +312,14 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
     <div class="grid2">
       <div class="panel">
         <h2><span class="bar"></span>添加流动性</h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div><label>代币 A</label><div class="tokbtn" id="paBtn" onclick="pickToken('pa')"><span class="lg" id="paLg">?</span><span><span class="nm2" id="paNm">选择</span></span><span class="caret">▼</span></div></div>
-          <div><label>代币 B</label><div class="tokbtn" id="pbBtn" onclick="pickToken('pb')"><span class="lg" id="pbLg">?</span><span><span class="nm2" id="pbNm">选择</span></span><span class="caret">▼</span></div></div>
+        <div class="liq-row">
+          <div class="amount-wrap"><label id="paLbl">代币 A</label><input id="paAmt" type="number" min="0" placeholder="0.0" oninput="poolQuote()"></div>
+          <div class="tokbtn" id="paBtn" onclick="pickToken('pa')"><span class="lg" id="paLg">?</span><span><span class="nm2" id="paNm">选择</span></span><span class="caret">▼</span></div>
         </div>
-        <div class="amount-wrap"><label id="paLbl">A 数量</label><input id="paAmt" type="number" min="0" placeholder="0.0" oninput="poolQuote()"></div>
-        <div class="amount-wrap"><label id="pbLbl">B 数量</label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="pbTouched=true;poolQuote()"></div>
+        <div class="liq-row">
+          <div class="amount-wrap"><label id="pbLbl">代币 B</label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="pbTouched=true;poolQuote()"></div>
+          <div class="tokbtn" id="pbBtn" onclick="pickToken('pb')"><span class="lg" id="pbLg">?</span><span><span class="nm2" id="pbNm">选择</span></span><span class="caret">▼</span></div>
+        </div>
         <div class="info-row"><span>池状态</span><b id="poolRate">—</b></div>
         <div class="info-row"><span>你的份额</span><b id="poolShare" class="good">—</b></div>
         <div class="info-row"><span>我的 LP</span><b id="poolLp" class="mono" style="color:var(--gold)">—</b></div>
@@ -1252,14 +1257,14 @@ function renderAssetList(){
   const q=($("assetSearch").value||"").trim().toLowerCase();
   const u={};
   assets.forEach(a=>{if(a.addr)u[a.addr.toLowerCase()]=a;});
-  XSTOCKS.forEach(x=>{if(x.addr&&!u[x.addr.toLowerCase()])u[x.addr.toLowerCase()]={addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true};});
+  XSTOCKS.forEach(x=>{if(x.addr&&!u[x.addr.toLowerCase()])u[x.addr.toLowerCase()]={addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true,nat:x.nat};});
   const all=Object.values(u);
   const list=all.filter(a=>!q||(a.sym||"").toLowerCase().includes(q)||(a.name||"").toLowerCase().includes(q)||(a.addr||"").toLowerCase().includes(q));
   const cnt=$("assetCnt");if(cnt)cnt.textContent=list.length+"/"+all.length+" 项";
   el.innerHTML=list.length?list.map(a=>a.addr?`
     <div class="item">
       ${logoSvg(a.sym||"?","",a.logo)}
-      <div class="nm"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")} · ${shortAddr(a.addr)} · <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
+      <div class="nm"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")} · ${a.nat?"原生 Gas · X Layer":shortAddr(a.addr)} · <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
       <div style="display:flex;gap:6px">
         <button class="btn ghost sm" onclick="copyText('${a.addr}')">复制</button>
         ${a.builtin?"":`<button class="btn danger sm" onclick="removeAsset('${a.addr}')">移除</button>`}
@@ -1591,7 +1596,7 @@ function poolSelA(k,t){if(k==="pa"){pA=t;}else{pB=t;}pbTouched=false;renderPoolS
 function poolSelR(t){pR=t;renderPoolSel();removeQuote();}
 function renderPoolSel(){
   setTokBtn("paBtn","paLg","paNm",pA);setTokBtn("pbBtn","pbLg","pbNm",pB);setTokBtn("prBtn","prLg","prNm",pR);
-  if(pA&&pB){$("paLbl").textContent=pA.sym+" 数量";$("pbLbl").textContent=pB.sym+" 数量";}
+  if(pA&&pB){$("paLbl").textContent="代币 A · "+pA.sym;$("pbLbl").textContent="代币 B · "+pB.sym;}
   updateAddLiqCta();updateRmLiqCta();
 }
 async function poolQuote(){
