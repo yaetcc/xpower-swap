@@ -1,0 +1,10 @@
+{
+  "name": "XPower DeFi",
+  "chainId": 196,
+  "cfg": {
+    "factory": "",
+    "router": "",
+    "staking": "",
+    "xstork": ""
+  }
+}
