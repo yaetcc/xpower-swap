@@ -1152,17 +1152,17 @@ function openCfg(){
     <div class="box"><button class="x" onclick="this.parentElement.parentElement.remove()">✕</button>
     <h3>◈ 合约配置</h3>
     <div id="deploySteps" style="display:grid;gap:6px;margin-top:4px"></div>
-    <button class="btn primary wide" style="margin-top:14px" onclick="deployAll()">⚡ 一键部署 4 合约（连接钱包后 · 自动回填地址）</button>
+
     <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:4px">⚡ 一键起盘 · OKB × xStock 组 LP</div>
-      <div style="font-size:11.5px;color:var(--dim);margin-bottom:8px;line-height:1.6">默认 OKB + 你指定的 xStock 资产组成 LP 交易对；注入奖励从你的钱包直接冲入矿池（奖励币默认 XPR，可指定其他 ERC-20）</div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">⚡ 一键起盘 · 部署合约 + OKB × xStock 组 LP</div>
+      <div style="font-size:11.5px;color:var(--dim);margin-bottom:8px;line-height:1.6">首次起盘自动部署 4 合约（XPR / Factory / Router / Staking）；默认 OKB + 你指定的 xStock 资产组成 LP 交易对；注入奖励从你的钱包直接冲入矿池（奖励币默认 XPR，可指定其他 ERC-20）</div>
       <div style="display:grid;gap:8px">
         <input id="lgTok" list="lgTokList" placeholder="选择 xStock 资产（如 XAAPL）· 与 OKB 自动组 LP" class="mono" style="font-size:12.5px">
         <datalist id="lgTokList"></datalist>
         <input id="lgReward" placeholder="奖励币地址 · 留空默认 XPR" class="mono" style="font-size:12.5px">
         <input id="lgRate" type="number" placeholder="每秒奖励（如 0.000001）" style="font-size:12.5px">
         <input id="lgFund" type="number" placeholder="冲入奖励数量 · 从钱包转入矿池（如 100000）" style="font-size:12.5px">
-        <button class="btn gold wide" onclick="launchAll()">⚡ 一键起盘：组 LP 交易对 → 质押池 → 冲入奖励</button>
+        <button class="btn gold wide" onclick="launchAll()">⚡ 一键起盘：部署合约 → 组 LP 交易对 → 质押池 → 冲入奖励</button>
       </div>
       <div id="lgLog" style="display:grid;gap:6px;margin-top:8px;font-size:12px"></div>
     </div>
@@ -1188,7 +1188,12 @@ function resolveTok(v){
 async function launchAll(){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
-  if(needCfg()){toast("请先完成合约部署/配置","err");return;}
+  if(needCfg()){
+    toast("未配置合约 · 正在自动部署 4 合约…","warn");
+    await deployAll();
+    if(needCfg()){toast("合约部署未完成，请重试","err");return;}
+    toast("合约部署完成 · 继续起盘…","ok");
+  }
   const tok=resolveTok($("lgTok").value);
   if(!tok){toast("请选择 xStock 资产或粘贴地址","err");return;}
   const rate=Number($("lgRate").value),fund=Number($("lgFund").value);
