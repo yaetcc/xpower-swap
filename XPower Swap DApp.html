@@ -338,6 +338,10 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
         <input id="poolRate" type="number" placeholder="每秒奖励 XPR" style="flex:1;min-width:130px">
         <button class="btn primary" onclick="createPool()">创建池</button>
       </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <input id="poolFund" type="number" placeholder="注入奖励 XPR（转入矿池）" style="flex:2;min-width:240px">
+        <button class="btn" onclick="fundFarm()">注入奖励</button>
+      </div>
       <div class="info-row" style="border-top:1px solid var(--line);padding-top:10px">
         <span style="color:var(--dim)">一键批量创建推荐池（为已配置地址的每个资产建池）</span>
         <button class="btn gold sm" onclick="createRecommendedPools()">一键创建推荐池</button>
@@ -1745,6 +1749,9 @@ async function createPool(){
   if(!rate||rate<=0){toast("请输入每秒奖励","err");return;}
   try{
     const signer=await getSigner();
+    const st0=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
+    const own=await st0.owner();
+    if(own.toLowerCase()!==walletAddr){toast("仅池 owner 可创建","err");return;}
     qstate.steps=[];
     qAdd("创建质押池",async()=>{
       const st=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
@@ -1760,6 +1767,32 @@ function configuredAssets(){
   for(const x of XSTOCKS){ if(isAddr(x.addr)&&!seen[x.addr.toLowerCase()]){seen[x.addr.toLowerCase()]=1;set.push({addr:x.addr,sym:x.sym});} }
   return set;
 }
+async function fundFarm(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!walletAddr){toast("请先连接钱包","err");return;}
+  if(!cfg.xstork||!cfg.staking){toast("需先配置 XPR 与 Staking 合约","err");return;}
+  const amt=Number($("poolFund").value);
+  if(!amt||amt<=0){toast("请输入注入奖励数量","err");return;}
+  try{
+    const signer=await getSigner();
+    const st=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
+    const own=await st.owner();
+    if(own.toLowerCase()!==walletAddr){toast("仅池 owner 可注入奖励","err");return;}
+    const xpr=new ethers.Contract(cfg.xstork,ERC20_ABI,signer);
+    const amtBN=toWei(amt,18);
+    const bal=await xpr.balanceOf(walletAddr);
+    if(bal<amtBN){toast("XPR 余额不足（当前 "+fmt(fromWei(bal,18))+")","err");return;}
+    qstate.steps=[];
+    qAdd("授权 XPR → 矿池",async()=>{
+      const tx=await xpr.approve(cfg.staking,amtBN);await tx.wait();return"已授权";
+    });
+    qAdd("注入 "+amt+" XPR 奖励",async()=>{
+      const tx=await xpr.transfer(cfg.staking,amtBN);await tx.wait();return"奖励已入池";
+    });
+    qRun();
+  }catch(e){toast("注入失败："+(e.message||e),"err");}
+}
+
 async function createRecommendedPools(){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
