@@ -1872,7 +1872,7 @@ window.addEventListener("load",()=>{
 $("nav").innerHTML=[["swap",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg>',"兑换"],["pool",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg>',"流动性"],["farm",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg>',"质押"],["assets",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg>',"资产"]].map(([v,ic,zh])=>`<div class="n" data-v="${v}" onclick="go('${v}')">${ic}${zh}</div>`).join("");
   route();
   window.addEventListener("hashchange",route);
-  if(needCfg())setTimeout(openCfg,600);
+  if(needCfg())toast("未配置合约 · 点击下方「配置」按钮或 Swap/Pool 主按钮即可配置","warn");
 });
 </script>
 </body>
