@@ -914,13 +914,14 @@ function probeRPCs(){
 }
 function withRPC(fn){return new Promise((res,rej)=>{
   if(!rpcProbed){rpcProbed=true;probeRPCs();}
-  let t=0;const go=()=>{t++;
-    Promise.race([fn(pickProvider()),new Promise((_,r)=>setTimeout(()=>r(new Error("RPC timeout")),8000))]).then(res).catch(e=>{
-      if(t>=RPCS.length)return rej(e);
+  let t=0,round=0;const go=()=>{t++;
+    Promise.race([fn(pickProvider()),new Promise((_,r)=>setTimeout(()=>r(new Error("RPC timeout")),10000))]).then(res).catch(e=>{
+      if(t>=RPCS.length&&round>=1)return rej(e);
+      if(t>=RPCS.length){round++;t=0;}
       rpcIdx=(rpcIdx+1)%RPCS.length;
       const now=Date.now();
       if(now-lastRpcToast>8000){lastRpcToast=now;toast("RPC 波动，已自动切换节点","warn");}
-      setTimeout(go,200);
+      setTimeout(go,300);
     });
   };go();});}
 async function getSigner(){if(!window.ethereum)throw new Error("未检测到钱包");return new ethers.BrowserProvider(window.ethereum).getSigner();}
