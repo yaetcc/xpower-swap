@@ -343,7 +343,6 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
     <span>当前网络不是 X Layer（chainId 196）—— 兑换 / 添加流动性 / 质押均无法正常提交，请切换网络</span>
   </div>
   <div id="toasts"></div>
-  <div id="statusBar" style="display:none;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;padding:8px 16px;border-bottom:1px solid transparent"></div>
 
 <main>
   <!-- ===== Swap ===== -->
@@ -2425,26 +2424,7 @@ function refreshView(){
   if(curView==="assets"){renderAssetList();renderAssets();}
   renderCfgInfo();
 }
-function refreshAll(){refreshView();if(curView==="swap")quoteSwap();updateStatusBar();}
-async function updateStatusBar(){
-  const el=$("statusBar");if(!el)return;
-  try{
-    if(!walletAddr){el.style.display="flex";el.style.background="#f3f4f6";el.style.color="#4b5563";el.style.borderColor="transparent";el.innerHTML='<span>连接钱包后查看资产余额、添加流动性并参与质押挖矿</span>';return;}
-    if(!chainOk){el.style.display="none";return;}
-    if(needCfg()){el.style.display="flex";el.style.background="#fff7e6";el.style.color="#b45309";el.style.borderColor="#fcd34d";el.innerHTML='<span>合约尚未部署 · <b style="cursor:pointer;text-decoration:underline" onclick="openCfg()">点此一键起盘</b>（部署 4 合约 → 组 LP → 质押池）</span>';return;}
-    let pairs=0,pools=0;
-    try{
-      await withRPC(async p=>{
-        const f=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
-        pairs=Number(await f.allPairsLength());
-        const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
-        pools=Number(await st.poolLength());
-      });
-    }catch(e){}
-    el.style.display="flex";el.style.background="#ecfdf5";el.style.color="#047857";el.style.borderColor="#a7f3d0";
-    el.innerHTML='<span>合约已就绪 · '+pairs+' 交易对 · '+pools+' 质押池 · <b style="cursor:pointer;text-decoration:underline" onclick="openCfg()">查看配置</b></span>';
-  }catch(e){el.style.display="none";}
-}
+function refreshAll(){refreshView();if(curView==="swap")quoteSwap();}
 function renderCfgInfo(){
   const el=$("cfgInfo");if(!el)return;
   el.innerHTML=needCfg()
