@@ -293,8 +293,8 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
 .swap-head b{font-size:22px;font-weight:900;letter-spacing:-.3px;background:linear-gradient(90deg,#f5197b,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent}
 .amt-in{background:#f6f5f9;border:1px solid #eee9f1;border-radius:20px;padding:7px 13px 11px;display:grid;gap:3px;transition:border-color .18s,box-shadow .18s}
 .amt-in:focus-within{border-color:#f2b4d8;box-shadow:0 0 0 4px rgba(245,25,123,.08)}
-.amt-head{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#9a94a6;font-weight:700;letter-spacing:.3px}
-.amt-head .bal{color:#b0aaba;font-weight:600;font-size:11px}
+.amt-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11.5px;color:#9a94a6;font-weight:700;letter-spacing:.3px}
+.amt-head .bal{color:#b0aaba;font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%;text-align:right;font-family:var(--mono)}
 .amt-body{display:flex;align-items:center;gap:8px;height:52px}
 .amt-body input{flex:1 1 auto;min-width:0;width:auto;background:transparent;border:none!important;border-radius:0;font-size:24px!important;font-weight:900;font-family:var(--mono);outline:none;color:#16131f;letter-spacing:-.5px;padding:0;height:52px;box-sizing:border-box;box-shadow:none!important}
 .amt-body input:focus{border:none!important;box-shadow:none!important}
@@ -1226,7 +1226,7 @@ const WOKB_ADDR="0xe538905cf8410324e03a5a23c1c177a474d59b2b";
 const $=id=>document.getElementById(id);
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function shortAddr(a){if(!a)return"";a=String(a);return a.slice(0,6)+"…"+a.slice(-4);}
-function fmtPrice(n){n=Number(n);if(!isFinite(n))return"0";if(n>=1000)return n.toLocaleString("en-US",{maximumFractionDigits:2});if(n>=0.001)return n.toFixed(4).replace(/0+$/,"").replace(/\.$/,"");if(n>=1e-6)return n.toFixed(8).replace(/0+$/,"").replace(/\.$/,"");return n.toExponential(2);}
+function fmtPrice(n){n=Number(n);if(!isFinite(n)||n===0)return"0";if(n>=1000)return n.toLocaleString("en-US",{maximumFractionDigits:2});if(n>=0.001)return n.toFixed(4).replace(/0+$/,"").replace(/\.$/,"");if(n>=1e-6)return n.toFixed(8).replace(/0+$/,"").replace(/\.$/,"");return n.toExponential(2);}
 function fmt(n,d){n=Number(n);d=d==null?2:d;if(!isFinite(n))return"0";if(n>=1e6)return(n/1e6).toFixed(2)+"M";if(n>=1e4)return(n/1e3).toFixed(2)+"k";return n.toLocaleString("en-US",{maximumFractionDigits:d});}
 function toast(m,t){const e=document.createElement("div");e.className="toast"+(t==="err"?" err":t==="ok"?" ok":"");e.textContent=m;$("toasts").appendChild(e);setTimeout(()=>e.remove(),t==="err"?6000:3500);}
 function copyText(t){navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast("已复制"),()=>{});}
@@ -1468,7 +1468,7 @@ function setTokBtn(btnId,lgId,nmId,t){
   const b=$(btnId),l=$(lgId),n=$(nmId);if(!b)return;
   const sub=b.querySelector(".sub2");
   if(t){l.outerHTML=logoSvg(t.sym,lgId,t.logo);n.textContent=t.sym;
-    if(sub)sub.textContent=(t.name||"").slice(0,10)||"代币";}
+    if(sub)sub.textContent=t.nat?"原生 Gas · 自动包装":(t.name||"").slice(0,10)||"代币";}
   else{n.textContent="选择代币";l.outerHTML=`<span class="lg" id="${lgId}">?</span>`;
     if(sub)sub.textContent="点击选择";}
 }
@@ -1485,8 +1485,8 @@ function updateSwapBal(){
   withRPC(async p=>{
     const ra=async t=>t.nat?await p.getBalance(walletAddr):await new ethers.Contract(tokAddr(t),ERC20_ABI,p).balanceOf(walletAddr);
     const [ba,bb]=await Promise.all([ra(sA),ra(sB)]);
-    if(fb)fb.textContent="可用余额："+fmtPrice(fromWei(ba,sA.dec))+" "+sA.sym+(sA.nat?"（原生 Gas · 自动包装）":"");
-    if(tb)tb.textContent="可用余额："+fmtPrice(fromWei(bb,sB.dec))+" "+sB.sym;
+    if(fb)fb.textContent=fmtPrice(fromWei(ba,sA.dec))+" "+sA.sym;
+    if(tb)tb.textContent=fmtPrice(fromWei(bb,sB.dec))+" "+sB.sym;
   }).catch(()=>{});
 }
 async function setMax(){
