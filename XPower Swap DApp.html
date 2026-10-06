@@ -268,22 +268,6 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
         <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
         <details style="margin-top:12px;font-size:12px"><summary style="cursor:pointer;color:var(--dim);font-weight:700;user-select:none">最近交易 · 本机记录</summary><div id="txHist" style="margin-top:6px"></div></details>
       </div>
-      <div class="swap-card" style="margin-top:14px">
-        <div class="swap-head"><b>OKB ⇄ WOKB 包装</b><span class="badge">原生 Gas ⇄ 可交易封装</span></div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-          <div style="flex:1;min-width:200px">
-            <div class="swap-row"><div class="amt"><label>OKB 包装</label><input id="wrapAmt" type="number" min="0" placeholder="0.0"><button class="maxbtn" onclick="setWrapMax()">MAX</button></div></div>
-            <div class="balrow"><span id="okbBal"></span></div>
-            <button class="btn primary wide" style="margin-top:8px" onclick="wrapOkb()">包装为 WOKB</button>
-          </div>
-          <div style="flex:1;min-width:200px">
-            <div class="swap-row"><div class="amt"><label>WOKB 解包</label><input id="unwAmt" type="number" min="0" placeholder="0.0"><button class="maxbtn" onclick="setUnwMax()">MAX</button></div></div>
-            <div class="balrow"><span id="wokbBal"></span></div>
-            <button class="btn wide" style="margin-top:8px" onclick="unwrapOkb()">解包为 OKB</button>
-          </div>
-        </div>
-        <div class="balrow" style="margin-top:8px"><span style="color:var(--faint);font-size:11px">OKB 是 X Layer 原生 Gas（非 ERC20），交易需先包装为 WOKB；解包随时可取回原生 OKB。</span></div>
-      </div>
     </div>
   </section>
 
@@ -436,7 +420,6 @@ try{ const _xm=JSON.parse(localStorage.getItem(STORAGE+"xaddrs")||"{}"); XSTOCKS
 let XSTOCKS=[
   /* X Layer 原生币封装 · Wrapped OKB */
   {sym:"OKB",name:"OKB · X Layer 原生 Gas 币",addr:"0xNATIVE_OKB",nat:1},
-  {sym:"WOKB",name:"Wrapped OKB · X Layer 原生封装",addr:"0xe538905cf8410324e03a5a23c1c177a474d59b2b"},
   /* 科技巨头 · Magnificent 7 */
   {sym:"XAAPL",name:"苹果 · Apple",addr:"0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a"},{sym:"XNVDA",name:"英伟达 · NVIDIA",addr:"0xc845b2894dbddd03858fd2d643b4ef725fe0849d"},
   {sym:"XTSLA",name:"特斯拉 · Tesla",addr:"0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0"},{sym:"XMSFT",name:"微软 · Microsoft",addr:"0x5621737f42dae558b81269fcb9e9e70c19aa6b35"},
@@ -1178,7 +1161,7 @@ function openCfg(){
 function fillTokList(){
   const dl=$("lgTokList");if(!dl)return;
   dl.innerHTML=XSTOCKS.filter(x=>x.addr&&!x.nat).map(x=>`<option value="${esc(x.sym)}">${esc(x.sym)} · ${esc(x.name)} · ${x.addr}</option>`).join("")
-    +`<option value="WOKB">WOKB · Wrapped OKB · 0xe538905cf8410324e03a5a23c1c177a474d59b2b</option>`;
+    ;
 }
 function resolveTok(v){
   v=(v||"").trim();
@@ -1448,53 +1431,7 @@ function txHistSave(x){
 
 /* ============ OKB ⇄ WOKB 包装 ============ */
 function tokAddr(t){return t&&t.nat?WOKB_ADDR:t.addr;}
-async function refreshWrapBals(){
-  if(!walletAddr)return;
-  try{
-    const b=await withRPC(async p=>({okb:await p.getBalance(walletAddr),wokb:await new ethers.Contract(WOKB_ADDR,WOKB_ABI,p).balanceOf(walletAddr)}));
-    const e1=$("okbBal"),e2=$("wokbBal");
-    if(e1)e1.textContent="OKB "+fmt(fromWei(b.okb,18));
-    if(e2)e2.textContent="WOKB "+fmt(fromWei(b.wokb,18));
-  }catch(e){}
-}
 function wSigner(){return new ethers.BrowserProvider(window.ethereum).getSigner();}
-async function wrapOkb(){
-  if(!walletAddr){connectWallet();return;}
-  const n=Number($("wrapAmt").value);
-  if(!n||n<=0){toast("请输入 OKB 数量","err");return;}
-  if(qstate.running){toast("任务进行中，请稍候","err");return;}
-  const el=$("wrapAmt");
-  el.disabled=true;
-  try{
-    await withQueue([{t:`包装 ${n} OKB → WOKB`,f:async()=>{
-      const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,await wSigner());
-      const tx=await w.deposit({value:parseUnits(String(n),18)});
-      await tx.wait();
-    }}],{
-      ok:()=>{toast("包装成功","ok");$("wrapAmt").value="";refreshWrapBals();refreshAll();},
-      err:(e)=>{toast("包装失败："+(e.shortMessage||e.message||e),"err");}
-    });
-  }finally{el.disabled=false;}
-}
-async function unwrapOkb(){
-  if(!walletAddr){connectWallet();return;}
-  const n=Number($("unwAmt").value);
-  if(!n||n<=0){toast("请输入 WOKB 数量","err");return;}
-  if(qstate.running){toast("任务进行中，请稍候","err");return;}
-  const el=$("unwAmt");
-  el.disabled=true;
-  try{
-    await withQueue([{t:`解包 ${n} WOKB → OKB`,f:async()=>{
-      const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,await wSigner());
-      const tx=await w.withdraw(parseUnits(String(n),18));
-      await tx.wait();
-    }}],{
-      ok:()=>{toast("解包成功","ok");$("unwAmt").value="";refreshWrapBals();refreshAll();},
-      err:(e)=>{toast("解包失败："+(e.shortMessage||e.message||e),"err");}
-    });
-  }finally{el.disabled=false;}
-}
-
 /* ============ 一键部署 4 合约 ============ */
 async function deployAll(){
   if(!walletAddr){toast("请先连接钱包","err");return;}
@@ -1562,7 +1499,7 @@ async function doSwap(){
       if(allw<amt)qAdd("授权 "+sA.sym,async()=>{const r=await tk.approve(cfg.router,ethers.MaxUint256);await r.wait();return"已授权";});
     }else{
       const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,signer);
-      qAdd("包装 "+fmtPrice(n)+" OKB → WOKB",async()=>{const r=await w.deposit({value:amt});await r.wait();return"已包装";});
+      qAdd("包装 "+fmtPrice(n)+" OKB（自动封装）",async()=>{const r=await w.deposit({value:amt});await r.wait();return"已包装";});
     }
     qAdd("兑换 "+fmtPrice(n)+" "+sA.sym,async()=>{
       const r=new ethers.Contract(cfg.router,ROUTER_ABI,signer);
@@ -1667,11 +1604,11 @@ async function doAddLiquidity(){
     }
     for(const[t,amt]of[[pA,amtA],[pB,amtB]]){
       if(!t.nat)continue;
-      qAdd("包装 "+fmtPrice(Number(fromWei(amt,18)))+" OKB → WOKB",async()=>{
+      qAdd("包装 "+fmtPrice(Number(fromWei(amt,18)))+" OKB（自动封装）",async()=>{
         const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,signer);
         const tx=await w.deposit({value:amt});await tx.wait();return"已包装";
       });
-      qAdd("授权 WOKB → Router",async()=>{
+      qAdd("授权 OKB（封装后）",async()=>{
         const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,signer);
         const tx=await w.approve(cfg.router,ethers.MaxUint256);await tx.wait();return"已授权";
       });
@@ -2134,7 +2071,7 @@ function refreshView(){
   if(curView==="assets"){renderAssetList();renderAssets();}
   renderCfgInfo();
 }
-function refreshAll(){refreshView();if(curView==="swap")quoteSwap();refreshWrapBals();}
+function refreshAll(){refreshView();if(curView==="swap")quoteSwap();}
 function renderCfgInfo(){
   const el=$("cfgInfo");if(!el)return;
   el.innerHTML=needCfg()
