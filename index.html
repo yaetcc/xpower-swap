@@ -508,7 +508,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
               <input id="poolTok" placeholder="粘贴合约地址，或点右侧选择" spellcheck="false" oninput="farmTokInput()">
               <button type="button" class="btn ghost sm" onclick="pickToken('farm')">选择资产</button>
             </div>
-            <p class="fa-hint" id="poolTokHint">支持 XPR / OKB / 全部 xStock 股票资产 · XLP 池凭证请手动粘贴 LP 地址</p>
+            <p class="fa-hint" id="poolTokHint">支持 XPR / OKB / 全部 xStock 股票资产 · XLP 池凭证已自动列出（免粘贴）</p>
           </div>
           <div class="fa-row">
             <label>每秒奖励 <span class="gold">XPR</span></label>
@@ -1854,12 +1854,39 @@ function setXAddr(sym){
   renderAssetList();renderStats();toast(sym+" 地址已保存","ok");
 }
 /* ============ 代币选择 ============ */
-function pickToken(ctx){pickCtx=ctx;renderTokList();$("tokMask").classList.add("on");$("tokSearch").value="";setTimeout(()=>$("tokSearch").focus(),50);}
+let xlpPairs=null;
+async function loadXlp(){
+  xlpPairs=null;
+  if(!cfg.factory)return;
+  try{
+    await withRPC(async p=>{
+      const fc=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
+      const fl=Number(await fc.allPairsLength());
+      const arr=[];
+      for(let j=0;j<fl;j++){
+        try{
+          const pa=await fc.allPairs(j);
+          const pc=new ethers.Contract(pa,PAIR_ABI,p);
+          const t0=await pc.token0(),t1=await pc.token1();
+          const d0=tokInfo(t0),d1=tokInfo(t1);
+          const s0=d0?d0.sym:shortAddr(t0),s1=d1?d1.sym:shortAddr(t1);
+          const lg=(d1&&d1.nat&&d0)?d0.logo:(d0&&d0.nat&&d1)?d1.logo:(d0?d0.logo:(d1?d1.logo:""));
+          arr.push({addr:pa,sym:"XLP · "+s0+"/"+s1,name:"LP 凭证 · "+s0+" / "+s1,dec:18,logo:lg,nat:0,xlp:1});
+        }catch(e){}
+      }
+      xlpPairs=arr;
+    });
+  }catch(e){xlpPairs=null;}
+  const m=$("tokMask");
+  if(m&&m.classList.contains("on")&&pickCtx==="farm")renderTokList();
+}
+function pickToken(ctx){pickCtx=ctx;renderTokList();$("tokMask").classList.add("on");$("tokSearch").value="";setTimeout(()=>$("tokSearch").focus(),50);if(ctx==="farm")loadXlp();}
 function hideTok(){$("tokMask").classList.remove("on");pickCtx=null;}
 function renderTokList(){
   const q=($("tokSearch").value||"").trim().toLowerCase();
   if(q!==lastTokQ){lastTokQ=q;tokPage=1;}
-  const pool=[...(cfg.xstork?[{addr:cfg.xstork,sym:"XPR",name:"平台奖励币",dec:18,logo:XPR_LOGO,nat:0}]:[]),...assets,...XSTOCKS.filter(x=>x.addr).map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,logo:x.logo,nat:x.nat||0}))];
+  const xlps=(pickCtx==="farm"&&xlpPairs&&xlpPairs.length)?xlpPairs:[];
+const pool=[...(pickCtx==="farm"?xlps:[]),...(cfg.xstork?[{addr:cfg.xstork,sym:"XPR",name:"平台奖励币",dec:18,logo:XPR_LOGO,nat:0}]:[]),...assets,...XSTOCKS.filter(x=>x.addr).map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,logo:x.logo,nat:x.nat||0}))];
   const u={};pool.forEach(x=>u[x.addr.toLowerCase()]=x);
   const list=Object.values(u).filter(x=>!q||x.sym.toLowerCase().includes(q)||x.name.toLowerCase().includes(q)||x.addr.toLowerCase().includes(q));
   const shown=list.slice(0,tokPage*60);
@@ -1867,7 +1894,7 @@ function renderTokList(){
     <div class="item" style="cursor:pointer" onclick="selToken('${x.addr}','${esc(x.sym)}','${esc(x.name)}',${x.dec},'${esc(x.logo||"")}',${x.nat?1:0})">
       ${logoSvg(x.sym,"",x.logo)}
       <div class="nm"><b>${esc(x.sym)}</b><span>${esc(x.name)}</span></div>
-      <span style="color:var(--acc);font-size:13px">选择 →</span>
+      ${x.xlp?'<span style="font-size:10px;padding:2px 6px;border-radius:6px;background:linear-gradient(135deg,#F5197B22,#7C3AED22);color:var(--acc);font-weight:700">XLP 凭证 · 免粘贴</span>':'<span style="color:var(--acc);font-size:13px">选择 →</span>'}
     </div>`).join("")+(list.length>shown.length?`<div style="text-align:center;padding:8px 0 2px"><button class="btn ghost sm" onclick="tokPage++;renderTokList()">显示更多 ${list.length-shown.length} 项</button></div>`:"")
   :`<div class="empty"><div class="big"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg></div>无匹配 · 先到「资产」页添加代币地址</div>`;
 }
@@ -2449,9 +2476,13 @@ async function renderFarm(){
         }
         if(cfg.xstork){
           const poolXprBal=await new ethers.Contract(cfg.xstork,ERC20_ABI,p).balanceOf(cfg.staking);
+          const sumRate=data.reduce((a,b)=>a+b.rate,0);
           for(const pg of data){
             const ex=$("poolXpr"+pg.pid);
-            if(ex)ex.innerHTML=poolXprBal>0n?`<span class="badge-ok">${fmt(fromWei(poolXprBal,18))} XPR</span>`:(fmt(fromWei(poolXprBal,18))+" XPR · <span class='badge-gold'>尚未注入</span>");
+            if(!ex)continue;
+            if(poolXprBal<=0n){ex.innerHTML="0 XPR · <span class='badge-gold'>尚未注入</span>";continue;}
+            const share=sumRate>0?poolXprBal*BigInt(pg.rate)/BigInt(sumRate):0n;
+            ex.innerHTML=`<span class="badge-ok">${fmt(fromWei(share,18))} XPR</span> <span style="font-size:10px;color:var(--faint)">本池 · 全池 ${fmt(fromWei(poolXprBal,18))} XPR 按速率占比</span>`;
           }
         }
       }).catch(()=>{});
