@@ -522,6 +522,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
       <p>质押 xStock 资产或 LP 凭证，按份额每秒获得 XPR 奖励</p></div>
     </div>
     <div class="stats" id="farmStats"></div>
+    <div id="farmDivCard" style="margin-bottom:12px"></div>
     <div class="farm-grid" id="farmList" style="display:grid;gap:10px"></div>
     <div class="panel" id="farmAdmin" style="display:none;margin-top:16px">
       <h2><span class="bar"></span>矿池管理 · owner</h2>
@@ -2476,6 +2477,7 @@ async function doRemoveLiquidity(){
 async function renderFarm(){
   const el=$("farmList");
   if(!cfg.staking){el.innerHTML=`<div class="empty"><div class="big">◈</div>未配置 Staking 合约<br><div style="display:flex;gap:8px;margin-top:8px;justify-content:center"><button class="btn primary sm" onclick="openCfg()">去配置合约</button><button class="btn gold sm" onclick="location.hash='pool'">去 Pool 一键起盘</button></div></div>`;return;}
+  renderXprsDivCard();
   el.innerHTML=`<div class="empty">读取质押池…</div>`;
   try{
     const data=await withRPC(async p=>{
@@ -2855,31 +2857,6 @@ async function renderAssets(){
       const n=await st.poolLength();
       const e=$("astPoolCnt");if(e)e.textContent=String(n);
     }).catch(()=>{});
-    /* XPRS 分红面板：持币分红 XPR · 手动领取 */
-    if(isAddr(cfg.xprsDiv)){
-      let pend=0n,totalStaked=0n;
-      try{await withRPC(async p=>{
-        const dv=new ethers.Contract(cfg.xprsDiv,DIV_ABI,p);
-        pend=await dv.userPending(walletAddr);
-        try{totalStaked=await dv.totalStaked();}catch(e){}
-      });}catch(e){}
-      const card=document.createElement("div");
-      card.style.cssText="margin-top:14px;border:1px solid var(--line);border-radius:16px;padding:14px;background:linear-gradient(160deg,rgba(245,25,123,.06),rgba(255,154,61,.05))";
-      card.innerHTML=`
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          ${logoSvg("XPRS","",XPRS_LOGO)}
-          <div style="flex:1"><b style="font-size:14px">XPRS 分红</b><div style="font-size:11px;color:var(--faint)">持币分红 XPR · 按持仓比例累积 · 手动领取</div></div>
-          ${isAddr(cfg.xprs)?`<span class="mono cp" data-copy="${cfg.xprs}" title="点击复制 XPRS 地址" style="font-size:10.5px;color:var(--faint)">XPRS ${shortAddr(cfg.xprs)}</span>`:""}
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <div style="background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:12px;padding:9px 12px"><div style="font-size:10.5px;color:var(--faint)">我的 XPRS 持仓</div><div style="font-weight:800;font-size:15px">${fmt(fromWei(xprsB,18))}</div></div>
-          <div style="background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:12px;padding:9px 12px"><div style="font-size:10.5px;color:var(--faint)">可领取 XPR 分红</div><div style="font-weight:800;font-size:15px;color:var(--acc)" class="grad-txt">${fmt(fromWei(pend,18))}</div></div>
-        </div>
-        ${totalStaked>0n?`<div style="font-size:11px;color:var(--faint);margin-bottom:8px">分红池持仓总量：${fmt(fromWei(totalStaked,18))} XPRS</div>`:""}
-        <button class="btn gold wide" onclick="claimXprs()" ${pend>0n?"":"disabled"}>${pend>0n?`领取 ${fmt(fromWei(pend,18))} XPR`:"暂无待领分红"}</button>
-        <div style="font-size:10.5px;color:var(--faint);margin-top:8px;line-height:1.6">分红合约：<span class="mono cp" data-copy="${cfg.xprsDiv}" title="点击复制分红合约地址">${shortAddr(cfg.xprsDiv)}</span><br>XPR 分红由项目方按持仓注入分红池，持仓 XPRS 即可累积。</div>`;
-      balEl.parentElement.insertBefore(card,balEl);
-    }
   }catch(e){$("balList").innerHTML=`<div class="empty" style="grid-column:1/-1">读取失败：${esc(e.message)}<br><br><button class="btn ghost sm" onclick="renderAssets()">重试</button></div>`;}
 }
 async function claimXprs(){
@@ -2893,8 +2870,36 @@ async function claimXprs(){
     toast("领取 XPR 分红提交中…","warn");
     await tx.wait();
     toast("XPR 分红已到账","ok");
-    renderAssets();
+    renderXprsDivCard();
   }catch(e){toast("领取失败："+String(e.message||e).slice(0,90),"err");}
+}
+/* XPRS 分红卡：质押页顶部 · 持币分红 XPR · 手动领取 */
+async function renderXprsDivCard(){
+  const host=$("farmDivCard");if(!host)return;
+  if(!isAddr(cfg.xprs)&&!isAddr(cfg.xprsDiv)){host.innerHTML="";return;}
+  let pend=0n,totalStaked=0n,xprsB=0n;
+  if(!walletAddr){host.innerHTML=`<div class="panel" style="padding:14px;text-align:center;color:var(--faint);font-size:12.5px">${logoSvg("XPRS","",XPRS_LOGO)} <b>XPRS 分红</b> · 持币分红 XPR · 连接钱包查看分红</div>`;return;}
+  if(isAddr(cfg.xprs)){try{xprsB=await withRPC(async p=>new ethers.Contract(cfg.xprs,ERC20_ABI,p).balanceOf(walletAddr));}catch(e){}}
+  if(isAddr(cfg.xprsDiv)){
+    try{await withRPC(async p=>{
+      const dv=new ethers.Contract(cfg.xprsDiv,DIV_ABI,p);
+      pend=await dv.userPending(walletAddr);
+      try{totalStaked=await dv.totalStaked();}catch(e){}
+    });}catch(e){}
+  }
+  host.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:linear-gradient(160deg,rgba(245,25,123,.06),rgba(255,154,61,.05))">
+      ${logoSvg("XPRS","",XPRS_LOGO)}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:13.5px">XPRS 分红</b><span style="font-size:10.5px;color:var(--faint)">持币分红 XPR · 手动领取</span></div>
+        <div style="display:flex;gap:14px;margin-top:6px;flex-wrap:wrap">
+          <span style="font-size:12px"><span style="color:var(--faint)">我的持仓 </span><b>${fmt(fromWei(xprsB,18))} XPRS</b></span>
+          <span style="font-size:12px"><span style="color:var(--faint)">可领分红 </span><b class="grad-txt">${fmt(fromWei(pend,18))} XPR</b></span>
+          ${totalStaked>0n?`<span style="font-size:12px"><span style="color:var(--faint)">分红池 </span>${fmt(fromWei(totalStaked,18))} XPRS</span>`:""}
+        </div>
+      </div>
+      <button class="btn gold sm" onclick="claimXprs()" ${pend>0n?"":"disabled"}>${pend>0n?`领取 ${fmt(fromWei(pend,18))} XPR`:"暂无待领"}</button>
+    </div>`;
 }
 
 /* ============ 统计条 ============ */
