@@ -2016,6 +2016,21 @@ async function renderFarm(){
       const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
       const len=await st.poolLength();
       const pools=[];
+      const lpMap={};
+      if(cfg.factory){
+        try{
+          const fc=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
+          const fl=Number(await fc.allPairsLength());
+          for(let j=0;j<fl;j++){
+            try{
+              const pa=await fc.allPairs(j);
+              const pc=new ethers.Contract(pa,PAIR_ABI,p);
+              const t0=await pc.token0(),t1=await pc.token1();
+              lpMap[pa.toLowerCase()]={t0,t1};
+            }catch(e){}
+          }
+        }catch(e){}
+      }
       for(let i=0;i<Number(len);i++){
         const info=await st.poolInfo(i);
         const known=XSTOCKS.find(x=>x.addr&&x.addr.toLowerCase()===info[0].toLowerCase());
@@ -2027,7 +2042,9 @@ async function renderFarm(){
           if(cfg.xstork&&info[0].toLowerCase()===cfg.xstork.toLowerCase())meta.sym="XPR";
         }
         tokenCache[info[0]]=meta;
-        pools.push({pid:i,tok:info[0],sym:meta.sym,name:meta.name,dec:Number(meta.dec),rate:Number(info[1]),total:Number(info[4]),active:info[5],logo:meta.logo});
+        const lpk=lpMap[info[0].toLowerCase()];
+        pools.push({pid:i,tok:info[0],sym:meta.sym,name:meta.name,dec:Number(meta.dec),rate:Number(info[1]),total:Number(info[4]),active:info[5],logo:meta.logo,
+          lp:lpk?{t0:tokInfo(lpk.t0),t1:tokInfo(lpk.t1)}:null});
       }
       return pools;
     });
@@ -2035,7 +2052,7 @@ async function renderFarm(){
     el.innerHTML=data.map(p=>`
       <div class="poolcard">
         <div class="top">
-          <div class="pair">${logoSvg(p.sym,"",p.logo)}<div><b>${esc(p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">#${p.pid} · ${shortAddr(p.tok)}</div></div></div>
+          <div class="pair">${p.lp?`<span style="display:flex">${logoSvg(p.lp.t0.sym,"",p.lp.t0.logo)}${logoSvg(p.lp.t1.sym,"",p.lp.t1.logo)}</span>`:logoSvg(p.sym,"",p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?"XLP · ":""}#${p.pid} · ${shortAddr(p.tok)}</div></div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
             <span class="badge ${p.active?"live":"pause"}">${p.active?"挖矿中":"已暂停"}</span>
             <div class="apr" style="text-align:right"><div class="k">每秒奖励</div><div class="v">${fmtPrice(fromWei(BigInt(p.rate),18))} <span style="font-size:11px;color:var(--gold)">XPR</span></div></div>
@@ -2043,7 +2060,7 @@ async function renderFarm(){
           </div>
         </div>
         <div class="poolmeta">
-          <div class="m"><div class="k">总质押</div><div class="v">${fmt(fromWei(p.total,p.dec))} ${esc(p.sym)}</div></div>
+          <div class="m"><div class="k">总质押</div><div class="v">${fmt(fromWei(p.total,p.dec))} ${esc(p.lp?"XLP":p.sym)}</div></div>
           <div class="m"><div class="k">我的质押</div><div class="v" id="myStk${p.pid}">—</div></div>
           <div class="m"><div class="k">待领取</div><div class="v" id="pend${p.pid}">—</div></div>
           <div class="m" style="grid-column:1/4"><div class="k">矿池奖励 XPR（可分余额）</div><div class="v" id="poolXpr${p.pid}">…</div></div>
