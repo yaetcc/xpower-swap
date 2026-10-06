@@ -258,6 +258,23 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .pct-btn.on{background:var(--acc-grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(245,25,123,.25)}
 .liq-card{border:1px solid var(--line2);border-radius:14px;padding:12px;display:grid;gap:8px;background:var(--card);transition:border-color .18s,box-shadow .18s,transform .18s}
 .liq-card:hover{border-color:var(--acc-line)!important;box-shadow:0 8px 24px rgba(245,25,123,.08);transform:translateY(-1px)}
+/* ===== 矿池管理 owner 面板 ===== */
+.farm-admin{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.fa-card{background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:14px;display:grid;gap:10px;align-content:start;transition:border-color .18s,box-shadow .18s}
+.fa-card:hover{border-color:var(--acc-line)!important;box-shadow:0 8px 24px rgba(245,25,123,.08)}
+.fa-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:900;color:var(--fg)}
+.fa-ico{width:26px;height:26px;border-radius:9px;background:var(--acc-soft);color:var(--acc);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fa-row{display:grid;gap:7px}
+.fa-row label{font-size:11.5px;font-weight:800;color:var(--dim);letter-spacing:.02em;margin:0;display:block}
+.fa-row label .gold{color:var(--gold)}
+.fa-tok{display:flex;align-items:center;gap:8px}
+.fa-lg{width:38px;height:38px;border-radius:50%;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--dim);flex-shrink:0;overflow:hidden}
+.fa-lg .lg{width:38px;height:38px;font-size:13px}
+.fa-tok input{flex:1;min-width:0;font-family:var(--mono);font-size:12px}
+.fa-hint{font-size:11px;color:var(--faint);margin:0;line-height:1.55}
+.fa-card .btn.wide{margin-top:2px}
+.fa-rec{align-items:stretch}
+.fa-rec .fa-hint{flex:1}
 /* ===== Farm 页增强 ===== */
 .poolcard:hover{border-color:var(--acc-line)!important;box-shadow:0 10px 28px rgba(245,25,123,.08),var(--shadow);transform:translateY(-2px)}
 .poolcard .badge.live{background:rgba(22,163,74,.12);color:#047857;border-color:rgba(22,163,74,.35)}
@@ -479,22 +496,40 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
     <div class="stats" id="farmStats"></div>
     <div class="farm-grid" id="farmList" style="display:grid;gap:12px"></div>
     <div class="panel" id="farmAdmin" style="display:none;margin-top:16px">
-      <h2><span class="bar"></span>创建质押池 · owner</h2>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-        <input id="poolTok" placeholder="质押资产地址（xStock / LP）" style="flex:2;min-width:240px">
-        <input id="poolRate" type="number" placeholder="每秒奖励 XPR" style="flex:1;min-width:130px">
-        <button class="btn primary" onclick="createPool()">创建池</button>
+      <h2><span class="bar"></span>矿池管理 · owner</h2>
+      <div class="farm-admin">
+        <div class="fa-card">
+          <div class="fa-title"><span class="fa-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg></span>创建质押池</div>
+          <div class="fa-row">
+            <label>质押资产</label>
+            <div class="fa-tok">
+              <span class="fa-lg" id="poolLg">?</span>
+              <input id="poolTok" placeholder="粘贴合约地址，或点右侧选择" spellcheck="false" oninput="farmTokInput()">
+              <button type="button" class="btn ghost sm" onclick="pickToken('farm')">选择资产</button>
+            </div>
+            <p class="fa-hint" id="poolTokHint">支持 XPR / OKB / 全部 xStock 股票资产 · XLP 池凭证请手动粘贴 LP 地址</p>
+          </div>
+          <div class="fa-row">
+            <label>每秒奖励 <span class="gold">XPR</span></label>
+            <input id="poolRate" type="number" min="0" step="any" placeholder="如 0.001" oninput="farmRateHint()">
+            <p class="fa-hint" id="poolRateHint">年化 ≈ — XPR</p>
+          </div>
+          <button class="btn primary wide" onclick="createPool()">创建质押池</button>
+        </div>
+        <div class="fa-card">
+          <div class="fa-title"><span class="fa-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg></span>注入矿池奖励</div>
+          <div class="fa-row">
+            <label>注入数量 <span class="gold">XPR</span> <span style="float:right;color:var(--faint);font-weight:600" id="fundXprAvail">可用：—</span></label>
+            <input id="poolFund" type="number" min="0" step="any" placeholder="如 100000" onkeydown="if(event.key==='Enter')fundFarm()">
+          </div>
+          <button class="btn wide" onclick="fundFarm()">注入奖励</button>
+        </div>
+        <div class="fa-card fa-rec">
+          <div class="fa-title"><span class="fa-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></span>一键创建推荐池</div>
+          <p class="fa-hint" id="recPoolInfo">已配置地址 0 个 · 先到「资产」页粘贴 xStock 合约地址，再批量建池</p>
+          <button class="btn gold wide" onclick="createRecommendedPools()">一键创建推荐池</button>
+        </div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-        <input id="poolFund" type="number" placeholder="注入奖励 XPR（转入矿池）" style="flex:2;min-width:240px">
-        <span id="fundXprAvail" style="font-size:11.5px;color:var(--faint);align-self:center">可用 XPR：—</span>
-        <button class="btn" onclick="fundFarm()">注入奖励</button>
-      </div>
-      <div class="info-row" style="border-top:1px solid var(--line);padding-top:10px">
-        <span style="color:var(--dim)">一键批量创建推荐池（为已配置地址的每个资产建池）</span>
-        <button class="btn gold sm" onclick="createRecommendedPools()">一键创建推荐池</button>
-      </div>
-      <div class="balrow" style="margin-top:6px;font-size:11px;color:var(--faint)" id="recPoolInfo">已配置地址: 0 个 · 需先到「资产」页粘贴 xStock 合约地址</div>
     </div>
   </section>
 
@@ -1486,10 +1521,27 @@ function selToken(addr,sym,name,dec,logo,nat){
   if(ctx==="from"||ctx==="to")swapSel(ctx,t);
   else if(ctx==="pa"||ctx==="pb")poolSelA(ctx,t);
   else if(ctx==="pr")poolSelR(t);
+  else if(ctx==="farm")farmSel(t);
   hideTok();
 }
 
 /* ============ Swap ============ */
+function farmSel(t){
+  const inp=$("poolTok");if(inp)inp.value=t.addr;
+  const lg=$("poolLg");if(lg)lg.innerHTML=logoSvg(t.sym,"",t.logo);
+  const h=$("poolTokHint");if(h)h.textContent="已选择 "+t.sym+" · "+(t.name||"")+" — 可直接创建池";
+  toast("已选择 "+t.sym,"ok");
+}
+function farmTokInput(){
+  const v=($("poolTok").value||"").trim().toLowerCase();if(!v)return;
+  const lg=$("poolLg");if(!lg)return;
+  const hit=configuredAssets().find(x=>x.addr.toLowerCase()===v)||(cfg.xstork&&cfg.xstork.toLowerCase()===v?{sym:"XPR",logo:XPR_LOGO}:null)||(v===WOKB_ADDR?{sym:"OKB"}:null);
+  lg.innerHTML=hit?logoSvg(hit.sym,"",hit.logo):"<span class='fa-lg' style='font-size:13px;color:var(--faint)'>?</span>";
+}
+function farmRateHint(){
+  const r=Number($("poolRate").value),h=$("poolRateHint");if(!h)return;
+  h.textContent=r>0?`年化 ≈ ${fmtPrice(r*31536000)} XPR / 年`:"年化 ≈ — XPR";
+}
 function swapSel(k,t){if(k==="from")sA=t;else sB=t;renderSwapSel();quoteSwap();}
 function flipSwap(){
   const am=$("arrow-mid")||document.querySelector(".arrow-mid button");
