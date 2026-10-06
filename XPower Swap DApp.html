@@ -684,6 +684,7 @@ async function setMax(){
 async function quoteSwap(){
   const el=$("swapErr"),rate=$("rateTxt");
   el.classList.remove("on");rate.textContent="—";
+  if(!cfg.router){$("outAmt").value="";rate.textContent="未配置 Router 合约 · 点击下方按钮配置";updateSwapCta();return;}
   if(!sA||!sB){$("outAmt").value="";updateSwapCta();return;}
   if(sA.addr.toLowerCase()===sB.addr.toLowerCase()){el.textContent="不能兑换同一代币";el.classList.add("on");$("outAmt").value="";updateSwapCta();return;}
   const n=Number($("inAmt").value);
@@ -766,6 +767,7 @@ function renderPoolSel(){
   updateAddLiqCta();updateRmLiqCta();
 }
 async function poolQuote(){
+  if(!cfg.factory){const el=$("poolRate");if(el)el.textContent="未配置 Factory 合约";updateAddLiqCta();return;}
   if(!pA||!pB)return;
   const a=Number($("paAmt").value),b=Number($("pbAmt").value);
   const el=$("poolErr");el.classList.remove("on");
@@ -840,6 +842,7 @@ async function doAddLiquidity(){
 }
 async function removeQuote(){
   if(!pR||!walletAddr)return;
+  if(!cfg.factory){$("prLp").textContent="LP: —（未配置 Factory 合约）";$("prOut").textContent="—";updateRmLiqCta();return;}
   const pct=Number($("prPct").value)/100;
   $("prPctTxt").textContent=(pct*100).toFixed(0)+"%";
   $("prOut").textContent="—";
