@@ -272,6 +272,19 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .bal-card .amt{font-size:20px;font-weight:900;font-family:var(--mono);letter-spacing:-.5px;line-height:1.3}
 .list .item:hover{background:var(--card2)}
 .list .item{transition:background .15s}
+/* ===== XLP 池卡片增强 ===== */
+.liq-card .lp-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.liq-card .lp-pair{display:flex;align-items:center;gap:9px;min-width:0}
+.liq-card .lp-lg{display:flex;flex-shrink:0}
+.liq-card .lp-lg .lg:first-child{margin-right:-10px;z-index:1;outline:2px solid var(--card);outline-offset:-1px}
+.liq-card .lp-lg .lg{width:30px;height:30px;font-size:11px}
+.liq-card .lp-id{display:grid;gap:1px;min-width:0}
+.liq-card .lp-id b{font-size:13.5px;letter-spacing:-.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.liq-card .lp-nm{font-size:10.5px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
+.liq-card .lp-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;gap:8px}
+.liq-card .lp-row span{color:var(--faint)}
+.liq-card .lp-row b{font-size:12.5px}
+.liq-card .badge.live{background:rgba(22,163,74,.12);color:#047857;border:1px solid rgba(22,163,74,.35);font-size:10.5px;padding:2px 8px;border-radius:20px;font-weight:800}
 /* ===== 兑换页体验 v2 ===== */
 .pricebar{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 2px;padding:11px 14px;border:1px solid var(--acc-line);border-radius:12px;background:linear-gradient(135deg,rgba(245,25,123,.06),rgba(255,169,0,.05));font-size:13px}
 .pricebar b{font-family:var(--mono);font-size:17px;font-weight:900;background:var(--acc-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -2375,6 +2388,7 @@ function tokInfo(a){
   const d=f(assets)||f(XSTOCKS);
   if(d)return d;
   if(cfg.xstork&&String(cfg.xstork).toLowerCase()===a)return{sym:"XPR",name:"XPower",addr:cfg.xstork,dec:18,logo:XPR_LOGO};
+  if(a===WOKB_ADDR)return{sym:"OKB",name:"X Layer 原生 Gas 币",addr:WOKB_ADDR,dec:18,logo:""};
   return{sym:shortAddr(a),name:"",addr:a,dec:18,logo:""};
 }
 async function renderMyLiq(){
@@ -2401,12 +2415,19 @@ async function renderMyLiq(){
       el.className="";
       el.innerHTML=rows.map(r=>`
         <div class="liq-card">
-          <div style="display:flex;align-items:center;gap:8px">
-            ${logoSvg(r.d0.sym,"",r.d0.logo)}${logoSvg(r.d1.sym,"",r.d1.logo)}
-            <span style="display:grid;gap:2px"><b style="font-size:13px">${esc(r.d0.sym)} / ${esc(r.d1.sym)}</b><span class="mono" style="font-size:10.5px;color:var(--faint)">${shortAddr(r.pa)}</span></span>
+          <div class="lp-head">
+            <div class="lp-pair">
+              <span class="lp-lg">${logoSvg(r.d0.sym,"",r.d0.logo)}${logoSvg(r.d1.sym,"",r.d1.logo)}</span>
+              <span class="lp-id">
+                <b>${esc(r.d0.sym)} / ${esc(r.d1.sym)}</b>
+                <span class="lp-nm">${esc(r.d0.name||r.d0.sym)} · ${esc(r.d1.name||r.d1.sym)}</span>
+              </span>
+            </div>
+            <span class="badge live" style="flex-shrink:0">XLP</span>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--faint)">LP 余额</span><b>${fmtPrice(fromWei(r.lpBal,18))}</b></div>
-          <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--faint)">池占比</span><b>${r.share.toFixed(4)}%</b></div>
+          <div class="lp-row"><span>LP 凭证</span><b class="mono">${fmtPrice(fromWei(r.lpBal,18))} XLP</b></div>
+          <div class="lp-row"><span>池占比</span><b>${r.share.toFixed(4)}%</b></div>
+          <div class="lp-row"><span>池地址</span><span class="mono" style="color:var(--faint);font-size:11px">${shortAddr(r.pa)}</span></div>
           <div class="prog"><i style="width:${Math.min(r.share,100).toFixed(2)}%"></i></div>
         </div>`).join("");
     });
