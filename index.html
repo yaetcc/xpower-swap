@@ -570,9 +570,9 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
     </div>
     <div class="stats" id="assetStats"></div>
     <div class="panel">
-      <h2><span class="bar"></span>xStock 资产名录 · 已内置 1001 个可交易（X Layer wrapped 全量）</h2>
+      <h2><span class="bar"></span>xStock 资产名录 · 已内置 ${XSTOCKS.length} 个可交易（区块浏览器 xLayer 收录）</h2>
       <div style="display:flex;gap:9px;align-items:center;margin-bottom:10px">
-        <input id="assetSearch" placeholder="搜索 1001 个可交易 xStock：符号 / 名称 / 地址" oninput="renderAssetList()" style="flex:1;min-width:220px">
+        <input id="assetSearch" placeholder="搜索 ${XSTOCKS.length} 个可交易 xStock：符号 / 名称 / 地址" oninput="renderAssetList()" style="flex:1;min-width:220px">
         <span id="assetCnt" style="font-size:12px;color:var(--dim);white-space:nowrap"></span>
       </div>
       <div class="th-row"><span class="lg" style="width:34px"></span><span class="nm">资产 / 地址</span><span>操作</span></div>
@@ -2055,7 +2055,7 @@ async function renderStats(){
   if(sv)sv.innerHTML=`
     <div class="stat"><div class="k">交易对</div><div class="v c">${d.pairs}</div><div class="d">Factory 登记</div></div>
     <div class="stat"><div class="k">质押池</div><div class="v o">${d.pools}</div><div class="d">Staking 池</div></div>
-    <div class="stat"><div class="k">内置资产</div><div class="v">1001</div><div class="d">X Layer 可交易 xStock</div></div>
+    <div class="stat"><div class="k">内置资产</div><div class="v">${XSTOCKS.length}</div><div class="d">X Layer 可交易 xStock</div></div>
     <div class="stat"><div class="k">钱包</div><div class="v g" style="font-size:15px">${walletAddr?`<span class="cp" data-copy="${walletAddr}" title="点击复制">${shortAddr(walletAddr)}</span>`:"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
   if(pv)pv.innerHTML=`
     <div class="stat"><div class="k">交易对</div><div class="v c">${d.pairs}</div><div class="d">Factory 登记</div></div>
