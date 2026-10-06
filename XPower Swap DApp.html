@@ -1679,8 +1679,8 @@ async function doSwap(){
       qAdd("包装 "+fmtPrice(n)+" OKB（自动封装）",async()=>{const r=await w.deposit({value:amt});await r.wait();return"已包装";});
     }
     qAdd("兑换 "+fmtPrice(n)+" "+sA.sym,async()=>{
+      const amounts=await withRPC(async p=>new ethers.Contract(cfg.router,ROUTER_ABI,p).getAmountsOut(amt,[inTok,outTok]));
       const r=new ethers.Contract(cfg.router,ROUTER_ABI,signer);
-      const amounts=await r.getAmountsOut(amt,[inTok,outTok]);
       const minOut=amounts[1]*(10000n-BigInt(Math.round(slipPct*10000)))/10000n;
       const tx=await r.swapExactTokensForTokens(amt,minOut,[inTok,outTok],walletAddr,deadline());
       await tx.wait();
@@ -2300,6 +2300,7 @@ function qRender(){
 const VIEWS=["swap","pool","farm","assets"];
 function route(){
   let h=location.hash.replace("#","").split("?")[0];
+  if(["launch","deploy","create"].includes(h))h="pool";
   if(!VIEWS.includes(h))h="swap";
   curView=h;
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
