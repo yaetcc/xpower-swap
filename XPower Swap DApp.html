@@ -2755,7 +2755,7 @@ async function renderStats(){
   if(sv)sv.innerHTML=`
     <div class="stat"><div class="k">交易对</div><div class="v c">${d.pairs}</div><div class="d">Factory 登记</div></div>
     <div class="stat"><div class="k">质押池</div><div class="v o">${d.pools}</div><div class="d">Staking 池</div></div>
-    <div class="stat"><div class="k">内置资产</div><div class="v">1272</div><div class="d">X Layer 可交易 xStock</div></div>
+    <div class="stat"><div class="k">内置资产</div><div class="v">1001</div><div class="d">X Layer 可交易 xStock</div></div>
     <div class="stat"><div class="k">钱包</div><div class="v g" style="font-size:15px">${walletAddr?shortAddr(walletAddr):"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
   if(pv)pv.innerHTML=`
     <div class="stat"><div class="k">交易对</div><div class="v c">${d.pairs}</div><div class="d">Factory 登记</div></div>
@@ -2764,7 +2764,7 @@ async function renderStats(){
     <div class="stat"><div class="k">滑点模式</div><div class="v">${slipPct*100}%</div><div class="d">Swap 保护</div></div>`;
   if(fv)fv.innerHTML=`
     <div class="stat"><div class="k">质押池</div><div class="v o">${d.pools}</div><div class="d">Staking 池</div></div>
-    <div class="stat"><div class="k">奖励代币</div><div class="v g">XPR</div><div class="d">按秒释放</div></div>
+    <div class="stat"><div class="k">奖励代币</div><div class="v" style="display:flex;align-items:center;justify-content:center;gap:5px">${logoSvg("XPR","")}<span class="g">XPR</span></div><div class="d">按秒释放</div></div>
     <div class="stat"><div class="k">XPR 池余额</div><div class="v" id="farmXprBal">—</div><div class="d">Staking 持有</div></div>
     <div class="stat"><div class="k">我的地址</div><div class="v" style="font-size:15px">${walletAddr?shortAddr(walletAddr):"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
   if(fv&&cfg.xstork){
