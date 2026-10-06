@@ -291,11 +291,6 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 <main>
   <!-- ===== Swap ===== -->
   <section class="view" id="view-swap">
-    <div class="pagehead">
-      <div><h1><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg></span> Swap · 股票资产兑换</h1>
-      <p>xStock 代币化股票 / XPR / 任意资产间兑换 · 恒定乘积 AMM · 0.3% 手续费归 LP</p></div>
-    </div>
-    <div class="stats" id="swapStats"></div>
     <div class="swap-center">
       <div class="swap-card card-lift">
         <div class="swap-head">
@@ -342,7 +337,6 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
         <div id="swapErr" class="errbox"></div>
         <button class="btn primary wide" id="btnSwap" style="margin-top:14px" onclick="swapCta()">兑换</button>
         <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
-        <details style="margin-top:12px;font-size:12px"><summary style="cursor:pointer;color:var(--dim);font-weight:700;user-select:none">最近交易 · 本机记录</summary><div id="txHist" style="margin-top:6px"></div></details>
       </div>
       </section>
 
