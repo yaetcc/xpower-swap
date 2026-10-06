@@ -1339,8 +1339,10 @@ function resolveTok(v){
 async function launchAll(){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!walletAddr){toast("请先连接钱包","err");return;}
-  if(needCfg()){
-    toast("未配置合约 · 正在自动部署 4 合约…","warn");
+  const hasCfg=!needCfg();
+  if(hasCfg&&!confirm("检测到已配置合约。重新起盘将重新部署全部 4 合约（含新版 XPR，旧 XPR 作废）并重建 LP 与质押池，是否继续？"))return;
+  if(hasCfg||needCfg()){
+    toast(hasCfg?"正在重新部署 4 合约…":"未配置合约 · 正在自动部署 4 合约…","warn");
     await deployAll();
     if(needCfg()){toast("合约部署未完成，请重试","err");return;}
     toast("合约部署完成 · 继续起盘…","ok");
