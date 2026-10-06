@@ -1899,6 +1899,7 @@ function renderAssetList(){
   const q=($("assetSearch").value||"").trim().toLowerCase();
   if(q!==lastAstQ){lastAstQ=q;astPage=1;}
   const u={};
+  if(isAddr(cfg.xprs))u[cfg.xprs.toLowerCase()]={addr:cfg.xprs,sym:"XPRS",name:"XPRS 分红币",logo:XPRS_LOGO,div:1};
   assets.forEach(a=>{if(a.addr)u[a.addr.toLowerCase()]=a;});
   XSTOCKS.forEach(x=>{if(x.addr&&!u[x.addr.toLowerCase()])u[x.addr.toLowerCase()]={addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true,nat:x.nat};});
   const all=Object.values(u);
@@ -1908,7 +1909,7 @@ function renderAssetList(){
   el.innerHTML=shown.length?shown.map(a=>a.addr?`
     <div class="item">
       ${logoSvg(a.sym||"?","",a.logo)}
-      <div class="nm"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")} · ${a.nat?"原生 Gas · X Layer":`<span class="cp" data-copy="${a.addr}" title="点击复制合约地址">${shortAddr(a.addr)}</span>`} · <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
+      <div class="nm"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")}${a.div?'<span style="margin-left:6px;padding:1px 6px;border-radius:6px;background:linear-gradient(135deg,#FF9A3D22,#F5197B22);color:var(--acc);font-size:10px;font-weight:700">持币分红 XPR</span>':''} · ${a.nat?"原生 Gas · X Layer":`<span class="cp" data-copy="${a.addr}" title="点击复制合约地址">${shortAddr(a.addr)}</span>`} · <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
       <div style="display:flex;gap:6px">
         <button class="btn ghost sm" onclick="copyText('${a.addr}')">复制</button>
         ${a.builtin?"":`<button class="btn danger sm" onclick="removeAsset('${a.addr}')">移除</button>`}
