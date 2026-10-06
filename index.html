@@ -627,6 +627,21 @@ try{
   const _u=new URL(location.href);const _mp={fc:"factory",rt:"router",st:"staking",xp:"xstork"};
   for(const _k in _mp){const _v=_u.searchParams.get(_k);if(_v&&/^0x[a-fA-F0-9]{40}$/.test(_v))cfg[_mp[_k]]=_v.toLowerCase();}
 }catch(e){}
+/* 平台公开配置：自动读取 xpower.world/xpower-config.json（发盘地址由平台维护，访客打开主域即生效） */
+async function loadRemoteCfg(){
+  try{
+    const r=await fetch("./xpower-config.json?v="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return;
+    const j=await r.json();
+    const d=(j&&j.cfg)||{};
+    let changed=false;
+    for(const k of ["factory","router","staking","xstork"]){
+      const v=d[k];
+      if(v&&/^0x[a-fA-F0-9]{40}$/.test(v)&&!cfg[k]){cfg[k]=v.toLowerCase();changed=true;}
+    }
+    if(changed){try{localStorage.setItem(STORAGE+"cfg",JSON.stringify(cfg));}catch(e){} refreshView();}
+  }catch(e){}
+}
 /* 配置迁移 v2：新 XPR（含LOGO登记诉求）替换旧 XPR / 新 Staking（绑定新XPR）替换旧 Staking */
 const CFG_MIG={
   xstork:{
@@ -2997,8 +3012,9 @@ window.addEventListener("load",()=>{
   renderPoolSel();
 $("nav").innerHTML=[["swap",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg>',"兑换"],["pool",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg>',"流动性"],["farm",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg>',"质押"],["assets",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg>',"资产"]].map(([v,ic,zh])=>`<div class="n" data-v="${v}" onclick="go('${v}')">${ic}${zh}</div>`).join("");
   route();
+  loadRemoteCfg();
   window.addEventListener("hashchange",route);
-  if(needCfg())toast("未配置合约 · 点击下方「配置」按钮或 Swap/Pool 主按钮即可配置","warn");
+  if(needCfg())setTimeout(()=>{if(needCfg())toast("当前为未发盘状态 · 官方入口见项目官方链接 / 联系运营获取","warn");},600);
 
 });
 </script>
