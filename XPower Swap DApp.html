@@ -454,6 +454,7 @@ let walletAddr=null, provider=null, rpcIdx=0;
 let pickCtx=null, slipPct=0.005;
 let sA=null,sB=null,pA=null,pB=null,pR=null,curView="swap";
 let assets=[];
+let tokPage=1,astPage=1,lastTokQ="",lastAstQ="";
 let cfg={factory:"",router:"",staking:"",xstork:""};
 try{ Object.assign(cfg, JSON.parse(localStorage.getItem(STORAGE+"cfg")||"{}")); assets=JSON.parse(localStorage.getItem(STORAGE+"assets")||"[]"); }catch(e){}
 try{ const _xm=JSON.parse(localStorage.getItem(STORAGE+"xaddrs")||"{}"); XSTOCKS.forEach(x=>{ if(_xm[x.sym]) x.addr=_xm[x.sym]; }); }catch(e){}
@@ -1268,13 +1269,15 @@ function removeAsset(a){assets=assets.filter(x=>x.addr.toLowerCase()!==a.toLower
 function renderAssetList(){
   const el=$("assetList");if(!el)return;
   const q=($("assetSearch").value||"").trim().toLowerCase();
+  if(q!==lastAstQ){lastAstQ=q;astPage=1;}
   const u={};
   assets.forEach(a=>{if(a.addr)u[a.addr.toLowerCase()]=a;});
   XSTOCKS.forEach(x=>{if(x.addr&&!u[x.addr.toLowerCase()])u[x.addr.toLowerCase()]={addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true,nat:x.nat};});
   const all=Object.values(u);
   const list=all.filter(a=>!q||(a.sym||"").toLowerCase().includes(q)||(a.name||"").toLowerCase().includes(q)||(a.addr||"").toLowerCase().includes(q));
   const cnt=$("assetCnt");if(cnt)cnt.textContent=list.length+"/"+all.length+" 项";
-  el.innerHTML=list.length?list.map(a=>a.addr?`
+  const shown=list.slice(0,astPage*60);
+  el.innerHTML=shown.length?shown.map(a=>a.addr?`
     <div class="item">
       ${logoSvg(a.sym||"?","",a.logo)}
       <div class="nm"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")} · ${a.nat?"原生 Gas · X Layer":shortAddr(a.addr)} · <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
@@ -1291,7 +1294,7 @@ function renderAssetList(){
         <input class="mono" data-xaddr="${a.sym}" placeholder="0x… 粘贴 ${a.sym} 合约地址" style="flex:1;font-size:12px">
         <button class="btn primary sm" onclick="setXAddr('${a.sym}')">保存</button>
       </div>
-    </div>`).join("")
+    </div>`).join("")+(list.length>shown.length?`<div style="text-align:center;padding:10px 0 2px"><button class="btn ghost sm" onclick="astPage++;renderAssetList()">显示更多 ${list.length-shown.length} 项</button></div>`:"")
   :`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg></div>暂无资产</div>`;
 }
 
@@ -1309,15 +1312,17 @@ function pickToken(ctx){pickCtx=ctx;renderTokList();$("tokMask").classList.add("
 function hideTok(){$("tokMask").classList.remove("on");pickCtx=null;}
 function renderTokList(){
   const q=($("tokSearch").value||"").trim().toLowerCase();
+  if(q!==lastTokQ){lastTokQ=q;tokPage=1;}
   const pool=[...assets,...XSTOCKS.filter(x=>x.addr).map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,logo:x.logo,nat:x.nat||0}))];
   const u={};pool.forEach(x=>u[x.addr.toLowerCase()]=x);
   const list=Object.values(u).filter(x=>!q||x.sym.toLowerCase().includes(q)||x.name.toLowerCase().includes(q)||x.addr.toLowerCase().includes(q));
-  $("tokList").innerHTML=list.length?list.map(x=>`
+  const shown=list.slice(0,tokPage*60);
+  $("tokList").innerHTML=shown.length?shown.map(x=>`
     <div class="item" style="cursor:pointer" onclick="selToken('${x.addr}','${esc(x.sym)}','${esc(x.name)}',${x.dec},'${esc(x.logo||"")}',${x.nat?1:0})">
       ${logoSvg(x.sym,"",x.logo)}
       <div class="nm"><b>${esc(x.sym)}</b><span>${esc(x.name)}</span></div>
       <span style="color:var(--acc);font-size:13px">选择 →</span>
-    </div>`).join("")
+    </div>`).join("")+(list.length>shown.length?`<div style="text-align:center;padding:8px 0 2px"><button class="btn ghost sm" onclick="tokPage++;renderTokList()">显示更多 ${list.length-shown.length} 项</button></div>`:"")
   :`<div class="empty"><div class="big"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg></div>无匹配 · 先到「资产」页添加代币地址</div>`;
 }
 function selToken(addr,sym,name,dec,logo,nat){
