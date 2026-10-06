@@ -306,6 +306,7 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
         <div class="amount-wrap"><label id="pbLbl">B 数量</label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="pbTouched=true;poolQuote()"></div>
         <div class="info-row"><span>池状态</span><b id="poolRate">—</b></div>
         <div class="info-row"><span>你的份额</span><b id="poolShare" class="good">—</b></div>
+        <div class="info-row"><span>我的 LP</span><b id="poolLp" class="mono" style="color:var(--gold)">—</b></div>
         <div id="poolErr" class="errbox"></div>
         <button class="btn gold wide" id="btnAddLiq" style="margin-top:14px" onclick="addLiqCta()">添加流动性</button>
       </div>
@@ -1602,13 +1603,19 @@ async function poolQuote(){
       const f=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
       const pair=await f.getPair(pA.addr,pB.addr);
       if(pair===ethers.ZeroAddress)return null;
-      const pc=new ethers.Contract(pair,PAIR_ABI,p);
+      const pc=new ethers.Contract(pair,[...PAIR_ABI,"function totalSupply() view returns (uint256)"],p);
       const[t0,r]=await Promise.all([pc.token0(),pc.getReserves()]);
-      return{pair,t0,r0:Number(r[0]),r1:Number(r[1])};
+      let lp=null;
+      if(walletAddr){
+        try{const[lpBal,lpTot]=await Promise.all([pc.balanceOf(walletAddr),pc.totalSupply()]);lp={bal:lpBal,tot:lpTot};}catch(e){}
+      }
+      return{pair,t0,r0:Number(r[0]),r1:Number(r[1]),lp};
     });
-    if(!info){$("poolRate").textContent="新交易对 · 首次添加定价";$("poolShare").textContent="—";pbTouched=false;updateAddLiqCta();return;}
+    if(!info){$("poolRate").textContent="新交易对 · 首次添加定价";$("poolShare").textContent="—";const lpEl0=$("poolLp");if(lpEl0)lpEl0.textContent="—";pbTouched=false;updateAddLiqCta();return;}
     const[rA,rB]=info.t0.toLowerCase()===pA.addr.toLowerCase()?[info.r0,info.r1]:[info.r1,info.r0];
     $("poolRate").textContent=fmtPrice(fromWei(rA,pA.dec))+" "+pA.sym+" / "+fmtPrice(fromWei(rB,pB.dec))+" "+pB.sym;
+    const lpEl=$("poolLp");
+    if(lpEl)lpEl.textContent=info.lp&&info.lp.bal>0n?fmt(fromWei(info.lp.bal,18))+" LP · 占比 "+(info.lp.tot>0n?(Number(info.lp.bal)/Number(info.lp.tot)*100).toFixed(2)+"%":"—"):"—";
     if(a>0&&rA>0){
       const need=a*(rB/rA);
       const share=a/(rA+a);
