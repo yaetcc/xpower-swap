@@ -275,7 +275,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .arrow-mid button.flip{transform:rotate(180deg)}
 .arrow-mid button:hover{color:var(--acc);border-color:var(--acc-line)}
 .seg{border:1px solid var(--line);border-radius:10px;padding:3px;background:var(--card2)}
-.seg div{padding:4px 9px;border-radius:8px;font-size:11.5px;font-weight:800;color:var(--dim);cursor:pointer;transition:.15s}
+.seg div{padding:4px 9px;border-radius:8px;font-size:11.5px;font-weight:800;color:var(--dim);cursor:pointer;transition:.15s;box-sizing:border-box}
 .seg div:hover{color:var(--acc)}
 .seg div.on{background:var(--acc-grad);color:#fff;box-shadow:0 3px 10px rgba(245,25,123,.3)}
 /* ===== 兑换页专业视觉 v4 ===== */
@@ -303,8 +303,8 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
 .pct-row{display:flex;gap:6px;margin-top:6px}
 .pct-row button{flex:1;padding:5px 0;border-radius:9px;border:none;background:rgba(245,25,123,.08);color:#f5197b;font-size:11px;font-weight:800;cursor:pointer;transition:.15s}
 .pct-row button:hover{background:linear-gradient(90deg,#f5197b,#a855f7);color:#fff;box-shadow:0 3px 10px rgba(245,25,123,.3)}
-.arrow-mid{display:flex;justify-content:center;margin:-12px 0;position:relative;z-index:2}
-.arrow-mid button{width:40px;height:40px;border-radius:50%;border:3px solid #fff;background:linear-gradient(135deg,#f5197b,#a855f7);color:#fff;font-size:16px;cursor:pointer;box-shadow:0 6px 18px rgba(245,25,123,.38);display:flex;align-items:center;justify-content:center;transition:transform .3s cubic-bezier(.2,.8,.3,1)}
+.arrow-mid{display:flex;justify-content:center;margin:-8px 0;position:relative;z-index:2}
+.arrow-mid button{width:32px;height:32px;border-radius:50%;border:2px solid #fff;background:linear-gradient(135deg,#f5197b,#a855f7);color:#fff;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(245,25,123,.35);display:flex;align-items:center;justify-content:center;transition:transform .3s cubic-bezier(.2,.8,.3,1)}
 .arrow-mid button:hover{transform:scale(1.08)}
 .pricebar{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0 4px;padding:9px 12px;background:#faf9fc;border:1px solid #f1ebf1;border-radius:12px;font-size:12.5px;font-weight:600;color:#6f6a7a}
 .pricebar b{font-size:16px;font-weight:900;font-family:var(--mono);background:linear-gradient(90deg,#f5197b,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -347,7 +347,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
           <b>兑换</b>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="badge x" id="swapDir" style="display:none">A → B</span>
-            <div class="seg" id="slipSeg"><div class="on" data-s="0.5">0.5%</div><div data-s="1">1%</div><div data-s="3">3%</div><div id="slipCus" style="color:var(--acc);cursor:pointer">自定义</div></div>
+            <div class="seg" id="slipSeg"><div class="on" data-s="0.5">0.5%</div><div data-s="1">1%</div><div data-s="3">3%</div><div id="slipCus" style="color:var(--acc);cursor:pointer;border:1px dashed #f2b4d8;border-radius:8px;padding:3px 9px;box-sizing:border-box">自定义</div></div>
             <div id="slipCustom" style="display:none;align-items:center;gap:8px;margin-top:8px"><input id="slipInput" type="number" step="0.1" min="0.01" max="10" placeholder="0.01–10" style="flex:1;min-width:0;font-family:var(--mono)"><button class="btn sm" onclick="applySlip()">应用</button></div>
           </div>
         </div>
