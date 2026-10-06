@@ -434,7 +434,8 @@ try{ Object.assign(cfg, JSON.parse(localStorage.getItem(STORAGE+"cfg")||"{}")); 
 try{ const _xm=JSON.parse(localStorage.getItem(STORAGE+"xaddrs")||"{}"); XSTOCKS.forEach(x=>{ if(_xm[x.sym]) x.addr=_xm[x.sym]; }); }catch(e){}
 let XSTOCKS=[
   /* X Layer 原生币封装 · Wrapped OKB */
-  {sym:"OKB",name:"Wrapped OKB · X Layer 原生封装",addr:"0xe538905cf8410324e03a5a23c1c177a474d59b2b"},
+  {sym:"OKB",name:"OKB · X Layer 原生 Gas 币",addr:"0xNATIVE_OKB",nat:1},
+  {sym:"WOKB",name:"Wrapped OKB · X Layer 原生封装",addr:"0xe538905cf8410324e03a5a23c1c177a474d59b2b"},
   /* 科技巨头 · Magnificent 7 */
   {sym:"XAAPL",name:"苹果 · Apple",addr:"0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a"},{sym:"XNVDA",name:"英伟达 · NVIDIA",addr:"0xc845b2894dbddd03858fd2d643b4ef725fe0849d"},
   {sym:"XTSLA",name:"特斯拉 · Tesla",addr:"0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0"},{sym:"XMSFT",name:"微软 · Microsoft",addr:"0x5621737f42dae558b81269fcb9e9e70c19aa6b35"},
@@ -1251,20 +1252,20 @@ function pickToken(ctx){pickCtx=ctx;renderTokList();$("tokMask").classList.add("
 function hideTok(){$("tokMask").classList.remove("on");pickCtx=null;}
 function renderTokList(){
   const q=($("tokSearch").value||"").trim().toLowerCase();
-  const pool=[...assets,...XSTOCKS.filter(x=>x.addr).map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,logo:x.logo}))];
+  const pool=[...assets,...XSTOCKS.filter(x=>x.addr).map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,logo:x.logo,nat:x.nat||0}))];
   const u={};pool.forEach(x=>u[x.addr.toLowerCase()]=x);
   const list=Object.values(u).filter(x=>!q||x.sym.toLowerCase().includes(q)||x.name.toLowerCase().includes(q)||x.addr.toLowerCase().includes(q));
   $("tokList").innerHTML=list.length?list.map(x=>`
-    <div class="item" style="cursor:pointer" onclick="selToken('${x.addr}','${esc(x.sym)}','${esc(x.name)}',${x.dec},'${esc(x.logo||"")}')">
+    <div class="item" style="cursor:pointer" onclick="selToken('${x.addr}','${esc(x.sym)}','${esc(x.name)}',${x.dec},'${esc(x.logo||"")}',${x.nat?1:0})">
       ${logoSvg(x.sym,"",x.logo)}
       <div class="nm"><b>${esc(x.sym)}</b><span>${esc(x.name)}</span></div>
       <span style="color:var(--acc);font-size:13px">选择 →</span>
     </div>`).join("")
   :`<div class="empty"><div class="big"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg></div>无匹配 · 先到「资产」页添加代币地址</div>`;
 }
-function selToken(addr,sym,name,dec,logo){
+function selToken(addr,sym,name,dec,logo,nat){
   const ctx=pickCtx;if(!ctx)return;
-  const t={addr,sym,name,dec,logo};
+  const t={addr,sym,name,dec,logo,nat:!!nat};
   if(ctx==="from"||ctx==="to")swapSel(ctx,t);
   else if(ctx==="pa"||ctx==="pb")poolSelA(ctx,t);
   else if(ctx==="pr")poolSelR(t);
@@ -1287,9 +1288,9 @@ function renderSwapSel(){
 async function setMax(){
   if(!walletAddr||!sA){toast("请先选择卖出代币并连接钱包","err");return;}
   withRPC(async p=>{
-    const bal=await new ethers.Contract(sA.addr,ERC20_ABI,p).balanceOf(walletAddr);
+    const bal=sA.nat?await p.getBalance(walletAddr):await new ethers.Contract(sA.addr,ERC20_ABI,p).balanceOf(walletAddr);
     $("inAmt").value=fmtPrice(fromWei(bal,sA.dec));
-    $("inBal").textContent=sA.sym+" 余额: "+fmtPrice(fromWei(bal,sA.dec));
+    $("inBal").textContent=sA.sym+" 余额: "+fmtPrice(fromWei(bal,sA.dec))+(sA.nat?"（原生 Gas · 自动包装参与交易）":"");
     quoteSwap();
   }).catch(e=>toast("读取余额失败："+(e.message||e),"err"));
 }
@@ -1298,25 +1299,25 @@ async function quoteSwap(){
   el.classList.remove("on");rate.textContent="—";
   if(!cfg.router){$("outAmt").value="";rate.textContent=walletAddr?"未配置 Router 合约 · 点击下方按钮配置":"连接钱包后即可配置 Router 合约";updateSwapCta();return;}
   if(!sA||!sB){$("outAmt").value="";updateSwapCta();return;}
-  if(sA.addr.toLowerCase()===sB.addr.toLowerCase()){el.textContent="不能兑换同一代币";el.classList.add("on");$("outAmt").value="";updateSwapCta();return;}
+  if(tokAddr(sA).toLowerCase()===tokAddr(sB).toLowerCase()){el.textContent="不能兑换同一代币";el.classList.add("on");$("outAmt").value="";updateSwapCta();return;}
   const n=Number($("inAmt").value);
   if(!n||n<=0){$("outAmt").value="";updateSwapCta();return;}
   try{
     const res=await withRPC(async p=>{
       const r=new ethers.Contract(cfg.router,ROUTER_ABI,p);
-      const amounts=await r.getAmountsOut(toWei(n,sA.dec),[sA.addr,sB.addr]);
+      const amounts=await r.getAmountsOut(toWei(n,sA.dec),[tokAddr(sA),tokAddr(sB)]);
       const out=fromWei(amounts[1],sB.dec);
       const minOut=fromWei(amounts[1]*(10000n-BigInt(Math.round(slipPct*10000)))/10000n,sB.dec);
       let depth=null;
       try{
         const f=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
-        const pair=await f.getPair(sA.addr,sB.addr);
+        const pair=await f.getPair(tokAddr(sA),tokAddr(sB));
         if(pair!==ethers.ZeroAddress){
           const pc=new ethers.Contract(pair,PAIR_ABI,p);
           const rs=await pc.getReserves();
           const t0=(await pc.token0()).toLowerCase();
-          const dA=t0===sA.addr.toLowerCase()?rs[0]:rs[1];
-          const dB=t0===sA.addr.toLowerCase()?rs[1]:rs[0];
+          const dA=t0===tokAddr(sA).toLowerCase()?rs[0]:rs[1];
+          const dB=t0===tokAddr(sA).toLowerCase()?rs[1]:rs[0];
           depth={a:fromWei(dA,sA.dec),b:fromWei(dB,sB.dec)};
         }
       }catch(e){}
@@ -1335,8 +1336,8 @@ async function quoteSwap(){
     }
     if(walletAddr&&sA){
       withRPC(async p=>{
-        const bal=await new ethers.Contract(sA.addr,ERC20_ABI,p).balanceOf(walletAddr);
-        $("inBal").textContent=sA.sym+" 余额: "+fmtPrice(fromWei(bal,sA.dec));
+        const bal=sA.nat?await p.getBalance(walletAddr):await new ethers.Contract(sA.addr,ERC20_ABI,p).balanceOf(walletAddr);
+        $("inBal").textContent=sA.sym+" 余额: "+fmtPrice(fromWei(bal,sA.dec))+(sA.nat?"（原生 Gas · 自动包装参与交易）":"");
       }).catch(()=>{});
     }
   }catch(e){el.textContent="报价失败："+(e.message||e);el.classList.add("on");$("outAmt").value="";}
@@ -1376,6 +1377,7 @@ function txHistSave(x){
 }
 
 /* ============ OKB ⇄ WOKB 包装 ============ */
+function tokAddr(t){return t&&t.nat?WOKB_ADDR:t.addr;}
 async function refreshWrapBals(){
   if(!walletAddr)return;
   try{
@@ -1468,20 +1470,38 @@ async function doSwap(){
   if(!n||n<=0){toast("请输入卖出数量","err");return;}
   try{
     const signer=await getSigner();
-    const tk=new ethers.Contract(sA.addr,ERC20_ABI,signer);
-    const bal=await tk.balanceOf(walletAddr);
     const amt=toWei(n,sA.dec);
-    if(bal<amt){toast(sA.sym+" 余额不足","err");return;}
-    const allw=await tk.allowance(walletAddr,cfg.router);
+    const inTok=tokAddr(sA),outTok=tokAddr(sB);
+    let bal;
+    if(sA.nat){
+      bal=await signer.provider.getBalance(walletAddr);
+      const need=amt+3000000000000000n;
+      if(bal<need){toast("OKB 余额不足（含 Gas）","err");return;}
+    }else{
+      const tk=new ethers.Contract(sA.addr,ERC20_ABI,signer);
+      bal=await tk.balanceOf(walletAddr);
+      if(bal<amt){toast(sA.sym+" 余额不足","err");return;}
+    }
     qstate.steps=[];
-    if(allw<amt)qAdd("授权 "+sA.sym,async()=>{const r=await tk.approve(cfg.router,ethers.MaxUint256);await r.wait();return"已授权";});
+    if(!sA.nat){
+      const tk=new ethers.Contract(sA.addr,ERC20_ABI,signer);
+      const allw=await tk.allowance(walletAddr,cfg.router);
+      if(allw<amt)qAdd("授权 "+sA.sym,async()=>{const r=await tk.approve(cfg.router,ethers.MaxUint256);await r.wait();return"已授权";});
+    }else{
+      const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,signer);
+      qAdd("包装 "+fmtPrice(n)+" OKB → WOKB",async()=>{const r=await w.deposit({value:amt});await r.wait();return"已包装";});
+    }
     qAdd("兑换 "+fmtPrice(n)+" "+sA.sym,async()=>{
       const r=new ethers.Contract(cfg.router,ROUTER_ABI,signer);
-      const amounts=await r.getAmountsOut(amt,[sA.addr,sB.addr]);
+      const amounts=await r.getAmountsOut(amt,[inTok,outTok]);
       const minOut=amounts[1]*(10000n-BigInt(Math.round(slipPct*10000)))/10000n;
-      const tx=await r.swapExactTokensForTokens(amt,minOut,[sA.addr,sB.addr],walletAddr,deadline());
+      const tx=await r.swapExactTokensForTokens(amt,minOut,[inTok,outTok],walletAddr,deadline());
       await tx.wait();
       txHistSave({h:tx.hash,dir:sA.sym+"→"+sB.sym,n:fmtPrice(n)+" "+sA.sym,out:fmtPrice(fromWei(amounts[1],sB.dec))+" "+sB.sym,tm:new Date().toLocaleTimeString()});
+      if(sB.nat){
+        const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,signer);
+        const rx=await w.withdraw(amounts[1]);await rx.wait();
+      }
       return"成交 ≈ "+fmtPrice(fromWei(amounts[1],sB.dec))+" "+sB.sym;
     });
     qRun();
@@ -1859,8 +1879,8 @@ async function renderAssets(){
   const balEl=$("balList");
   balEl.innerHTML=`<div class="empty" style="grid-column:1/-1">查询余额中… <span id="balProg" style="color:var(--gold)"></span></div>`;
   try{
-    /* 去重地址池：自定义 + 全量内置 */
-    const xs=XSTOCKS.filter(x=>x.addr);
+    /* 去重地址池：自定义 + 全量内置（OKB 原生币无合约地址，跳过） */
+    const xs=XSTOCKS.filter(x=>x.addr&&!x.nat);
     const metaByAddr={};
     for(const x of xs)metaByAddr[x.addr.toLowerCase()]={sym:x.sym,name:x.name,logo:x.logo};
     for(const a of assets)metaByAddr[a.addr.toLowerCase()]={sym:a.sym,name:a.name,logo:a.logo};
