@@ -457,7 +457,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
           <div class="amount-wrap"><label id="pbLbl" style="display:flex;justify-content:space-between;align-items:center;width:100%">代币 B <button type="button" class="mini-btn" onclick="maxPb()">MAX</button></label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="pbTouched=true;dqPool()" onkeydown="if(event.key==='Enter')addLiqCta()"></div>
           <div class="tokbtn" id="pbBtn" onclick="pickToken('pb')"><span class="lg" id="pbLg">?</span><span><span class="nm2" id="pbNm">选择</span></span><span class="caret">▼</span></div>
         </div>
-        <div class="info-row"><span>池状态</span><b id="poolRate">—</b></div>
+        <div class="info-row"><span>池状态</span><b id="poolStatus">—</b></div>
         <div class="info-row"><span>你的份额</span><b id="poolShare" class="good">—</b></div>
         <div class="info-row"><span>我的 LP</span><b id="poolLp" class="mono" style="color:var(--gold)">—</b></div>
         <div id="poolErr" class="errbox"></div>
@@ -2176,7 +2176,7 @@ function renderPoolSel(){
   updateAddLiqCta();updateRmLiqCta();
 }
 async function poolQuote(){
-  if(!cfg.factory){const el=$("poolRate");if(el)el.textContent=walletAddr?"未配置 Factory 合约 · 点击下方按钮配置":"连接钱包后即可配置 Factory 合约";updateAddLiqCta();return;}
+  if(!cfg.factory){const el=$("poolStatus");if(el)el.textContent=walletAddr?"未配置 Factory 合约 · 点击下方按钮配置":"连接钱包后即可配置 Factory 合约";updateAddLiqCta();return;}
   if(!pA||!pB)return;
   const a=Number($("paAmt").value),b=Number($("pbAmt").value);
   const el=$("poolErr");el.classList.remove("on");
@@ -2193,9 +2193,9 @@ async function poolQuote(){
       }
       return{pair,t0,r0:Number(r[0]),r1:Number(r[1]),lp};
     });
-    if(!info){$("poolRate").textContent="新交易对 · 首次添加定价";$("poolShare").textContent="—";const lpEl0=$("poolLp");if(lpEl0)lpEl0.textContent="—";pbTouched=false;updateAddLiqCta();return;}
+    if(!info){$("poolStatus").textContent="新交易对 · 首次添加定价";$("poolShare").textContent="—";const lpEl0=$("poolLp");if(lpEl0)lpEl0.textContent="—";pbTouched=false;updateAddLiqCta();return;}
     const[rA,rB]=info.t0.toLowerCase()===pA.addr.toLowerCase()?[info.r0,info.r1]:[info.r1,info.r0];
-    $("poolRate").textContent=fmtPrice(fromWei(rA,pA.dec))+" "+pA.sym+" / "+fmtPrice(fromWei(rB,pB.dec))+" "+pB.sym;
+    $("poolStatus").textContent=fmtPrice(fromWei(rA,pA.dec))+" "+pA.sym+" / "+fmtPrice(fromWei(rB,pB.dec))+" "+pB.sym;
     const lpEl=$("poolLp");
     if(lpEl)lpEl.textContent=info.lp&&info.lp.bal>0n?fmt(fromWei(info.lp.bal,18))+" LP · 占比 "+(info.lp.tot>0n?(Number(info.lp.bal)/Number(info.lp.tot)*100).toFixed(2)+"%":"—"):"—";
     if(a>0&&rA>0){
@@ -2420,6 +2420,7 @@ async function renderFarm(){
           <div class="m"><div class="k">总质押</div><div class="v">${fmt(fromWei(p.total,p.dec))} ${esc(p.lp?"XLP":p.sym)}</div></div>
           <div class="m"><div class="k">我的质押</div><div class="v" id="myStk${p.pid}">—</div></div>
           <div class="m"><div class="k">待领取</div><div class="v" id="pend${p.pid}">—</div></div>
+          <div class="m"><div class="k">钱包余额</div><div class="v" id="wbal${p.pid}">—</div></div>
           <div class="m" style="grid-column:1/4"><div class="k">矿池奖励 XPR（可分余额）</div><div class="v" id="poolXpr${p.pid}">…</div></div>
         </div>
         <div class="poolacts">
@@ -2439,8 +2440,9 @@ async function renderFarm(){
         for(const pg of data){
           const u=await st.userInfo(pg.pid,walletAddr);
           const pend=await st.pendingReward(pg.pid,walletAddr);
-          const e1=$("myStk"+pg.pid),e2=$("pend"+pg.pid);
+          const e1=$("myStk"+pg.pid),e2=$("pend"+pg.pid),e3=$("wbal"+pg.pid);
           if(e1)e1.textContent=fmt(fromWei(u[0],pg.dec))+" "+pg.sym;
+          if(e3){try{const wb=await new ethers.Contract(pg.tok,ERC20_ABI,p).balanceOf(walletAddr);e3.textContent=fmt(fromWei(wb,pg.dec))+" "+pg.sym;e3.style.color=wb>0n?"var(--ok)":"var(--faint)";}catch(err){e3.textContent="—";}}
           if(e2)e2.innerHTML=pend>0n?`<span class="badge-gold">${fmt(fromWei(pend,18))} XPR</span>`:fmt(fromWei(pend,18))+" XPR";
         const cb=$("claimBtn"+pg.pid);if(cb){if(pend>0n)cb.classList.add("claim-avail");else cb.classList.remove("claim-avail");}
         }
@@ -2535,7 +2537,7 @@ async function doStake(pid){
       const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
       const info=await st.poolInfo(pid);
       const tk=new ethers.Contract(info[0],ERC20_ABI,p);
-      return{tok:info[0],dec:await tk.decimals().catch(()=>18),sym:await tk.symbol().catch(()=>"?")};
+      return{tok:info[0],dec:Number(await tk.decimals().catch(()=>18)),sym:await tk.symbol().catch(()=>"?")};
     });
     const amt=toWei(n,pool.dec);
     const tk=new ethers.Contract(pool.tok,ERC20_ABI,signer);
