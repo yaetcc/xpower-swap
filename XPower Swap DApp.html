@@ -220,6 +220,28 @@ footer b{color:var(--dim)}
 details{margin-top:12px;max-width:640px;margin-left:auto;margin-right:auto;text-align:left}
 details summary{cursor:pointer;color:var(--dim);font-size:12px}
 details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line-height:2}
+/* ===== 专业增强：渐变数字 / 卡片微交互 / 进度条 / 按钮状态 ===== */
+.grad-txt{background:var(--acc-grad);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.card-lift{transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s;will-change:transform}
+.card-lift:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(16,16,24,.1),0 2px 8px rgba(245,25,123,.08)}
+.btn{position:relative}
+.btn.busy::after{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.35)}
+.btn.busy::before{content:"";position:absolute;left:50%;top:50%;width:15px;height:15px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .7s linear infinite;z-index:1}
+@keyframes spin{to{transform:rotate(360deg)}}
+input[type=text],input[type=number],select,textarea{transition:border-color .16s,box-shadow .16s}
+input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc-line)!important;box-shadow:0 0 0 3px rgba(245,25,123,.12)}
+.amt-in{transition:.2s}
+.amt-in:focus{transform:scale(1.015)}
+.prog{height:5px;border-radius:4px;background:rgba(20,20,28,.07);overflow:hidden}
+.prog>i{display:block;height:100%;border-radius:4px;background:var(--acc-grad)}
+.badge-gold{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;background:rgba(240,180,41,.14);color:#b45309;font-size:11px;font-weight:800;border:1px solid rgba(240,180,41,.4)}
+.badge-ok{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;background:rgba(22,163,74,.12);color:#047857;font-size:11px;font-weight:800;border:1px solid rgba(22,163,74,.35)}
+.liq-card:hover{border-color:var(--acc-line)!important;box-shadow:0 8px 24px rgba(245,25,123,.08)}
+.stat-num{font-size:19px;font-weight:900;font-family:var(--mono);letter-spacing:-.3px}
+#toasts>div{border-left:3px solid var(--acc);animation:toastin .22s cubic-bezier(.2,.7,.2,1)}
+#toasts>div.err{border-left-color:var(--err)}
+#toasts>div.ok{border-left-color:var(--ok)}
+@keyframes toastin{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -253,7 +275,7 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
     </div>
     <div class="stats" id="swapStats"></div>
     <div class="swap-center">
-      <div class="swap-card">
+      <div class="swap-card card-lift">
         <div class="swap-head">
           <b>兑换</b>
           <div style="display:flex;align-items:center;gap:10px">
@@ -293,7 +315,7 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
         <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
         <details style="margin-top:12px;font-size:12px"><summary style="cursor:pointer;color:var(--dim);font-weight:700;user-select:none">最近交易 · 本机记录</summary><div id="txHist" style="margin-top:6px"></div></details>
       </div>
-      <div class="swap-card" style="margin-top:14px">
+      <div class="swap-card card-lift" style="margin-top:14px">
         <div class="swap-head"><b>价格图表</b><span class="badge">链上实时采样</span></div>
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap">
           <div>
@@ -2256,6 +2278,7 @@ async function renderMyLiq(){
           </div>
           <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--faint)">LP 余额</span><b>${fmtPrice(fromWei(r.lpBal,18))}</b></div>
           <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--faint)">池占比</span><b>${r.share.toFixed(4)}%</b></div>
+          <div class="prog"><i style="width:${Math.min(r.share,100).toFixed(2)}%"></i></div>
         </div>`).join("");
     });
   }catch(e){el.className="empty";el.innerHTML=`<div class="big">!</div>持仓读取失败（RPC 波动，切换页面自动重试）`;}
