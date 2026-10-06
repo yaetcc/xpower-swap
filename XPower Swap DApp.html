@@ -1585,6 +1585,8 @@ async function setMax(){
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
 const dqSwap=debounce(quoteSwap,250);
 const dqPool=debounce(poolQuote,250);
+function dqSwap(){quoteSwap();}
+function dqPool(){poolQuote();}
 function swapPct(v){
   if(!walletAddr){toast("请先连接钱包","err");return;}
   if(!sA){toast("请先选择代币","err");return;}
