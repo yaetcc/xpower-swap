@@ -403,7 +403,13 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
 .liq-input:focus-within{border-color:var(--acc-line);box-shadow:0 0 0 3px var(--acc-soft)}
 .pct-btn{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--dim);font-size:12px;font-weight:800;cursor:pointer;transition:.15s;text-align:center}
 .pct-btn.on{background:var(--acc-grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(245,25,123,.25)}
-.farm-wrap{display:grid;gap:12px}
+.farm-wrap{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(345px,1fr))}
+@media(max-width:760px){.farm-wrap{grid-template-columns:1fr}}
+.farm-filt{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.farm-filt .t{padding:7px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--dim);font-size:12px;font-weight:800;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.farm-filt .t em{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+.farm-filt .t.on{background:var(--acc-grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(245,25,123,.25)}
+.farm-filt .t.on em{color:rgba(255,255,255,.85)}
 #view-farm .poolcard{background:linear-gradient(168deg,#fff 0%,#fdfafd 60%,#f6f1fb 100%);border-radius:16px;padding:13px 14px;box-shadow:var(--shadow)}
 #view-farm .poolcard:hover{border-color:var(--acc-line);box-shadow:0 12px 30px rgba(245,25,123,.09),var(--shadow)}
 #view-farm .poolcard .top{border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
@@ -1678,6 +1684,18 @@ async function doRemoveLiquidity(){
 }
 
 /* ============ Farm ============ */
+function setFarmFilt(v){
+  const btns=document.querySelectorAll("#farmFilt .t");
+  btns.forEach(b=>b.classList.toggle("on",b.dataset.f===v));
+  let mineN=0;
+  document.querySelectorAll("#farmList .poolcard").forEach(c=>{
+    let show=v==="all"||(v==="live"&&c.dataset.live==="1")||(v==="mine"&&c.dataset.mine==="1");
+    if(v==="mine"&&c.dataset.mine==="1")mineN++;
+    c.style.display=show?"":"none";
+  });
+  const me=document.querySelector('#farmFilt .t[data-f="mine"] em');
+  if(me)me.textContent=mineN;
+}
 async function renderFarm(){
   const el=$("farmList");
   if(!cfg.staking){el.innerHTML=`<div class="empty"><div class="big">◈</div>未配置 Staking 合约<br><div style="display:flex;gap:8px;margin-top:8px;justify-content:center"><button class="btn primary sm" onclick="openCfg()">去配置合约</button><button class="btn gold sm" onclick="location.hash='pool'">去 Pool 一键起盘</button></div></div>`;return;}
@@ -1723,8 +1741,13 @@ async function renderFarm(){
       return pools;
     });
     if(!data.length){el.innerHTML=`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg></div>暂无质押池 · 由平台 owner 在下方面板一键创建</div>`;return;}
-    el.innerHTML=data.map(p=>`
-      <div class="poolcard">
+    const liveN=data.filter(p=>p.active).length;
+    el.innerHTML=`<div class="farm-filt" id="farmFilt">
+      <span class="t on" data-f="all" onclick="setFarmFilt('all')">全部 <em>${data.length}</em></span>
+      <span class="t" data-f="live" onclick="setFarmFilt('live')">挖矿中 <em>${liveN}</em></span>
+      <span class="t" data-f="mine" onclick="setFarmFilt('mine')">我的质押</span>
+    </div>`+data.map(p=>`
+      <div class="poolcard" data-live="${p.active?"1":"0"}">
         <div class="top">
           <div class="pair">${logoSvg(p.lpLg?p.lpLg.sym:p.sym,"",p.lpLg?p.lpLg.logo:p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?"XLP · ":""}#${p.pid} · <span class="cp" data-copy="${p.tok}" title="点击复制代币地址">${shortAddr(p.tok)}</span></div></div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
@@ -1759,6 +1782,7 @@ async function renderFarm(){
           const pend=await st.pendingReward(pg.pid,walletAddr);
           const e1=$("myStk"+pg.pid),e2=$("pend"+pg.pid),e3=$("wbal"+pg.pid);
           if(e1)e1.textContent=fmt(fromWei(u[0],pg.dec))+" "+pg.sym;
+          if(u[0]>0n){const pc=$("myStk"+pg.pid);if(pc)pc.closest(".poolcard").dataset.mine="1";}
           if(e3){try{const wb=await new ethers.Contract(pg.tok,ERC20_ABI,p).balanceOf(walletAddr);e3.textContent=fmt(fromWei(wb,pg.dec))+" "+pg.sym;e3.style.color=wb>0n?"var(--ok)":"var(--faint)";}catch(err){e3.textContent="—";}}
           if(e2)e2.innerHTML=pend>0n?`<span class="badge-gold">${fmt(fromWei(pend,18))} XPR</span>`:fmt(fromWei(pend,18))+" XPR";
         const cb=$("claimBtn"+pg.pid);if(cb){if(pend>0n)cb.classList.add("claim-avail");else cb.classList.remove("claim-avail");}
