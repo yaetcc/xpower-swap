@@ -1164,8 +1164,9 @@ function openCfg(){
       <div style="display:grid;gap:8px">
         <input id="lgTok" list="lgTokList" placeholder="选择 xStock 资产（如 XAAPL）或粘贴地址" class="mono" style="font-size:12.5px">
         <datalist id="lgTokList"></datalist>
-        <input id="lgRate" type="number" placeholder="每秒奖励 XPR（如 0.000001）" style="font-size:12.5px">
-        <input id="lgFund" type="number" placeholder="注入奖励 XPR 数量（如 100000）" style="font-size:12.5px">
+        <input id="lgReward" placeholder="奖励币地址 · 留空默认 XPR（部署后自动填）" class="mono" style="font-size:12.5px">
+        <input id="lgRate" type="number" placeholder="每秒奖励（如 0.000001）" style="font-size:12.5px">
+        <input id="lgFund" type="number" placeholder="注入奖励数量（如 100000）" style="font-size:12.5px">
         <button class="btn gold wide" onclick="launchAll()">⚡ 一键起盘：交易对 → 质押池 → 注入奖励</button>
       </div>
       <div id="lgLog" style="display:grid;gap:6px;margin-top:8px;font-size:12px"></div>
@@ -1204,10 +1205,12 @@ async function launchAll(){
     const st=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
     const own=await st.owner();
     if(own.toLowerCase()!==walletAddr){toast("仅矿池 owner 可起盘","err");return;}
-    const xpr=new ethers.Contract(cfg.xstork,ERC20_ABI,signer);
+    const rwIn=$("lgReward")?($("lgReward").value||"").trim():"";
+    const rewardAddr=isAddr(rwIn)?rwIn:cfg.xstork;
+    const rwTok=new ethers.Contract(rewardAddr,ERC20_ABI,signer);
     const fundBN=toWei(fund,18);
-    const bal=await xpr.balanceOf(walletAddr);
-    if(bal<fundBN){toast("XPR 余额不足（当前 "+fmt(fromWei(bal,18))+")","err");return;}
+    const bal=await rwTok.balanceOf(walletAddr);
+    if(bal<fundBN){toast("奖励币余额不足（当前 "+fmt(fromWei(bal,18))+")","err");return;}
     let pairAddr=ethers.ZeroAddress;
     qstate.steps=[];
     qAdd("创建交易对 "+tok.sym+"/WOKB",async()=>{
@@ -1222,13 +1225,13 @@ async function launchAll(){
     });
     qAdd("创建质押池（质押 LP 凭证）",async()=>{
       const tx=await st.createPool(pairAddr,toWei(rate,18));await tx.wait();
-      return"矿池已建 · 每秒 "+rate+" XPR";
+      return"矿池已建 · 每秒 "+rate+" 奖励";
     });
-    qAdd("授权 XPR → 矿池",async()=>{
-      const tx=await xpr.approve(cfg.staking,fundBN);await tx.wait();return"已授权";
+    qAdd("授权奖励币 → 矿池",async()=>{
+      const tx=await rwTok.approve(cfg.staking,fundBN);await tx.wait();return"已授权";
     });
-    qAdd("注入 "+fund+" XPR 奖励",async()=>{
-      const tx=await xpr.transfer(cfg.staking,fundBN);await tx.wait();return"奖励已入池";
+    qAdd("注入 "+fund+" 奖励",async()=>{
+      const tx=await rwTok.transfer(cfg.staking,fundBN);await tx.wait();return"奖励已入池";
     });
     qRun({ok:()=>{toast("一键起盘完成 · 可去 Pool 添加流动性","ok");refreshAll();},err:(e)=>{toast("起盘中断："+(e.shortMessage||e.message||e),"err");}});
   }catch(e){toast("起盘失败："+(e.message||e),"err");}
@@ -1514,7 +1517,10 @@ async function deployAll(){
       const f=new ethers.ContractFactory(st.abi,st.bin,s);
       let args=st.args;
       if(st.k==="router")args=[cfg.factory];
-      if(st.k==="staking")args=[cfg.xstork];
+      if(st.k==="staking"){
+        const rw=$("lgReward")?($("lgReward").value||"").trim():"";
+        args=[isAddr(rw)?rw:cfg.xstork];
+      }
       const c=await f.deploy(...args);
       await c.waitForDeployment();
       const addr=c.target.toString();
