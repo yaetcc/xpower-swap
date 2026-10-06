@@ -242,6 +242,14 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 #toasts>div.err{border-left-color:var(--err)}
 #toasts>div.ok{border-left-color:var(--ok)}
 @keyframes toastin{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+/* ===== 流动性页增强 ===== */
+.mini-btn{padding:2px 8px;border-radius:7px;border:1px solid var(--line2);background:var(--card2);color:var(--acc);font-size:10.5px;font-weight:800;cursor:pointer;transition:.15s}
+.mini-btn:hover{border-color:var(--acc);background:var(--acc-soft)}
+.pct-btn{flex:1;padding:6px 0;border-radius:9px;border:1px solid var(--line);background:var(--card2);color:var(--dim);font-size:12px;font-weight:800;cursor:pointer;transition:.15s;text-align:center}
+.pct-btn:hover{border-color:var(--acc-line);color:var(--acc)}
+.pct-btn.on{background:var(--acc-grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(245,25,123,.25)}
+.liq-card{border:1px solid var(--line2);border-radius:14px;padding:12px;display:grid;gap:8px;background:var(--card);transition:border-color .18s,box-shadow .18s,transform .18s}
+.liq-card:hover{border-color:var(--acc-line)!important;box-shadow:0 8px 24px rgba(245,25,123,.08);transform:translateY(-1px)}
 </style>
 </head>
 <body>
@@ -329,11 +337,11 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
       <div class="panel">
         <h2><span class="bar"></span>添加流动性</h2>
         <div class="liq-row">
-          <div class="amount-wrap"><label id="paLbl">代币 A</label><input id="paAmt" type="number" min="0" placeholder="0.0" oninput="poolQuote()"></div>
+          <div class="amount-wrap"><label id="paLbl" style="display:flex;justify-content:space-between;align-items:center;width:100%">代币 A <button type="button" class="mini-btn" onclick="maxPa()">MAX</button></label><input id="paAmt" type="number" min="0" placeholder="0.0" oninput="poolQuote()"></div>
           <div class="tokbtn" id="paBtn" onclick="pickToken('pa')"><span class="lg" id="paLg">?</span><span><span class="nm2" id="paNm">选择</span></span><span class="caret">▼</span></div>
         </div>
         <div class="liq-row">
-          <div class="amount-wrap"><label id="pbLbl">代币 B</label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="pbTouched=true;poolQuote()"></div>
+          <div class="amount-wrap"><label id="pbLbl" style="display:flex;justify-content:space-between;align-items:center;width:100%">代币 B <button type="button" class="mini-btn" onclick="maxPb()">MAX</button></label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="pbTouched=true;poolQuote()"></div>
           <div class="tokbtn" id="pbBtn" onclick="pickToken('pb')"><span class="lg" id="pbLg">?</span><span><span class="nm2" id="pbNm">选择</span></span><span class="caret">▼</span></div>
         </div>
         <div class="info-row"><span>池状态</span><b id="poolRate">—</b></div>
@@ -346,7 +354,13 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
         <h2><span class="bar"></span>移除流动性</h2>
         <div><label>交易对</label><div class="tokbtn" id="prBtn" onclick="pickToken('pr')"><span class="lg" id="prLg">?</span><span><span class="nm2" id="prNm">选择资产</span></span><span class="caret">▼</span></div></div>
         <div style="margin-top:14px"><label>移除比例</label>
-          <input id="prPct" type="range" min="0" max="100" value="0" oninput="removeQuote()">
+          <input id="prPct" type="range" min="0" max="100" value="0" oninput="setRmPctActive();removeQuote()">
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button type="button" class="pct-btn" onclick="setRmPct(25)">25%</button>
+            <button type="button" class="pct-btn" onclick="setRmPct(50)">50%</button>
+            <button type="button" class="pct-btn" onclick="setRmPct(75)">75%</button>
+            <button type="button" class="pct-btn" data-v="100" onclick="setRmPct(100)">MAX</button>
+          </div>
           <div class="balrow"><span id="prLp">LP: —</span><b id="prPctTxt">0%</b></div>
         </div>
         <div class="info-row" style="margin-top:10px"><span>预计收到</span><b id="prOut" class="good">—</b></div>
@@ -1576,6 +1590,37 @@ async function doSwap(){
 
 /* ============ Pool ============ */
 function poolSelA(k,t){if(k==="pa"){pA=t;}else{pB=t;}pbTouched=false;renderPoolSel();poolQuote();}
+async function maxPa(){
+  if(!walletAddr){toast("请先连接钱包","err");return;}
+  if(!pA){toast("请先选择代币 A","err");return;}
+  try{
+    await withRPC(async p=>{
+      const bal=pA.nat?await p.getBalance(walletAddr):await new ethers.Contract(tokAddr(pA),ERC20_ABI,p).balanceOf(walletAddr);
+      $("paAmt").value=fmtPrice(fromWei(bal,pA.dec));
+    });
+    poolQuote();
+  }catch(e){toast("读取余额失败","err");}
+}
+async function maxPb(){
+  if(!walletAddr){toast("请先连接钱包","err");return;}
+  if(!pB){toast("请先选择代币 B","err");return;}
+  try{
+    await withRPC(async p=>{
+      const bal=pB.nat?await p.getBalance(walletAddr):await new ethers.Contract(tokAddr(pB),ERC20_ABI,p).balanceOf(walletAddr);
+      $("pbAmt").value=fmtPrice(fromWei(bal,pB.dec));
+    });
+    pbTouched=true;poolQuote();
+  }catch(e){toast("读取余额失败","err");}
+}
+function setRmPct(v){const r=$("prPct");if(!r)return;r.value=v;rmPctOn(v);removeQuote();}
+function setRmPctActive(){const r=$("prPct");if(r)rmPctOn(Number(r.value||0));}
+function rmPctOn(v){
+  document.querySelectorAll(".pct-btn").forEach(b=>{
+    const on=Number(b.dataset.v||-1)===v;
+    b.classList.toggle("on",on);
+  });
+}
+
 function poolSelR(t){pR=t;renderPoolSel();removeQuote();}
 function renderPoolSel(){
   setTokBtn("paBtn","paLg","paNm",pA);setTokBtn("pbBtn","pbLg","pbNm",pB);setTokBtn("prBtn","prLg","prNm",pR);
@@ -2168,7 +2213,7 @@ async function renderMyLiq(){
       if(!rows.length){el.className="empty";el.innerHTML=empty;return;}
       el.className="";
       el.innerHTML=rows.map(r=>`
-        <div style="border:1px solid var(--line2);border-radius:14px;padding:12px;display:grid;gap:8px;background:var(--card)">
+        <div class="liq-card">
           <div style="display:flex;align-items:center;gap:8px">
             ${logoSvg(r.d0.sym,"",r.d0.logo)}${logoSvg(r.d1.sym,"",r.d1.logo)}
             <span style="display:grid;gap:2px"><b style="font-size:13px">${esc(r.d0.sym)} / ${esc(r.d1.sym)}</b><span class="mono" style="font-size:10.5px;color:var(--faint)">${shortAddr(r.pa)}</span></span>
