@@ -1405,7 +1405,7 @@ function txHistSave(x){
   renderTxHist();
 }
 
-/* ============ OKB ⇄ WOKB 包装 ============ */
+/* ============ OKB 封装 ============ */
 function tokAddr(t){return t&&t.nat?WOKB_ADDR:t.addr;}
 function wSigner(){return new ethers.BrowserProvider(window.ethereum).getSigner();}
 /* ============ 一键部署 4 合约 ============ */
