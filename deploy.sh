@@ -11,8 +11,8 @@ RPC="${RPC:-https://rpc.xlayer.tech}"
 echo "== 编译 =="
 forge build --quiet
 
-echo "== 1/4 XSTORK 奖励币 =="
-XSTORK=$(forge create contracts/XSTORK.sol:XSTORK --rpc-url "$RPC" --private-key "$PRIVATE_KEY" --json | python3 -c "import sys,json;print(json.load(sys.stdin)['deployedTo'])")
+echo "== 1/4 XPower 奖励币 (XPR · 2100万) =="
+XSTORK=$(forge create contracts/XPower.sol:XPower --constructor-args "21000000000000000000000000" --rpc-url "$RPC" --private-key "$PRIVATE_KEY" --json | python3 -c "import sys,json;print(json.load(sys.stdin)['deployedTo'])")
 echo "XSTORK = $XSTORK"
 
 echo "== 2/4 XStorkFactory =="
@@ -30,13 +30,13 @@ echo "STAKING = $STAKING"
 cat <<EOF
 
 ========== 部署完成 ==========
-XSTORK   奖励币 : $XSTORK
+XPR      奖励币 : $XSTORK (2100万 XPR)
 FACTORY  交易对工厂 : $FACTORY
 ROUTER   兑换路由 : $ROUTER
 STAKING  质押挖矿 : $STAKING
 
 接下来（手动）:
-1) 给质押池注入奖励: cast send --private-key \$PRIVATE_KEY --rpc-url $RPC $XSTORK "transfer(address,uint256)" $STAKING <数量XSTORK(wei)>
+1) 给质押池注入奖励: cast send --private-key \$PRIVATE_KEY --rpc-url $RPC $XSTORK "transfer(address,uint256)" $STAKING <2100万XPR=21000000000000000000000000>
 2) 前端「合约配置」填入以上 4 个地址并保存
 3) 「资产」页粘贴 xStock 资产地址（如 xTSLA/xNVDA）→ 即可 Swap / 加流动性 / 质押
 ================================
