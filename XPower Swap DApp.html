@@ -257,6 +257,13 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .stake-row{display:flex;gap:6px;flex:1;min-width:130px}
 .stake-row input{flex:1;min-width:0}
 .annual{color:var(--acc);font-weight:800}
+/* ===== 资产页增强 ===== */
+.bal-card{background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:12px;display:grid;gap:6px;transition:border-color .18s,box-shadow .18s,transform .18s;align-content:start}
+.bal-card:hover{border-color:var(--acc-line)!important;box-shadow:0 8px 24px rgba(245,25,123,.08);transform:translateY(-1px)}
+.bal-card .symrow{display:flex;align-items:center;gap:8px}
+.bal-card .amt{font-size:20px;font-weight:900;font-family:var(--mono);letter-spacing:-.5px;line-height:1.3}
+.list .item:hover{background:var(--card2)}
+.list .item{transition:background .15s}
 </style>
 </head>
 <body>
@@ -2062,6 +2069,8 @@ async function renderAssets(){
     /* XPR 奖励币余额 */
     let xb=0n;
     if(cfg.xstork){try{xb=await withRPC(async p=>new ethers.Contract(cfg.xstork,ERC20_ABI,p).balanceOf(walletAddr));}catch(e){}}
+    let okb=0n;
+    try{okb=await withRPC(async p=>p.getBalance(walletAddr));}catch(e){}
     /* 余额缓存（45s TTL）避免每次切页全量重查 */
     const ckey=STORAGE+"bals";
     let balCache={};
@@ -2092,7 +2101,8 @@ async function renderAssets(){
       localStorage.setItem(ckey,JSON.stringify(nc));
     }catch(e){}
     /* 组装：只显示余额 > 0 的持仓 */
-    const rows=[{sym:"XPR",name:"平台奖励币",dec:18,bal:xb,addr:cfg.xstork,logo:XPR_LOGO}];
+    const rows=[{sym:"XPR",name:"平台奖励币",dec:18,bal:xb,addr:cfg.xstork,logo:XPR_LOGO},
+                {sym:"OKB",name:"X Layer 原生 Gas 币",dec:18,bal:okb,addr:"",logo:null}];
     const held=[];
     for(const a of addrs){
       const b=BigInt(found[a]||0);
@@ -2104,15 +2114,16 @@ async function renderAssets(){
     held.sort((p,q)=>q.bal>p.bal?1:-1);
     rows.push(...held);
     balEl.innerHTML=rows.length>1?rows.map(r=>`
-      <div class="item">
-        ${logoSvg(r.sym,"",r.logo)}
-        <div class="nm"><b>${esc(r.sym)}</b><span>${esc(r.name||"")}${r.addr?" · "+shortAddr(r.addr):""}</span></div>
-        <div class="val">${fmt(fromWei(r.bal,r.dec))}<span>${esc(r.sym)}</span></div>
-        ${r.addr&&r.sym==="XPR"?`<button class="btn ghost sm" style="grid-column:1/4;margin-top:6px" onclick="copyAddr('${r.addr}')">${r.bal>0n?"复制合约地址":"复制地址 · 钱包若未显示 XPR 请手动添加代币"}</button>`:""}
+      <div class="bal-card">
+        <div class="symrow">${logoSvg(r.sym,"",r.logo)}<b>${esc(r.sym)}</b><span style="color:var(--faint);font-size:11.5px">${esc(r.name||"")}</span></div>
+        <div class="amt ${r.sym==="XPR"?"grad-txt":""}">${fmt(fromWei(r.bal,r.dec))}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--faint)"><span>${esc(r.sym)} 余额</span>${r.addr?`<span class="mono">${shortAddr(r.addr)}</span>`:"<span>原生币 · 无需合约</span>"}</div>
+        ${r.addr&&r.sym==="XPR"?`<button class="btn ghost sm" style="margin-top:4px" onclick="copyAddr('${r.addr}')">${r.bal>0n?"复制合约地址":"复制地址 · 钱包若未显示 XPR 请手动添加代币"}</button>`:""}
       </div>`).join("")
     :`<div class="empty" style="grid-column:1/-1"><div class="big">◉</div>钱包中暂无资产 · 可在「名录」中选择交易或到 Pool 添加流动性</div>`;
     $("assetStats").innerHTML=`
       <div class="stat"><div class="k">XPR 余额</div><div class="v g">${fmt(fromWei(xb,18))}</div></div>
+      <div class="stat"><div class="k">OKB 余额</div><div class="v o">${fmt(fromWei(okb,18))}</div></div>
       <div class="stat"><div class="k">持仓资产</div><div class="v c">${held.length}</div></div>
       <div class="stat"><div class="k">内置资产名录</div><div class="v">${XSTOCKS.length}</div></div>
       <div class="stat"><div class="k">质押挖矿池</div><div class="v o" id="astPoolCnt">—</div></div>`;
