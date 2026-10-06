@@ -2006,7 +2006,7 @@ async function renderXprsDivCard(){
   const host=$("farmDivCard");if(!host)return;
   if(!isAddr(cfg.xprs)&&!isAddr(cfg.xprsDiv)){host.innerHTML="";return;}
   let pend=0n,totalStaked=0n,xprsB=0n;
-  if(!walletAddr){host.innerHTML=`<div class="panel" style="padding:14px;text-align:center;color:var(--faint);font-size:12.5px">${logoSvg("XPRS","",XPRS_LOGO)} <b>XPRS 分红</b> · 持币分红 XPR · 连接钱包查看分红</div>`;return;}
+  if(!walletAddr){host.innerHTML=`<div class="panel" style="padding:14px;text-align:center;color:var(--faint);font-size:12.5px">${logoSvg("XPRS","",XPRS_LOGO)} <b>XPRS 分红</b> · 持币分红 XPR · 连接钱包查看分红${isAddr(cfg.xprs)?`<div style="display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;font-size:11px"><span class="mono cp" data-copy="${cfg.xprs}" title="点击复制合约地址">合约 ${shortAddr(cfg.xprs)}</span><a href="https://ignix.bot/launch?token=${cfg.xprs}" target="_blank" rel="noopener" style="color:var(--acc)">ignix 购买 ↗</a><a href="https://web3.okx.com/zh-hans/token/x-layer/${cfg.xprs.toLowerCase()}" target="_blank" rel="noopener" style="color:var(--acc)">OKX 行情 ↗</a></div>`:""}</div>`;return;}
   if(isAddr(cfg.xprs)){try{xprsB=await withRPC(async p=>new ethers.Contract(cfg.xprs,ERC20_ABI,p).balanceOf(walletAddr));}catch(e){}}
   if(isAddr(cfg.xprsDiv)){
     try{await withRPC(async p=>{
@@ -2027,7 +2027,13 @@ async function renderXprsDivCard(){
         </div>
       </div>
       <button class="btn gold sm" onclick="claimXprs()" ${pend>0n?"":"disabled"}>${pend>0n?`领取 ${fmt(fromWei(pend,18))} XPR`:"暂无待领"}</button>
-    </div>`;
+    </div>
+    <div style="display:flex;gap:12px;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);flex-wrap:wrap;font-size:11px;align-items:center">
+      ${isAddr(cfg.xprs)?`<span class="mono cp" data-copy="${cfg.xprs}" title="点击复制合约地址" style="color:var(--dim)">合约 ${shortAddr(cfg.xprs)}</span>`:""}
+      ${isAddr(cfg.xprs)?`<a href="https://ignix.bot/launch?token=${cfg.xprs}" target="_blank" rel="noopener" style="color:var(--acc);font-weight:700">ignix 购买 ↗</a><a href="https://web3.okx.com/zh-hans/token/x-layer/${cfg.xprs.toLowerCase()}" target="_blank" rel="noopener" style="color:var(--acc);font-weight:700">OKX 行情 ↗</a>`:""}
+      <span style="color:var(--faint)">持 XPRS 即自动分红 · 领取按秒结算</span>
+    </div>
+  </div>`;
 }
 
 /* ============ 统计条 ============ */
