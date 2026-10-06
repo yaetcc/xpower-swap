@@ -1719,7 +1719,7 @@ async function doAddLiquidity(){
     qstate.steps=[];
     for(const[t,amt]of[[pA,amtA],[pB,amtB]]){
       if(t.nat){ // 原生 OKB：检查原生余额，添加时自动包装
-        const nb=await signer.getBalance();
+        const nb=await signer.provider.getBalance(walletAddr);
         if(nb<amt){toast(t.sym+" 余额不足","err");return;}
         continue;
       }
