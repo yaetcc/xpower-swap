@@ -2208,8 +2208,51 @@ function route(){
   refreshView();
 }
 function go(v){location.hash=v;}
+function tokInfo(a){
+  a=String(a||"").toLowerCase();if(!a)return null;
+  const f=arr=>arr.find(x=>x&&x.addr&&String(x.addr).toLowerCase()===a);
+  const d=f(assets)||f(XSTOCKS);
+  if(d)return d;
+  if(cfg.xstork&&String(cfg.xstork).toLowerCase()===a)return{sym:"XPR",name:"XPower",addr:cfg.xstork,dec:18,logo:XPR_LOGO};
+  return{sym:shortAddr(a),name:"",addr:a,dec:18,logo:""};
+}
+async function renderMyLiq(){
+  const el=$("myLiq");if(!el)return;
+  const empty=`<div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg></div>连接钱包并添加流动性后显示持仓`;
+  if(!walletAddr||!cfg.factory){el.className="empty";el.innerHTML=empty;return;}
+  try{
+    await withRPC(async p=>{
+      const fc=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
+      const len=Number(await fc.allPairsLength());
+      const rows=[];
+      for(let i=0;i<len;i++){
+        let pa;try{pa=await fc.allPairs(i);}catch(e){continue;}
+        const pc=new ethers.Contract(pa,[...PAIR_ABI,...ERC20_ABI,"function totalSupply() view returns (uint256)"],p);
+        const t0=await pc.token0(),t1=await pc.token1();
+        const lpBal=await pc.balanceOf(walletAddr);
+        if(lpBal<=0n)continue;
+        const lpTot=await pc.totalSupply();
+        const d0=tokInfo(t0),d1=tokInfo(t1);
+        const share=lpTot>0n?Number(lpBal)/Number(lpTot)*100:0;
+        rows.push({pa,t0,t1,d0,d1,lpBal,share});
+      }
+      if(!rows.length){el.className="empty";el.innerHTML=empty;return;}
+      el.className="";
+      el.innerHTML=rows.map(r=>`
+        <div style="border:1px solid var(--line2);border-radius:14px;padding:12px;display:grid;gap:8px;background:var(--card)">
+          <div style="display:flex;align-items:center;gap:8px">
+            ${logoSvg(r.d0.sym,"",r.d0.logo)}${logoSvg(r.d1.sym,"",r.d1.logo)}
+            <span style="display:grid;gap:2px"><b style="font-size:13px">${esc(r.d0.sym)} / ${esc(r.d1.sym)}</b><span class="mono" style="font-size:10.5px;color:var(--faint)">${shortAddr(r.pa)}</span></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--faint)">LP 余额</span><b>${fmtPrice(fromWei(r.lpBal,18))}</b></div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--faint)">池占比</span><b>${r.share.toFixed(4)}%</b></div>
+        </div>`).join("");
+    });
+  }catch(e){el.className="empty";el.innerHTML=`<div class="big">!</div>持仓读取失败（RPC 波动，切换页面自动重试）`;}
+}
 function refreshView(){
   renderStats();
+  if(curView==="pool")renderMyLiq();
   if(curView==="swap")renderSwapSel();
   if(curView==="pool")renderPoolSel();
   if(curView==="farm")renderFarm();
