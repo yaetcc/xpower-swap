@@ -367,9 +367,9 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
     </div>
     <div class="stats" id="assetStats"></div>
     <div class="panel">
-      <h2><span class="bar"></span>xStock 资产名录 · 已内置 1273 个（X Layer 全量）</h2>
+      <h2><span class="bar"></span>xStock 资产名录 · 已内置 1272 个可交易（X Layer 全量）</h2>
       <div style="display:flex;gap:9px;align-items:center;margin-bottom:10px">
-        <input id="assetSearch" placeholder="搜索 1273 个内置资产：符号 / 名称 / 地址" oninput="renderAssetList()" style="flex:1;min-width:220px">
+        <input id="assetSearch" placeholder="搜索 1272 个可交易 xStock：符号 / 名称 / 地址" oninput="renderAssetList()" style="flex:1;min-width:220px">
         <span id="assetCnt" style="font-size:12px;color:var(--dim);white-space:nowrap"></span>
       </div>
       <div class="th-row"><span class="lg" style="width:34px"></span><span class="nm">资产 / 地址</span><span>操作</span></div>
@@ -1243,7 +1243,10 @@ function removeAsset(a){assets=assets.filter(x=>x.addr.toLowerCase()!==a.toLower
 function renderAssetList(){
   const el=$("assetList");if(!el)return;
   const q=($("assetSearch").value||"").trim().toLowerCase();
-  const all=[...assets,...XSTOCKS.map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true}))];
+  const u={};
+  assets.forEach(a=>{if(a.addr)u[a.addr.toLowerCase()]=a;});
+  XSTOCKS.forEach(x=>{if(x.addr&&!u[x.addr.toLowerCase()])u[x.addr.toLowerCase()]={addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true};});
+  const all=Object.values(u);
   const list=all.filter(a=>!q||(a.sym||"").toLowerCase().includes(q)||(a.name||"").toLowerCase().includes(q)||(a.addr||"").toLowerCase().includes(q));
   const cnt=$("assetCnt");if(cnt)cnt.textContent=list.length+"/"+all.length+" 项";
   el.innerHTML=list.length?list.map(a=>a.addr?`
@@ -2061,7 +2064,7 @@ async function renderStats(){
   if(sv)sv.innerHTML=`
     <div class="stat"><div class="k">交易对</div><div class="v c">${d.pairs}</div><div class="d">Factory 登记</div></div>
     <div class="stat"><div class="k">质押池</div><div class="v o">${d.pools}</div><div class="d">Staking 池</div></div>
-    <div class="stat"><div class="k">内置资产</div><div class="v">${assets.length+1273}</div><div class="d">X Layer 全量 xStock</div></div>
+    <div class="stat"><div class="k">内置资产</div><div class="v">1272</div><div class="d">X Layer 可交易 xStock</div></div>
     <div class="stat"><div class="k">钱包</div><div class="v g" style="font-size:15px">${walletAddr?shortAddr(walletAddr):"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
   if(pv)pv.innerHTML=`
     <div class="stat"><div class="k">交易对</div><div class="v c">${d.pairs}</div><div class="d">Factory 登记</div></div>
