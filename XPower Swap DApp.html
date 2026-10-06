@@ -179,6 +179,13 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;b
 .poolmeta .m .k{font-size:10px;color:var(--faint)}
 .poolmeta .m .v{font-size:13.5px;font-weight:800;font-family:var(--mono);font-variant-numeric:tabular-nums;margin-top:1px}
 .poolacts{display:flex;gap:8px;flex-wrap:wrap}
+.pmode{display:flex;gap:2px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:2px;margin-bottom:8px;width:100%}
+.pmode button{flex:1;padding:5px 0;border:none;background:transparent;border-radius:8px;font-size:11.5px;font-weight:800;color:var(--dim);cursor:pointer;transition:.15s}
+.pmode button:hover{color:var(--acc)}
+.pmode button.on{background:#fff;color:var(--acc);box-shadow:0 2px 6px rgba(20,20,43,.08)}
+.annual-mini{font-size:10.5px;color:var(--gold);font-weight:700;font-family:var(--mono)}
+.claim-avail{box-shadow:0 0 0 3px rgba(245,158,11,.28)!important;animation:claimPulse 1.6s infinite}
+@keyframes claimPulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.28)}50%{box-shadow:0 0 0 7px rgba(245,158,11,.13)}}
 .poolacts input{flex:1;min-width:130px}
 /* 徽标 */
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.03em}
@@ -1929,7 +1936,7 @@ async function doRemoveLiquidity(){
 /* ============ Farm ============ */
 async function renderFarm(){
   const el=$("farmList");
-  if(!cfg.staking){el.innerHTML=`<div class="empty"><div class="big">◈</div>未配置 Staking 合约 · <button class="btn ghost sm" style="margin-top:6px" onclick="openCfg()">去配置</button></div>`;return;}
+  if(!cfg.staking){el.innerHTML=`<div class="empty"><div class="big">◈</div>未配置 Staking 合约<br><div style="display:flex;gap:8px;margin-top:8px;justify-content:center"><button class="btn primary sm" onclick="openCfg()">去配置合约</button><button class="btn gold sm" onclick="location.hash='pool'">去 Pool 一键起盘</button></div></div>`;return;}
   el.innerHTML=`<div class="empty">读取质押池…</div>`;
   try{
     const data=await withRPC(async p=>{
@@ -1955,8 +1962,11 @@ async function renderFarm(){
       <div class="poolcard">
         <div class="top">
           <div class="pair">${logoSvg(p.sym,"",p.logo)}<div><b>${esc(p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">#${p.pid} · ${shortAddr(p.tok)}</div></div></div>
-          <div class="apr"><div class="k">每秒奖励</div><div class="v">${fmtPrice(fromWei(BigInt(p.rate),18))} <span style="font-size:11px;color:var(--gold)">XPR</span></div>
-          <div class="k" style="margin-top:3px">年化奖励</div><div class="v annual">≈ ${fmtPrice(fromWei(BigInt(p.rate)*31536000n,18))} XPR</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <span class="badge ${p.active?"live":"pause"}">${p.active?"挖矿中":"已暂停"}</span>
+            <div class="apr" style="text-align:right"><div class="k">每秒奖励</div><div class="v">${fmtPrice(fromWei(BigInt(p.rate),18))} <span style="font-size:11px;color:var(--gold)">XPR</span></div></div>
+            <div class="annual-mini">≈ ${fmtPrice(fromWei(BigInt(p.rate)*31536000n,18))} XPR / 年</div>
+          </div>
         </div>
         <div class="poolmeta">
           <div class="m"><div class="k">总质押</div><div class="v">${fmt(fromWei(p.total,p.dec))} ${esc(p.sym)}</div></div>
@@ -1965,13 +1975,14 @@ async function renderFarm(){
           <div class="m" style="grid-column:1/4"><div class="k">矿池奖励 XPR（可分余额）</div><div class="v" id="poolXpr${p.pid}">…</div></div>
         </div>
         <div class="poolacts">
-          <div class="stake-row"><input id="stkAmt${p.pid}" type="number" min="0" placeholder="质押数量" onkeydown="if(event.key==='Enter')doStake(${p.pid})"><button type="button" class="mini-btn" onclick="maxStake(${p.pid})">MAX</button></div>
-          <button class="btn primary sm" onclick="doStake(${p.pid})">质押</button>
+          <div class="pmode">
+            <button type="button" class="on" data-m="stake" onclick="setPMode(${p.pid},this)">质押</button>
+            <button type="button" data-m="withdraw" onclick="setPMode(${p.pid},this)">提取</button>
+          </div>
+          <div class="stake-row"><input id="stkAmt${p.pid}" type="number" min="0" placeholder="质押数量" onkeydown="if(event.key==='Enter')farmAct(${p.pid})"><button type="button" class="mini-btn" onclick="maxStake(${p.pid})">MAX</button></div>
+          <button class="btn primary sm" id="farmActBtn${p.pid}" onclick="farmAct(${p.pid})">质押</button>
           <button class="btn ghost sm" onclick="doWithdraw(${p.pid})">全部提取</button>
-          <button class="btn gold sm" onclick="doClaim(${p.pid})">领取</button>
-        </div>
-        <div style="margin-top:8px;display:flex;justify-content:space-between;font-size:11px">
-          <span class="badge ${p.active?"live":"pause"}">${p.active?"挖矿中":"已暂停"}</span>
+          <button class="btn gold sm" id="claimBtn${p.pid}" onclick="doClaim(${p.pid})">领取</button>
         </div>
       </div>`).join("");
     if(walletAddr){
@@ -1983,6 +1994,7 @@ async function renderFarm(){
           const e1=$("myStk"+pg.pid),e2=$("pend"+pg.pid);
           if(e1)e1.textContent=fmt(fromWei(u[0],pg.dec))+" "+pg.sym;
           if(e2)e2.innerHTML=pend>0n?`<span class="badge-gold">${fmt(fromWei(pend,18))} XPR</span>`:fmt(fromWei(pend,18))+" XPR";
+        const cb=$("claimBtn"+pg.pid);if(cb){if(pend>0n)cb.classList.add("claim-avail");else cb.classList.remove("claim-avail");}
         }
         if(cfg.xstork){
           const poolXprBal=await new ethers.Contract(cfg.xstork,ERC20_ABI,p).balanceOf(cfg.staking);
@@ -2012,6 +2024,37 @@ async function renderFarm(){
   }catch(e){el.innerHTML=`<div class="empty">读取失败：${esc(e.message)}<br><br><button class="btn ghost sm" onclick="renderFarm()">重试</button></div>`;}
 }
 
+const farmModes={};
+function setPMode(pid,btn){
+  farmModes[pid]=btn.dataset.m;
+  const wrap=btn.parentElement;
+  wrap.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===btn));
+  const inp=$("stkAmt"+pid),act=$("farmActBtn"+pid);
+  const isW=farmModes[pid]==="withdraw";
+  if(inp)inp.placeholder=isW?"提取数量":"质押数量";
+  if(act)act.textContent=isW?"提取":"质押";
+}
+function farmAct(pid){if(farmModes[pid]==="withdraw")doWithdrawAmt(pid);else doStake(pid);}
+async function doWithdrawAmt(pid){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!walletAddr){toast("请先连接钱包","err");return;}
+  const n=Number($("stkAmt"+pid).value);
+  if(!n||n<=0){toast("请输入提取数量","err");return;}
+  try{
+    const signer=await getSigner();
+    const st=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
+    const dec=await withRPC(async p=>{
+      const info=await new ethers.Contract(cfg.staking,STAKING_ABI,p).poolInfo(pid);
+      return Number(await new ethers.Contract(info[0],ERC20_ABI,p).decimals().catch(()=>18));
+    });
+    const u=await st.userInfo(pid,walletAddr);
+    const amt=toWei(n,dec);
+    if(amt>u[0]){toast("超过我的质押量","err");return;}
+    qstate.steps=[];
+    qAdd("提取 "+fmtPrice(n),async()=>{const tx=await st.withdraw(pid,amt);await tx.wait();return"已提取";});
+    qRun();
+  }catch(e){toast("提取失败："+(e.message||e),"err");}
+}
 async function maxStake(pid){
   if(!walletAddr){toast("请先连接钱包","err");return;}
   try{
@@ -2019,7 +2062,15 @@ async function maxStake(pid){
       const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
       const info=await st.poolInfo(pid);
       const tk=new ethers.Contract(info[0],ERC20_ABI,p);
-      return{bal:await tk.balanceOf(walletAddr),dec:await tk.decimals().catch(()=>18)};
+      const dec=Number(await tk.decimals().catch(()=>18));
+      let v;
+      if(farmModes[pid]==="withdraw"){
+        const u=await st.userInfo(pid,walletAddr);
+        v={bal:u[0],dec};
+      }else{
+        v={bal:await tk.balanceOf(walletAddr),dec};
+      }
+      return v;
     });
     const el=$("stkAmt"+pid);
     if(el)el.value=fmtPrice(fromWei(bal.bal,bal.dec));
@@ -2264,8 +2315,15 @@ async function renderStats(){
   if(fv)fv.innerHTML=`
     <div class="stat"><div class="k">质押池</div><div class="v o">${d.pools}</div><div class="d">Staking 池</div></div>
     <div class="stat"><div class="k">奖励代币</div><div class="v g">XPR</div><div class="d">按秒释放</div></div>
-    <div class="stat"><div class="k">奖励精度</div><div class="v">1e12/秒</div><div class="d">合约固定</div></div>
+    <div class="stat"><div class="k">XPR 池余额</div><div class="v" id="farmXprBal">—</div><div class="d">Staking 持有</div></div>
     <div class="stat"><div class="k">我的地址</div><div class="v" style="font-size:15px">${walletAddr?shortAddr(walletAddr):"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
+  if(fv&&cfg.xstork){
+    withRPC(async p=>{
+      const xb=await new ethers.Contract(cfg.xstork,ERC20_ABI,p).balanceOf(cfg.staking);
+      const el=$("farmXprBal");
+      if(el)el.textContent=fmt(fromWei(xb,18))+" XPR";
+    }).catch(()=>{});
+  }
 }
 
 /* ============ 队列 ============ */
