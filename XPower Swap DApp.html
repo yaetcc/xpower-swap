@@ -258,11 +258,15 @@ details ol{padding-left:18px;margin-top:8px;color:var(--dim);font-size:12px;line
         </div>
         <div class="balrow" id="toBal"></div>
         <div class="info-row" style="margin-top:14px"><span>1 <span id="rFrom">—</span> ≈</span><b id="rateTxt">—</b></div>
+        <div class="info-row"><span>1 <span id="rTo">—</span> ≈</span><b id="revTxt">—</b></div>
+        <div class="info-row"><span>最少获得</span><b id="minTxt" style="font-family:var(--mono)">—</b></div>
+        <div class="info-row"><span>池储备</span><b id="depthTxt" style="font-family:var(--mono)">—</b></div>
         <div class="info-row"><span>交易费</span><b>0.3% → 流动池</b></div>
         <div class="info-row"><span>滑点</span><b id="slipTxt">0.5%</b></div>
         <div id="swapErr" class="errbox"></div>
         <button class="btn primary wide" id="btnSwap" style="margin-top:14px" onclick="swapCta()">兑换</button>
         <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
+        <details style="margin-top:12px;font-size:12px"><summary style="cursor:pointer;color:var(--dim);font-weight:700;user-select:none">最近交易 · 本机记录</summary><div id="txHist" style="margin-top:6px"></div></details>
       </div>
       <div class="swap-card" style="margin-top:14px">
         <div class="swap-head"><b>OKB ⇄ WOKB 包装</b><span class="badge">原生 Gas ⇄ 可交易封装</span></div>
@@ -1298,14 +1302,34 @@ async function quoteSwap(){
   const n=Number($("inAmt").value);
   if(!n||n<=0){$("outAmt").value="";updateSwapCta();return;}
   try{
-    const out=await withRPC(async p=>{
+    const res=await withRPC(async p=>{
       const r=new ethers.Contract(cfg.router,ROUTER_ABI,p);
       const amounts=await r.getAmountsOut(toWei(n,sA.dec),[sA.addr,sB.addr]);
-      return fromWei(amounts[1],sB.dec);
+      const out=fromWei(amounts[1],sB.dec);
+      const minOut=fromWei(amounts[1]*(10000n-BigInt(Math.round(slipPct*10000)))/10000n,sB.dec);
+      let depth=null;
+      try{
+        const f=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
+        const pair=await f.getPair(sA.addr,sB.addr);
+        if(pair!==ethers.ZeroAddress){
+          const pc=new ethers.Contract(pair,PAIR_ABI,p);
+          const rs=await pc.getReserves();
+          const t0=(await pc.token0()).toLowerCase();
+          const dA=t0===sA.addr.toLowerCase()?rs[0]:rs[1];
+          const dB=t0===sA.addr.toLowerCase()?rs[1]:rs[0];
+          depth={a:fromWei(dA,sA.dec),b:fromWei(dB,sB.dec)};
+        }
+      }catch(e){}
+      return {out,minOut,depth};
     });
-    $("outAmt").value=fmtPrice(out);
-    if(out>0){
-      rate.textContent=fmtPrice(out/n)+" "+sB.sym;
+    $("outAmt").value=fmtPrice(res.out);
+    if(res.out>0){
+      rate.textContent=fmtPrice(res.out/n)+" "+sB.sym;
+      const rTo=$("rTo");if(rTo)rTo.textContent="1 "+sB.sym;
+      const rev=$("revTxt");if(rev)rev.textContent=fmtPrice(n/res.out)+" "+sA.sym;
+      const min=$("minTxt");if(min)min.textContent=fmtPrice(res.minOut)+" "+sB.sym+"（-"+((slipPct*100).toFixed(2))+"%）";
+      const dp=$("depthTxt");
+      if(dp)dp.textContent=res.depth?fmtPrice(res.depth.a)+" "+sA.sym+" / "+fmtPrice(res.depth.b)+" "+sB.sym:"新交易对 · 首次兑换自动创建";
       $("rFrom").textContent="1 "+sA.sym;
       $("slipTxt").textContent=(slipPct*100)+"%";
     }
@@ -1338,6 +1362,19 @@ function swapCta(){
   if(!n||n<=0){toast("请输入卖出数量","err");$("inAmt").focus();return;}
   doSwap();
 }
+/* ============ 交易历史（本机） ============ */
+function renderTxHist(){
+  const el=$("txHist");if(!el)return;
+  let t=[];try{t=JSON.parse(localStorage.getItem(STORAGE+"txh")||"[]")}catch(e){}
+  el.innerHTML=t.length?t.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 0;border-top:1px solid var(--line)"><span class="mono" style="color:var(--dim);flex-shrink:0">${esc(x.dir)}</span><span style="flex:1">${esc(x.n)} → ${esc(x.out)}</span><span class="mono" style="font-size:10.5px;color:var(--faint);flex-shrink:0">${esc(x.tm)}</span><a href="${EXPLORER}tx/${esc(x.h)}" target="_blank" rel="noopener" style="color:var(--acc)">${shortAddr(x.h)} ↗</a></div>`).join(""):`<div style="font-size:12px;color:var(--faint);padding:6px 0">暂无交易记录 · 完成首笔兑换后显示</div>`;
+}
+function txHistSave(x){
+  let t=[];try{t=JSON.parse(localStorage.getItem(STORAGE+"txh")||"[]")}catch(e){}
+  t.unshift(x);t=t.slice(0,10);
+  try{localStorage.setItem(STORAGE+"txh",JSON.stringify(t))}catch(e){}
+  renderTxHist();
+}
+
 /* ============ OKB ⇄ WOKB 包装 ============ */
 async function refreshWrapBals(){
   if(!walletAddr)return;
@@ -1444,6 +1481,7 @@ async function doSwap(){
       const minOut=amounts[1]*(10000n-BigInt(Math.round(slipPct*10000)))/10000n;
       const tx=await r.swapExactTokensForTokens(amt,minOut,[sA.addr,sB.addr],walletAddr,deadline());
       await tx.wait();
+      txHistSave({h:tx.hash,dir:sA.sym+"→"+sB.sym,n:fmtPrice(n)+" "+sA.sym,out:fmtPrice(fromWei(amounts[1],sB.dec))+" "+sB.sym,tm:new Date().toLocaleTimeString()});
       return"成交 ≈ "+fmtPrice(fromWei(amounts[1],sB.dec))+" "+sB.sym;
     });
     qRun();
