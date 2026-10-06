@@ -1393,7 +1393,12 @@ async function quoteSwap(){
       const amounts=await r.getAmountsOut(toWei(n,sA.dec),[tokAddr(sA),tokAddr(sB)]);
       const out=fromWei(amounts[1],sB.dec);
       const minOut=fromWei(amounts[1]*(10000n-BigInt(Math.round(slipPct*10000)))/10000n,sB.dec);
-      let depth=null;
+      let depth=null,sbb=null;
+      if(walletAddr){
+        try{
+          sbb=sB.nat?await p.getBalance(walletAddr):await new ethers.Contract(tokAddr(sB),ERC20_ABI,p).balanceOf(walletAddr);
+        }catch(e){}
+      }
       try{
         const f=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
         const pair=await f.getPair(tokAddr(sA),tokAddr(sB));
@@ -1406,8 +1411,13 @@ async function quoteSwap(){
           depth={a:fromWei(dA,sA.dec),b:fromWei(dB,sB.dec)};
         }
       }catch(e){}
-      return {out,minOut,depth};
+      return {out,minOut,depth,sbb};
     });
+    const tb=$("toBal");
+    if(tb){
+      if(walletAddr&&res.sbb!==null&&res.sbb!==undefined)tb.textContent="可用余额："+fmtPrice(fromWei(res.sbb,sB.dec))+" "+sB.sym;
+      else tb.textContent="";
+    }
     $("outAmt").value=fmtPrice(res.out);
     if(res.out>0){
       rate.textContent=fmtPrice(res.out/n)+" "+sB.sym;
