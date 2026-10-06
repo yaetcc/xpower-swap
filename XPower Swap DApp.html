@@ -2039,7 +2039,7 @@ async function renderFarm(){
           const tk=new ethers.Contract(info[0],ERC20_ABI,p);
           meta={sym:await tk.symbol().catch(()=>"?"),name:await tk.name().catch(()=>"?"),dec:await tk.decimals().catch(()=>18)};
           if(info[0].toLowerCase()===WOKB_ADDR){meta.sym="OKB";meta.nat=1;}
-          if(cfg.xstork&&info[0].toLowerCase()===cfg.xstork.toLowerCase())meta.sym="XPR";
+          if(cfg.xstork&&info[0].toLowerCase()===cfg.xstork.toLowerCase()){meta.sym="XPR";meta.logo=XPR_LOGO;}
         }
         tokenCache[info[0]]=meta;
         const lpk=lpMap[info[0].toLowerCase()];
