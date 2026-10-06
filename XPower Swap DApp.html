@@ -1159,10 +1159,80 @@ function openCfg(){
     <div id="deploySteps" style="display:grid;gap:6px;margin-top:10px"></div>
     <button class="btn primary wide" style="margin-top:14px" onclick="saveCfgBox()">保存配置</button>
     <button class="btn wide" style="margin-top:8px;border:1px solid var(--acc-line);color:var(--acc)" onclick="deployAll()">⚡ 一键部署 4 合约（连接钱包后 · 约 4 笔签名）</button>
+    <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px">⚡ 一键起盘 · 指定 xStock 资产</div>
+      <div style="display:grid;gap:8px">
+        <input id="lgTok" list="lgTokList" placeholder="选择 xStock 资产（如 XAAPL）或粘贴地址" class="mono" style="font-size:12.5px">
+        <datalist id="lgTokList"></datalist>
+        <input id="lgRate" type="number" placeholder="每秒奖励 XPR（如 0.000001）" style="font-size:12.5px">
+        <input id="lgFund" type="number" placeholder="注入奖励 XPR 数量（如 100000）" style="font-size:12.5px">
+        <button class="btn gold wide" onclick="launchAll()">⚡ 一键起盘：交易对 → 质押池 → 注入奖励</button>
+      </div>
+      <div id="lgLog" style="display:grid;gap:6px;margin-top:8px;font-size:12px"></div>
+    </div>
     </div></div>`;
   document.body.appendChild(d);
+  fillTokList();
 }
 function saveCfgBox(){for(const k of["factory","router","staking","xstork"])cfg[k]=$("cfg_"+k).value.trim();saveCfg();const m=$("cfgMask");if(m)m.remove();toast("配置已保存","ok");refreshAll();}
+
+/* ============ 一键起盘：交易对 → 质押池 → 注入奖励 ============ */
+function fillTokList(){
+  const dl=$("lgTokList");if(!dl)return;
+  dl.innerHTML=XSTOCKS.filter(x=>x.addr&&!x.nat).map(x=>`<option value="${esc(x.sym)}">${esc(x.sym)} · ${esc(x.name)} · ${x.addr}</option>`).join("")
+    +`<option value="WOKB">WOKB · Wrapped OKB · 0xe538905cf8410324e03a5a23c1c177a474d59b2b</option>`;
+}
+function resolveTok(v){
+  v=(v||"").trim();
+  if(isAddr(v))return{addr:v,sym:v.slice(0,6)+"…",dec:18};
+  const hit=XSTOCKS.find(x=>x.sym.toLowerCase()===v.toLowerCase());
+  if(hit)return{addr:hit.addr,sym:hit.sym,dec:18};
+  return null;
+}
+async function launchAll(){
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!walletAddr){toast("请先连接钱包","err");return;}
+  if(needCfg()){toast("请先完成合约部署/配置","err");return;}
+  const tok=resolveTok($("lgTok").value);
+  if(!tok){toast("请选择 xStock 资产或粘贴地址","err");return;}
+  const rate=Number($("lgRate").value),fund=Number($("lgFund").value);
+  if(!rate||rate<=0){toast("请输入每秒奖励 XPR","err");return;}
+  if(!fund||fund<=0){toast("请输入注入奖励数量","err");return;}
+  const lg=$("lgLog");if(lg)lg.innerHTML="";
+  try{
+    const signer=await getSigner();
+    const st=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
+    const own=await st.owner();
+    if(own.toLowerCase()!==walletAddr){toast("仅矿池 owner 可起盘","err");return;}
+    const xpr=new ethers.Contract(cfg.xstork,ERC20_ABI,signer);
+    const fundBN=toWei(fund,18);
+    const bal=await xpr.balanceOf(walletAddr);
+    if(bal<fundBN){toast("XPR 余额不足（当前 "+fmt(fromWei(bal,18))+")","err");return;}
+    let pairAddr=ethers.ZeroAddress;
+    qstate.steps=[];
+    qAdd("创建交易对 "+tok.sym+"/WOKB",async()=>{
+      const f=new ethers.Contract(cfg.factory,FACTORY_ABI,signer);
+      let pair=await f.getPair(tok.addr,WOKB_ADDR);
+      if(pair===ethers.ZeroAddress){
+        const tx=await f.createPair(tok.addr,WOKB_ADDR);await tx.wait();
+        pair=await f.getPair(tok.addr,WOKB_ADDR);
+      }
+      pairAddr=pair;
+      return"交易对 "+shortAddr(pair);
+    });
+    qAdd("创建质押池（质押 LP 凭证）",async()=>{
+      const tx=await st.createPool(pairAddr,toWei(rate,18));await tx.wait();
+      return"矿池已建 · 每秒 "+rate+" XPR";
+    });
+    qAdd("授权 XPR → 矿池",async()=>{
+      const tx=await xpr.approve(cfg.staking,fundBN);await tx.wait();return"已授权";
+    });
+    qAdd("注入 "+fund+" XPR 奖励",async()=>{
+      const tx=await xpr.transfer(cfg.staking,fundBN);await tx.wait();return"奖励已入池";
+    });
+    qRun({ok:()=>{toast("一键起盘完成 · 可去 Pool 添加流动性","ok");refreshAll();},err:(e)=>{toast("起盘中断："+(e.shortMessage||e.message||e),"err");}});
+  }catch(e){toast("起盘失败："+(e.message||e),"err");}
+}
 
 /* ============ 资产名录 ============ */
 function saveAssets(){localStorage.setItem(STORAGE+"assets",JSON.stringify(assets));}
