@@ -316,7 +316,6 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
           </div>
           <div class="tokbtn" id="fromBtn" onclick="pickToken('from')"><span class="lg" id="fromLg">?</span><span><span class="nm2" id="fromNm">选择代币</span><span class="sub2" id="fromSub">xStock 名录</span></span><span class="caret">▼</span></div>
         </div>
-        <div class="balrow"><span id="inBal"></span><span style="cursor:pointer;color:var(--acc)" onclick="setMax()">余额</span></div>
         <div class="arrow-mid"><button onclick="flipSwap()" title="交换方向">⇅</button></div>
         <div class="swap-row">
           <div class="amt">
@@ -1428,12 +1427,21 @@ function renderSwapSel(){
   if(sA&&sB)$("swapDir").textContent=sA.sym+" → "+sB.sym;
   quoteSwap();
 }
+function updateSwapBal(){
+  const fb=$("fromBal"),tb=$("toBal");
+  if(!walletAddr||!sA||!sB){if(fb)fb.textContent="";if(tb)tb.textContent="";return;}
+  withRPC(async p=>{
+    const ra=async t=>t.nat?await p.getBalance(walletAddr):await new ethers.Contract(tokAddr(t),ERC20_ABI,p).balanceOf(walletAddr);
+    const [ba,bb]=await Promise.all([ra(sA),ra(sB)]);
+    if(fb)fb.textContent="可用余额："+fmtPrice(fromWei(ba,sA.dec))+" "+sA.sym+(sA.nat?"（原生 Gas · 自动包装）":"");
+    if(tb)tb.textContent="可用余额："+fmtPrice(fromWei(bb,sB.dec))+" "+sB.sym;
+  }).catch(()=>{});
+}
 async function setMax(){
   if(!walletAddr||!sA){toast("请先选择卖出代币并连接钱包","err");return;}
   withRPC(async p=>{
     const bal=sA.nat?await p.getBalance(walletAddr):await new ethers.Contract(sA.addr,ERC20_ABI,p).balanceOf(walletAddr);
     $("inAmt").value=fmtPrice(fromWei(bal,sA.dec));
-    $("inBal").textContent=sA.sym+" 余额: "+fmtPrice(fromWei(bal,sA.dec))+(sA.nat?"（原生 Gas · 自动包装参与交易）":"");
     quoteSwap();
   }).catch(e=>toast("读取余额失败："+(e.message||e),"err"));
 }
@@ -1456,6 +1464,7 @@ async function quoteSwap(){
   el.classList.remove("on");rate.textContent="—";
   if(!cfg.router){$("outAmt").value="";rate.textContent=walletAddr?"未配置 Router 合约 · 点击下方按钮配置":"连接钱包后即可配置 Router 合约";updateSwapCta();return;}
   if(!sA||!sB){$("outAmt").value="";updateSwapCta();return;}
+  updateSwapBal();
   if(tokAddr(sA).toLowerCase()===tokAddr(sB).toLowerCase()){el.textContent="不能兑换同一代币";el.classList.add("on");$("outAmt").value="";updateSwapCta();return;}
   const n=Number($("inAmt").value);
   if(!n||n<=0){$("outAmt").value="";updateSwapCta();return;}
@@ -1465,15 +1474,7 @@ async function quoteSwap(){
       const amounts=await r.getAmountsOut(toWei(n,sA.dec),[tokAddr(sA),tokAddr(sB)]);
       const out=fromWei(amounts[1],sB.dec);
       const minOut=fromWei(amounts[1]*(10000n-BigInt(Math.round(slipPct*10000)))/10000n,sB.dec);
-      let depth=null,sbb=null,fbb=null;
-      if(walletAddr){
-        try{
-          sbb=sB.nat?await p.getBalance(walletAddr):await new ethers.Contract(tokAddr(sB),ERC20_ABI,p).balanceOf(walletAddr);
-        }catch(e){}
-        try{
-          fbb=sA.nat?await p.getBalance(walletAddr):await new ethers.Contract(tokAddr(sA),ERC20_ABI,p).balanceOf(walletAddr);
-        }catch(e){}
-      }
+      let depth=null;
       try{
         const f=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
         const pair=await f.getPair(tokAddr(sA),tokAddr(sB));
@@ -1486,18 +1487,8 @@ async function quoteSwap(){
           depth={a:fromWei(dA,sA.dec),b:fromWei(dB,sB.dec)};
         }
       }catch(e){}
-      return {out,minOut,depth,sbb,fbb};
+      return {out,minOut,depth};
     });
-    const fb=$("fromBal");
-    if(fb){
-      if(walletAddr&&res.fbb!==null&&res.fbb!==undefined)fb.textContent="可用余额："+fmtPrice(fromWei(res.fbb,sA.dec))+" "+sA.sym;
-      else fb.textContent="";
-    }
-    const tb=$("toBal");
-    if(tb){
-      if(walletAddr&&res.sbb!==null&&res.sbb!==undefined)tb.textContent="可用余额："+fmtPrice(fromWei(res.sbb,sB.dec))+" "+sB.sym;
-      else tb.textContent="";
-    }
     $("outAmt").value=fmtPrice(res.out);
     if(res.out>0){
       rate.textContent=fmtPrice(res.out/n)+" "+sB.sym;
@@ -1513,7 +1504,6 @@ async function quoteSwap(){
       withRPC(async p=>{
         const bal=sA.nat?await p.getBalance(walletAddr):await new ethers.Contract(sA.addr,ERC20_ABI,p).balanceOf(walletAddr);
         const balNum=fromWei(bal,sA.dec);
-        $("inBal").textContent=sA.sym+" 余额: "+fmtPrice(balNum)+(sA.nat?"（原生 Gas · 自动包装参与交易）":"");
         const inEl=$("inAmt"),amtN=Number(inEl.value);
         if(amtN>0&&amtN>balNum){el.textContent="余额不足 · 可用 "+fmtPrice(balNum)+" "+sA.sym;el.classList.add("on");inEl.style.borderColor="var(--err)";}
         else{inEl.style.borderColor="";}
