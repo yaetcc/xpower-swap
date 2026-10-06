@@ -462,8 +462,14 @@ let cfg={factory:"",router:"",staking:"",xstork:""};
 try{ Object.assign(cfg, JSON.parse(localStorage.getItem(STORAGE+"cfg")||"{}")); assets=JSON.parse(localStorage.getItem(STORAGE+"assets")||"[]"); }catch(e){}
 /* 配置迁移 v2：新 XPR（含LOGO登记诉求）替换旧 XPR / 新 Staking（绑定新XPR）替换旧 Staking */
 const CFG_MIG={
-  xstork:{"0x1cb14f287454fa76b9a5c18cc173dc83a63e2191":"0x4E97e4bFA25DC18B9d413AC532Ef04652c93b80b"},
-  staking:{"0x40cfb6090d33ee9121be3a89aeb126b4d58007c5":"0xd69149C4FC392Ba8652Aa58f4b2C710d12ABf6Af"}
+  xstork:{
+    "0x1cb14f287454fa76b9a5c18cc173dc83a63e2191":"0x0637eE4c3dDa8ab968A79f939aC902B459e754eB",
+    "0x4e97e4bfa25dc18b9d413ac532ef04652c93b80b":"0x0637eE4c3dDa8ab968A79f939aC902B459e754eB"
+  },
+  staking:{
+    "0x40cfb6090d33ee9121be3a89aeb126b4d58007c5":"0x91b2cEd4a9aAFeE80098D2Bd5c5eb829f6846F65",
+    "0xd69149c4fc392ba8652aa58f4b2c710d12abf6af":"0x91b2cEd4a9aAFeE80098D2Bd5c5eb829f6846F65"
+  }
 };
 let _mig=0;
 for(const k in CFG_MIG){const v=(cfg[k]||"").toLowerCase();const nv=CFG_MIG[k][v];if(nv&&cfg[k]!==nv){cfg[k]=nv;_mig++;}}
