@@ -2043,8 +2043,10 @@ async function renderFarm(){
         }
         tokenCache[info[0]]=meta;
         const lpk=lpMap[info[0].toLowerCase()];
+        const lpObj=lpk?{t0:tokInfo(lpk.t0),t1:tokInfo(lpk.t1)}:null;
+        const lpLg=lpObj?(lpObj.t0.nat&&!lpObj.t1.nat)?lpObj.t1:(lpObj.t1.nat&&!lpObj.t0.nat)?lpObj.t0:lpObj.t0:null;
         pools.push({pid:i,tok:info[0],sym:meta.sym,name:meta.name,dec:Number(meta.dec),rate:Number(info[1]),total:Number(info[4]),active:info[5],logo:meta.logo,
-          lp:lpk?{t0:tokInfo(lpk.t0),t1:tokInfo(lpk.t1)}:null});
+          lp:lpObj,lpLg});
       }
       return pools;
     });
@@ -2052,7 +2054,7 @@ async function renderFarm(){
     el.innerHTML=data.map(p=>`
       <div class="poolcard">
         <div class="top">
-          <div class="pair">${p.lp?`<span style="display:flex">${logoSvg(p.lp.t0.sym,"",p.lp.t0.logo)}${logoSvg(p.lp.t1.sym,"",p.lp.t1.logo)}</span>`:logoSvg(p.sym,"",p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?"XLP · ":""}#${p.pid} · ${shortAddr(p.tok)}</div></div></div>
+          <div class="pair">${logoSvg(p.lpLg?p.lpLg.sym:p.sym,"",p.lpLg?p.lpLg.logo:p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?"XLP · ":""}#${p.pid} · ${shortAddr(p.tok)}</div></div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
             <span class="badge ${p.active?"live":"pause"}">${p.active?"挖矿中":"已暂停"}</span>
             <div class="apr" style="text-align:right"><div class="k">每秒奖励</div><div class="v">${fmtPrice(fromWei(BigInt(p.rate),18))} <span style="font-size:11px;color:var(--gold)">XPR</span></div></div>
