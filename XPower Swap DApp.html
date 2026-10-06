@@ -1159,6 +1159,7 @@ function logoColor(sym){ let h=0; for(const c of sym) h=(h*31+c.charCodeAt(0))>>
 const NO_LOGO={"OKB":1,"XSHOP":1,"XDIA":1,"XSPOT":1};
 function logoSvg(sym,id,logo){
   const idAttr=id?` id="${id}"`:"";
+  if(sym==="OKB")return `<span class="lg"${idAttr} style="overflow:hidden;background:#0b0b0d"><svg viewBox="0 0 64 64" style="width:100%;height:100%;display:block" aria-label="OKB"><circle cx="32" cy="32" r="32" fill="#0b0b0d"/><circle cx="32" cy="32" r="29.5" fill="none" stroke="#ffd21e" stroke-width="1.2" opacity=".85"/><text x="32" y="43" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="900" fill="#ffd21e" letter-spacing="-1.5">OKB</text></svg></span>`;
   if(NO_LOGO[sym])return `<span class="lg"${idAttr} style="background:${logoColor(sym)}">${esc(String(sym||"?")).slice(0,1)}</span>`;
   const src=logo||`assets/logos/${esc(sym)}.png`;
   return `<span class="lg"${idAttr} style="position:relative;overflow:hidden;background:${logoColor(sym)}">${esc(String(sym||"?")).slice(0,1)}<img src="${src}" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:50%;background:#fff" onerror="this.remove()"></span>`;
