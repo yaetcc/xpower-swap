@@ -264,6 +264,20 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .bal-card .amt{font-size:20px;font-weight:900;font-family:var(--mono);letter-spacing:-.5px;line-height:1.3}
 .list .item:hover{background:var(--card2)}
 .list .item{transition:background .15s}
+/* ===== 兑换页体验 v2 ===== */
+.pricebar{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 2px;padding:11px 14px;border:1px solid var(--acc-line);border-radius:12px;background:linear-gradient(135deg,rgba(245,25,123,.06),rgba(255,169,0,.05));font-size:13px}
+.pricebar b{font-family:var(--mono);font-size:17px;font-weight:900;background:var(--acc-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pricebar .pflip{cursor:pointer;color:var(--dim);font-size:11px;padding:3px 7px;border:1px solid var(--line);border-radius:7px;transition:.15s}
+.pricebar .pflip:hover{color:var(--acc);border-color:var(--acc-line)}
+#outAmt{font-size:22px!important;font-weight:900;font-family:var(--mono);letter-spacing:-.5px}
+#outAmt.grad{background:var(--acc-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.arrow-mid button{transition:transform .3s cubic-bezier(.2,.8,.3,1)}
+.arrow-mid button.flip{transform:rotate(180deg)}
+.arrow-mid button:hover{color:var(--acc);border-color:var(--acc-line)}
+.seg{border:1px solid var(--line);border-radius:10px;padding:3px;background:var(--card2)}
+.seg div{padding:4px 9px;border-radius:8px;font-size:11.5px;font-weight:800;color:var(--dim);cursor:pointer;transition:.15s}
+.seg div:hover{color:var(--acc)}
+.seg div.on{background:var(--acc-grad);color:#fff;box-shadow:0 3px 10px rgba(245,25,123,.3)}
 </style>
 </head>
 <body>
@@ -325,14 +339,14 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
           <div class="tokbtn" id="toBtn" onclick="pickToken('to')"><span class="lg" id="toLg">?</span><span><span class="nm2" id="toNm">选择代币</span><span class="sub2" id="toSub">选择目标</span></span><span class="caret">▼</span></div>
         </div>
         <div class="balrow" id="toBal"></div>
-        <div class="info-row" style="margin-top:12px"><span>1 <span id="rFrom">—</span> ≈</span><b id="rateTxt">—</b></div>
+        <div class="pricebar"><span>1 <span id="rFrom">—</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--acc)"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b id="rateBig">—</b><span id="rTo" style="color:var(--dim)">—</span><span class="pflip" onclick="flipSwap()">⇅ 反向</span></div>
         <div class="info-grid">
-          <div class="info-row"><span>1 <span id="rTo">—</span> ≈</span><b id="revTxt">—</b></div>
           <div class="info-row"><span>最少获得</span><b id="minTxt" style="font-family:var(--mono)">—</b></div>
           <div class="info-row"><span>池储备</span><b id="depthTxt" style="font-family:var(--mono)">—</b></div>
           <div class="info-row"><span>交易费</span><b>0.3% → 流动池</b></div>
           <div class="info-row"><span>滑点</span><b id="slipTxt">0.5%</b></div>
         </div>
+        <span id="rateTxt" style="display:none">—</span>
         <div id="swapErr" class="errbox"></div>
         <button class="btn primary wide" id="btnSwap" style="margin-top:14px" onclick="swapCta()">兑换</button>
         <div style="text-align:center;font-size:11px;color:var(--faint);margin-top:10px">价格由池内储备实时决定 · 首次兑换自动创建交易对</div>
@@ -1416,7 +1430,11 @@ function selToken(addr,sym,name,dec,logo,nat){
 
 /* ============ Swap ============ */
 function swapSel(k,t){if(k==="from")sA=t;else sB=t;renderSwapSel();quoteSwap();}
-function flipSwap(){const t=sA;sA=sB;sB=t;renderSwapSel();quoteSwap();}
+function flipSwap(){
+  const am=$("arrow-mid")||document.querySelector(".arrow-mid button");
+  if(am){am.classList.remove("flip");void am.offsetWidth;am.classList.add("flip");}
+  const t=sA;sA=sB;sB=t;renderSwapSel();quoteSwap();
+}
 function setTokBtn(btnId,lgId,nmId,t){
   const b=$(btnId),l=$(lgId),n=$(nmId);if(!b)return;
   if(t){l.outerHTML=logoSvg(t.sym,lgId,t.logo);n.textContent=t.sym;}
@@ -1425,6 +1443,8 @@ function setTokBtn(btnId,lgId,nmId,t){
 function renderSwapSel(){
   setTokBtn("fromBtn","fromLg","fromNm",sA);setTokBtn("toBtn","toLg","toNm",sB);
   if(sA&&sB)$("swapDir").textContent=sA.sym+" → "+sB.sym;
+  const rf=$("rFrom");if(rf)rf.textContent=sA?sA.sym:"—";
+  const rto=$("rTo");if(rto)rto.textContent=sB?sB.sym:"—";
   quoteSwap();
 }
 function updateSwapBal(){
@@ -1490,9 +1510,11 @@ async function quoteSwap(){
       return {out,minOut,depth};
     });
     $("outAmt").value=fmtPrice(res.out);
+    const oa=$("outAmt");if(oa)oa.classList.toggle("grad",sB&&sB.sym==="XPR");
     if(res.out>0){
       rate.textContent=fmtPrice(res.out/n)+" "+sB.sym;
-      const rTo=$("rTo");if(rTo)rTo.textContent="1 "+sB.sym;
+      const rb=$("rateBig");if(rb)rb.textContent=fmtPrice(res.out/n);
+      const rTo=$("rTo");if(rTo)rTo.textContent=sB.sym;
       const rev=$("revTxt");if(rev)rev.textContent=fmtPrice(n/res.out)+" "+sA.sym;
       const min=$("minTxt");if(min)min.textContent=fmtPrice(res.minOut)+" "+sB.sym+"（-"+((slipPct*100).toFixed(2))+"%）";
       const dp=$("depthTxt");
