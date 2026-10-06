@@ -5,6 +5,8 @@
     "factory": "0xfdBA35dbB9a7a2c01dA3aafD6E6900e9e1838805",
     "router": "0xA6086c26C449f58047DD94487c94796D684cB442",
     "staking": "0x9C2e0c1ca789B6582cD05BefE1f695b8E55cb955",
-    "xstork": "0xcd76b6223b045fc97b04ef0Ef427a0a5a0561BCF"
+    "xstork": "0xcd76b6223b045fc97b04ef0Ef427a0a5a0561BCF",
+    "xprs": "",
+    "xprsDiv": ""
   }
 }

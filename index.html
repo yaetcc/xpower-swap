@@ -623,11 +623,11 @@ let pickCtx=null, slipPct=0.005;
 let sA=null,sB=null,pA=null,pB=null,pR=null,curView="swap";
 let assets=[];
 let tokPage=1,astPage=1,lastTokQ="",lastAstQ="";
-let cfg={factory:"",router:"",staking:"",xstork:""};
+let cfg={factory:"",router:"",staking:"",xstork:"",xprs:"",xprsDiv:""};
 try{ Object.assign(cfg, JSON.parse(localStorage.getItem(STORAGE+"cfg")||"{}")); assets=JSON.parse(localStorage.getItem(STORAGE+"assets")||"[]"); }catch(e){}
 /* 公开分享链接：?fc=Factory&rt=Router&st=Staking&xp=XPR —— 访客打开即自动配置，无需本地存储 */
 try{
-  const _u=new URL(location.href);const _mp={fc:"factory",rt:"router",st:"staking",xp:"xstork"};
+  const _u=new URL(location.href);const _mp={fc:"factory",rt:"router",st:"staking",xp:"xstork",xr:"xprs",xd:"xprsDiv"};
   for(const _k in _mp){const _v=_u.searchParams.get(_k);if(_v&&/^0x[a-fA-F0-9]{40}$/.test(_v))cfg[_mp[_k]]=_v.toLowerCase();}
 }catch(e){}
 /* 平台公开配置：自动读取 xpower.world/xpower-config.json（发盘地址由平台维护，访客打开主域即生效） */
@@ -638,7 +638,7 @@ async function loadRemoteCfg(){
     const j=await r.json();
     const d=(j&&j.cfg)||{};
     let changed=false;
-    for(const k of ["factory","router","staking","xstork"]){
+    for(const k of ["factory","router","staking","xstork","xprs","xprsDiv"]){
       const v=d[k];
       if(v&&/^0x[a-fA-F0-9]{40}$/.test(v)&&!cfg[k]){cfg[k]=v.toLowerCase();changed=true;}
     }
@@ -1682,6 +1682,15 @@ const PAIR_ABI=["function token0() view returns (address)","function token1() vi
 const ROUTER_ABI=["constructor(address _factory)","function factory() view returns (address)","function addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256) returns (uint256,uint256,uint256)","function removeLiquidity(address,address,uint256,uint256,uint256,address,uint256) returns (uint256,uint256)","function swapExactTokensForTokens(uint256,uint256,address[],address,uint256) returns (uint256[])","function swapTokensForExactTokens(uint256,uint256,address[],address,uint256) returns (uint256[])","function getAmountsOut(uint256,address[]) view returns (uint256[])","function getAmountsIn(uint256,address[]) view returns (uint256[])","function getAmountOut(uint256,uint256,uint256) pure returns (uint256)"];
 const STAKING_ABI=["constructor(address _rewardToken)","function owner() view returns (address)","function rewardToken() view returns (address)","function poolLength() view returns (uint256)","function poolInfo(uint256) view returns (address,uint256,uint256,uint256,uint256,bool)","function userInfo(uint256,address) view returns (uint256,uint256)","function pendingReward(uint256,address) view returns (uint256)","function createPool(address,uint256) returns (uint256)","function setRewardPerSec(uint256,uint256)","function setActive(uint256,bool)","function stake(uint256,uint256)","function withdraw(uint256,uint256)","function claim(uint256)","function emergencyWithdraw(uint256)"];
 const XPR_LOGO="data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23F5197B%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%237C3AED%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2244%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.35%29%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2266%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2252%22%20font-weight%3D%22800%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EX%3C%2Ftext%3E%3C%2Fsvg%3E";
+const XPRS_LOGO="data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FF9A3D%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23F5197B%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2244%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.35%29%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2266%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2244%22%20font-weight%3D%22800%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EXPRS%3C%2Ftext%3E%3C%2Fsvg%3E";
+/* XPRS 分红合约标准接口：XPRS 持币 → 按持仓比例累积 XPR 分红 → 手动 claim */
+const DIV_ABI=["function userPending(address) view returns (uint256)","function claim() returns (uint256)","function stakedToken() view returns (address)","function rewardToken() view returns (address)","function totalStaked() view returns (uint256)"];
+function setCfgF(k,v){
+  v=(v||"").trim();
+  cfg[k]=isAddr(v)?v.toLowerCase():(v?v:"");
+  saveCfg();refreshView();
+  if(v&&!isAddr(v))toast("地址格式应为 0x + 40 位十六进制","warn");
+}
 const WOKB_ABI=["function deposit() payable","function withdraw(uint256)","function balanceOf(address) view returns (uint256)","function approve(address spender,uint256 amount) returns (bool)","function allowance(address owner,address spender) view returns (uint256)","function transfer(address to,uint256 amount) returns (bool)","function transferFrom(address from,address to,uint256 amount) returns (bool)"];
 /* 部署字节码（forge 编译产物） */
 const XPR_BIN="0x608060405234801561000f575f80fd5b506040516108d93803806108d983398101604081905261002e91610093565b600180546001600160a01b03191633179055801561008d57335f818152600260209081526040808320859055848355518481527fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef910160405180910390a35b506100aa565b5f602082840312156100a3575f80fd5b5051919050565b610822806100b75f395ff3fe608060405234801561000f575f80fd5b50600436106100b1575f3560e01c806342966c681161006e57806342966c681461016b57806370a082311461017e5780638da5cb5b1461019d57806395d89b41146101c8578063a9059cbb146101ea578063dd62ed3e146101fd575f80fd5b806306fdde03146100b5578063095ea7b3146100f057806318160ddd1461011357806323b872dd14610129578063313ce5671461013c57806340c10f1914610156575b5f80fd5b6100da604051806040016040528060068152602001652c2837bbb2b960d11b81525081565b6040516100e79190610689565b60405180910390f35b6101036100fe3660046106f0565b610227565b60405190151581526020016100e7565b61011b5f5481565b6040519081526020016100e7565b610103610137366004610718565b610293565b610144601281565b60405160ff90911681526020016100e7565b6101696101643660046106f0565b610355565b005b610169610179366004610751565b610471565b61011b61018c366004610768565b60026020525f908152604090205481565b6001546101b0906001600160a01b031681565b6040516001600160a01b0390911681526020016100e7565b6100da604051806040016040528060038152602001622c282960e91b81525081565b6101036101f83660046106f0565b610532565b61011b61020b366004610781565b600360209081525f928352604080842090915290825290205481565b335f8181526003602090815260408083206001600160a01b038716808552925280832085905551919290917f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925906102819086815260200190565b60405180910390a35060015b92915050565b6001600160a01b0383165f9081526003602090815260408083203384529091528120545f19811461034157828110156103135760405162461bcd60e51b815260206004820152601760248201527f5850523a20616c6c6f77616e636520657863656564656400000000000000000060448201526064015b60405180910390fd5b61031d83826107c6565b6001600160a01b0386165f9081526003602090815260408083203384529091529020555b61034c858585610545565b95945050505050565b6001546001600160a01b031633146103a05760405162461bcd60e51b815260206004820152600e60248201526d2c28291d103737ba1037bbb732b960911b604482015260640161030a565b6001600160a01b0382166103ea5760405162461bcd60e51b81526020600482015260116024820152705850523a206d696e7420746f207a65726f60781b604482015260640161030a565b6001600160a01b0382165f90815260026020526040812080548392906104119084906107d9565b92505081905550805f8082825461042891906107d9565b90915550506040518181526001600160a01b038316905f907fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9060200160405180910390a35050565b335f908152600260205260409020548111156104be5760405162461bcd60e51b815260206004820152600c60248201526b5850523a2062616c616e636560a01b604482015260640161030a565b335f90815260026020526040812080548392906104dc9084906107c6565b92505081905550805f808282546104f391906107c6565b90915550506040518181525f9033907fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9060200160405180910390a350565b5f61053e338484610545565b9392505050565b5f6001600160a01b0383166105945760405162461bcd60e51b81526020600482015260156024820152745850523a207472616e7366657220746f207a65726f60581b604482015260640161030a565b6001600160a01b0384165f90815260026020526040902054828110156105eb5760405162461bcd60e51b815260206004820152600c60248201526b5850523a2062616c616e636560a01b604482015260640161030a565b6105f583826107c6565b6001600160a01b038087165f90815260026020526040808220939093559086168152908120805485929061062a9084906107d9565b92505081905550836001600160a01b0316856001600160a01b03167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef8560405161067691815260200190565b60405180910390a3506001949350505050565b5f602080835283518060208501525f5b818110156106b557858101830151858201604001528201610699565b505f604082860101526040601f19601f8301168501019250505092915050565b80356001600160a01b03811681146106eb575f80fd5b919050565b5f8060408385031215610701575f80fd5b61070a836106d5565b946020939093013593505050565b5f805f6060848603121561072a575f80fd5b610733846106d5565b9250610741602085016106d5565b9150604084013590509250925092565b5f60208284031215610761575f80fd5b5035919050565b5f60208284031215610778575f80fd5b61053e826106d5565b5f8060408385031215610792575f80fd5b61079b836106d5565b91506107a9602084016106d5565b90509250929050565b634e487b7160e01b5f52601160045260245ffd5b8181038181111561028d5761028d6107b2565b8082018082111561028d5761028d6107b256fea26469706673582212209e47af30266672d34dd5aac8988308336c84ac62d3f225f67418e341afb45a2364736f6c63430008180033";
@@ -1774,6 +1783,8 @@ function copyShareLink(){
     u.search="";
     u.searchParams.set("fc",cfg.factory);u.searchParams.set("rt",cfg.router);
     u.searchParams.set("st",cfg.staking);u.searchParams.set("xp",cfg.xstork);
+    if(cfg.xprs)u.searchParams.set("xr",cfg.xprs);
+    if(cfg.xprsDiv)u.searchParams.set("xd",cfg.xprsDiv);
     const link=u.toString();
     const done=()=>toast("公开链接已复制 · 其他人打开即可看到已发盘项目","ok");
     if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(link).then(done).catch(()=>{prompt("复制公开链接（发给用户）",link);});}
@@ -1785,6 +1796,11 @@ function openCfg(){
   d.innerHTML=`<div class="mask on" id="cfgMask" onclick="if(event.target===this)this.remove()">
     <div class="box"><button class="x" onclick="this.parentElement.parentElement.remove()">✕</button>
     <h3>◈ 合约配置</h3>
+    <div style="display:grid;gap:6px;margin-bottom:8px;border-top:1px solid var(--line);padding-top:8px">
+      <div style="font-size:11px;color:var(--dim);font-weight:700">XPRS 分红币 · 持币分红 XPR（ignix 发行后填入）</div>
+      <input id="cfgXprs" placeholder="XPRS 合约地址（0x…）" class="mono" style="font-size:11.5px" value="${cfg.xprs||""}" onchange="setCfgF('xprs',this.value)">
+      <input id="cfgDiv" placeholder="分红合约地址（0x…）· 留空则仅展示 XPRS 资产" class="mono" style="font-size:11.5px" value="${cfg.xprsDiv||""}" onchange="setCfgF('xprsDiv',this.value)">
+    </div>
     <button class="btn ghost sm" onclick="copyShareLink()" style="margin:4px 0 8px;width:100%">🔗 复制公开访问链接（发盘后分享给用户）</button>
     <div id="deploySteps" style="display:grid;gap:6px;margin-top:4px"></div>
 
@@ -1952,7 +1968,7 @@ function renderTokList(){
   const q=($("tokSearch").value||"").trim().toLowerCase();
   if(q!==lastTokQ){lastTokQ=q;tokPage=1;}
   const xlps=(pickCtx==="farm"&&xlpPairs&&xlpPairs.length)?xlpPairs:[];
-const pool=[...(pickCtx==="farm"?xlps:[]),...(cfg.xstork?[{addr:cfg.xstork,sym:"XPR",name:"平台奖励币",dec:18,logo:XPR_LOGO,nat:0}]:[]),...assets,...XSTOCKS.filter(x=>x.addr).map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,logo:x.logo,nat:x.nat||0}))];
+const pool=[...(pickCtx==="farm"?xlps:[]),...(cfg.xstork?[{addr:cfg.xstork,sym:"XPR",name:"平台奖励币",dec:18,logo:XPR_LOGO,nat:0}]:[]),...(cfg.xprs?[{addr:cfg.xprs,sym:"XPRS",name:"XPRS 分红币",dec:18,logo:XPRS_LOGO,nat:0}]:[]),...assets,...XSTOCKS.filter(x=>x.addr).map(x=>({addr:x.addr,sym:x.sym,name:x.name,dec:18,logo:x.logo,nat:x.nat||0}))];
   const u={};pool.forEach(x=>u[x.addr.toLowerCase()]=x);
   const list=Object.values(u).filter(x=>!q||x.sym.toLowerCase().includes(q)||x.name.toLowerCase().includes(q)||x.addr.toLowerCase().includes(q));
   const shown=list.slice(0,tokPage*60);
@@ -2697,6 +2713,7 @@ async function createPool(){
 function configuredAssets(){
   const set=[];
   const seen={};
+  if(isAddr(cfg.xprs)&&!seen[cfg.xprs.toLowerCase()]){seen[cfg.xprs.toLowerCase()]=1;set.push({addr:cfg.xprs,sym:"XPRS"});}
   for(const a of assets){ if(isAddr(a.addr)&&!seen[a.addr.toLowerCase()]){seen[a.addr.toLowerCase()]=1;set.push({addr:a.addr,sym:a.sym});} }
   for(const x of XSTOCKS){ if(isAddr(x.addr)&&!seen[x.addr.toLowerCase()]){seen[x.addr.toLowerCase()]=1;set.push({addr:x.addr,sym:x.sym});} }
   return set;
@@ -2765,12 +2782,15 @@ async function renderAssets(){
     const metaByAddr={};
     for(const x of xs)metaByAddr[x.addr.toLowerCase()]={sym:x.sym,name:x.name,logo:x.logo};
     for(const a of assets)metaByAddr[a.addr.toLowerCase()]={sym:a.sym,name:a.name,logo:a.logo};
+    if(isAddr(cfg.xprs))metaByAddr[cfg.xprs.toLowerCase()]={sym:"XPRS",name:"XPRS 分红币",logo:XPRS_LOGO};
     const addrs=Object.keys(metaByAddr);
     /* XPR 奖励币余额 */
     let xb=0n;
     if(cfg.xstork){try{xb=await withRPC(async p=>new ethers.Contract(cfg.xstork,ERC20_ABI,p).balanceOf(walletAddr));}catch(e){}}
     let okb=0n;
     try{okb=await withRPC(async p=>p.getBalance(walletAddr));}catch(e){}
+    let xprsB=0n;
+    if(isAddr(cfg.xprs)){try{xprsB=await withRPC(async p=>new ethers.Contract(cfg.xprs,ERC20_ABI,p).balanceOf(walletAddr));}catch(e){}}
     /* 余额缓存（45s TTL）避免每次切页全量重查 */
     const ckey=STORAGE+"bals";
     let balCache={};
@@ -2802,7 +2822,8 @@ async function renderAssets(){
     }catch(e){}
     /* 组装：只显示余额 > 0 的持仓 */
     const rows=[{sym:"XPR",name:"平台奖励币",dec:18,bal:xb,addr:cfg.xstork,logo:XPR_LOGO},
-                {sym:"OKB",name:"X Layer 原生 Gas 币",dec:18,bal:okb,addr:"",logo:null}];
+                {sym:"OKB",name:"X Layer 原生 Gas 币",dec:18,bal:okb,addr:"",logo:null},
+                ...(isAddr(cfg.xprs)?[{sym:"XPRS",name:"XPRS 分红币",dec:18,bal:xprsB,addr:cfg.xprs,logo:XPRS_LOGO}]:[])];
     const held=[];
     for(const a of addrs){
       const b=BigInt(found[a]||0);
@@ -2833,7 +2854,46 @@ async function renderAssets(){
       const n=await st.poolLength();
       const e=$("astPoolCnt");if(e)e.textContent=String(n);
     }).catch(()=>{});
+    /* XPRS 分红面板：持币分红 XPR · 手动领取 */
+    if(isAddr(cfg.xprsDiv)){
+      let pend=0n,totalStaked=0n;
+      try{await withRPC(async p=>{
+        const dv=new ethers.Contract(cfg.xprsDiv,DIV_ABI,p);
+        pend=await dv.userPending(walletAddr);
+        try{totalStaked=await dv.totalStaked();}catch(e){}
+      });}catch(e){}
+      const card=document.createElement("div");
+      card.style.cssText="margin-top:14px;border:1px solid var(--line);border-radius:16px;padding:14px;background:linear-gradient(160deg,rgba(245,25,123,.06),rgba(255,154,61,.05))";
+      card.innerHTML=`
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          ${logoSvg("XPRS","",XPRS_LOGO)}
+          <div style="flex:1"><b style="font-size:14px">XPRS 分红</b><div style="font-size:11px;color:var(--faint)">持币分红 XPR · 按持仓比例累积 · 手动领取</div></div>
+          ${isAddr(cfg.xprs)?`<span class="mono cp" data-copy="${cfg.xprs}" title="点击复制 XPRS 地址" style="font-size:10.5px;color:var(--faint)">XPRS ${shortAddr(cfg.xprs)}</span>`:""}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:12px;padding:9px 12px"><div style="font-size:10.5px;color:var(--faint)">我的 XPRS 持仓</div><div style="font-weight:800;font-size:15px">${fmt(fromWei(xprsB,18))}</div></div>
+          <div style="background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:12px;padding:9px 12px"><div style="font-size:10.5px;color:var(--faint)">可领取 XPR 分红</div><div style="font-weight:800;font-size:15px;color:var(--acc)" class="grad-txt">${fmt(fromWei(pend,18))}</div></div>
+        </div>
+        ${totalStaked>0n?`<div style="font-size:11px;color:var(--faint);margin-bottom:8px">分红池持仓总量：${fmt(fromWei(totalStaked,18))} XPRS</div>`:""}
+        <button class="btn gold wide" onclick="claimXprs()" ${pend>0n?"":"disabled"}>${pend>0n?`领取 ${fmt(fromWei(pend,18))} XPR`:"暂无待领分红"}</button>
+        <div style="font-size:10.5px;color:var(--faint);margin-top:8px;line-height:1.6">分红合约：<span class="mono cp" data-copy="${cfg.xprsDiv}" title="点击复制分红合约地址">${shortAddr(cfg.xprsDiv)}</span><br>XPR 分红由项目方按持仓注入分红池，持仓 XPRS 即可累积。</div>`;
+      balEl.parentElement.insertBefore(card,balEl);
+    }
   }catch(e){$("balList").innerHTML=`<div class="empty" style="grid-column:1/-1">读取失败：${esc(e.message)}<br><br><button class="btn ghost sm" onclick="renderAssets()">重试</button></div>`;}
+}
+async function claimXprs(){
+  if(!walletAddr){toast("请先连接钱包","err");return;}
+  if(qstate.running){toast("任务进行中，请稍候","err");return;}
+  if(!isAddr(cfg.xprsDiv)){toast("未配置 XPRS 分红合约","err");return;}
+  try{
+    const signer=await getSigner();
+    const dv=new ethers.Contract(cfg.xprsDiv,DIV_ABI,signer);
+    const tx=await dv.claim();
+    toast("领取 XPR 分红提交中…","warn");
+    await tx.wait();
+    toast("XPR 分红已到账","ok");
+    renderAssets();
+  }catch(e){toast("领取失败："+String(e.message||e).slice(0,90),"err");}
 }
 
 /* ============ 统计条 ============ */
