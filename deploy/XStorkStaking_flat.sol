@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+// contracts/XStorkStaking.sol
+
 /// @title XStorkStaking — 质押挖矿（多池，按秒释放 XSTORK 奖励）
 /// @notice owner 创建质押池（指定可质押资产 + 每秒奖励速率），用户 stake/withdraw/claim。
 ///         奖励按份额累计（accRewardPerShare，1e12 精度）。

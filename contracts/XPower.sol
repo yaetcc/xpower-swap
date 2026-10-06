@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// @title XSTORK — xstork 平台奖励币（ERC20）
-/// @notice 总量 2100 万，owner 可 mint（预留给质押奖励池）；质押挖矿的奖励代币。
-contract XSTORK {
-    string public name = "XSTORK";
-    string public symbol = "XSTORK";
+/// @title XPower — XPower 平台奖励币（ERC20）
+/// @notice 总量 2100 万，owner 可 mint（预留给质押奖励池）；XPower-Swap 质押挖矿奖励代币。
+contract XPower {
+    string public name = "XPower";
+    string public symbol = "XPR";
     uint8 public constant decimals = 18;
     uint256 public totalSupply;
     address public owner;
@@ -25,7 +25,7 @@ contract XSTORK {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "XSTORK: not owner");
+        require(msg.sender == owner, "XPR: not owner");
         _;
     }
 

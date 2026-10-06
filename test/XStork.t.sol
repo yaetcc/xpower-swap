@@ -2,16 +2,16 @@
 pragma solidity ^0.8.20;
 
 import {Test, console} from "forge-std/Test.sol";
-import {XSTORK} from "../contracts/XSTORK.sol";
+import {XPower} from "../contracts/XPower.sol";
 import {XStorkFactory} from "../contracts/XStorkFactory.sol";
 import {XStorkPair} from "../contracts/XStorkPair.sol";
 import {XStorkRouter} from "../contracts/XStorkRouter.sol";
 import {XStorkStaking} from "../contracts/XStorkStaking.sol";
 
 contract XStorkTest is Test {
-    XSTORK reward;
-    XSTORK assetA; // 模拟 xTSLA 股票资产
-    XSTORK assetB; // 模拟 xAAPL 股票资产
+    XPower reward;
+    XPower assetA; // 模拟 xTSLA 股票资产
+    XPower assetB; // 模拟 xAAPL 股票资产
     XStorkFactory factory;
     XStorkRouter router;
     XStorkStaking staking;
@@ -20,9 +20,9 @@ contract XStorkTest is Test {
     address bob = address(0x2222);
 
     function setUp() public {
-        reward = new XSTORK(21e6 * 1e18);          // XSTORK 2100万
-        assetA = new XSTORK(0);                     // xStock 资产（无预铸）
-        assetB = new XSTORK(0);
+        reward = new XPower(21e6 * 1e18);          // XPR 2100万
+        assetA = new XPower(0);                     // xStock 资产（无预铸）
+        assetB = new XPower(0);
         factory = new XStorkFactory();
         router = new XStorkRouter(address(factory));
         staking = new XStorkStaking(address(reward));
@@ -74,7 +74,7 @@ contract XStorkTest is Test {
     }
 
     function test_staking_flow() public {
-        uint pid = staking.createPool(address(assetA), 100e18); // 每秒 100 XSTORK
+        uint pid = staking.createPool(address(assetA), 100e18); // 每秒 100 XPR
         vm.startPrank(alice);
         assetA.approve(address(staking), type(uint256).max);
         staking.stake(pid, 1_000e18);
