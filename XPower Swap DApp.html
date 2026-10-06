@@ -479,7 +479,8 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 <script>
 /* ============ 配置与常量 ============ */
 const CHAIN_ID = 196;
-const RPCS = ["https://rpc.xlayer.tech","https://xlayer.drpc.org","https://x-layer.drpc.org","https://xlayer.ondrpc.com"];
+const RPCS = ["https://rpc.xlayer.tech","https://xlayer.drpc.org","https://rpc.nodeflare.app/xlayer/public"];
+let rpcProbed=false,lastRpcToast=0;
 const EXPLORER = "https://web3.okx.com/zh-hans/explorer/x-layer/evm/";
 const STORAGE = "xp4s_";
 const tokenCache = {};
@@ -1191,7 +1192,33 @@ function toWei(n,d){return BigInt(Math.round(n*10**(d==null?18:d)));}
 function isAddr(s){return/^0x[0-9a-fA-F]{40}$/.test(String(s||"").trim());}
 function deadline(){return Math.floor(Date.now()/1000)+1800;}
 function pickProvider(){return new ethers.JsonRpcProvider(RPCS[rpcIdx],CHAIN_ID,{staticNetwork:true});}
-function withRPC(fn){return new Promise((res,rej)=>{let t=0;const go=()=>{t++;Promise.race([fn(pickProvider()),new Promise((_,r)=>setTimeout(()=>r(new Error("RPC timeout")),12000))]).then(res).catch(e=>{if(t>=3)return rej(e);rpcIdx=(rpcIdx+1)%RPCS.length;toast("RPC 波动，已切换节点","err");setTimeout(go,300);});};go();});}
+function rpcHost(u){try{return new URL(u).host;}catch(e){return u;}}
+function probeRPCs(){
+  Promise.all(RPCS.map(u=>new Promise(r=>{
+    const p=new ethers.JsonRpcProvider(u,CHAIN_ID,{staticNetwork:true});
+    Promise.race([p.getBlockNumber(),new Promise(res=>setTimeout(()=>res(-1),2500))])
+      .then(bn=>r({u,bn}))
+      .catch(()=>r({u,bn:-1}));
+  }))).then(list=>{
+    const ok=list.filter(x=>x.bn>0).sort((a,b)=>b.bn-a.bn);
+    if(!ok.length)return;
+    const order=ok.map(x=>x.u);
+    RPCS.forEach(u=>{if(!order.includes(u))order.push(u);});
+    RPCS.splice(0,RPCS.length,...order);
+    rpcIdx=0;
+  }).catch(()=>{});
+}
+function withRPC(fn){return new Promise((res,rej)=>{
+  if(!rpcProbed){rpcProbed=true;probeRPCs();}
+  let t=0;const go=()=>{t++;
+    Promise.race([fn(pickProvider()),new Promise((_,r)=>setTimeout(()=>r(new Error("RPC timeout")),8000))]).then(res).catch(e=>{
+      if(t>=RPCS.length)return rej(e);
+      rpcIdx=(rpcIdx+1)%RPCS.length;
+      const now=Date.now();
+      if(now-lastRpcToast>8000){lastRpcToast=now;toast("RPC 波动，已自动切换节点","warn");}
+      setTimeout(go,200);
+    });
+  };go();});}
 async function getSigner(){if(!window.ethereum)throw new Error("未检测到钱包");return new ethers.BrowserProvider(window.ethereum).getSigner();}
 
 /* ============ 钱包 ============ */
