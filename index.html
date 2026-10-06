@@ -622,6 +622,11 @@ let assets=[];
 let tokPage=1,astPage=1,lastTokQ="",lastAstQ="";
 let cfg={factory:"",router:"",staking:"",xstork:""};
 try{ Object.assign(cfg, JSON.parse(localStorage.getItem(STORAGE+"cfg")||"{}")); assets=JSON.parse(localStorage.getItem(STORAGE+"assets")||"[]"); }catch(e){}
+/* 公开分享链接：?fc=Factory&rt=Router&st=Staking&xp=XPR —— 访客打开即自动配置，无需本地存储 */
+try{
+  const _u=new URL(location.href);const _mp={fc:"factory",rt:"router",st:"staking",xp:"xstork"};
+  for(const _k in _mp){const _v=_u.searchParams.get(_k);if(_v&&/^0x[a-fA-F0-9]{40}$/.test(_v))cfg[_mp[_k]]=_v.toLowerCase();}
+}catch(e){}
 /* 配置迁移 v2：新 XPR（含LOGO登记诉求）替换旧 XPR / 新 Staking（绑定新XPR）替换旧 Staking */
 const CFG_MIG={
   xstork:{
@@ -1739,11 +1744,25 @@ if(window.ethereum&&window.ethereum.on){
 /* ============ 配置 ============ */
 function needCfg(){return !cfg.factory||!cfg.router||!cfg.staking||!cfg.xstork;}
 function saveCfg(){localStorage.setItem(STORAGE+"cfg",JSON.stringify(cfg));}
+function copyShareLink(){
+  if(needCfg()){toast("请先部署/配置合约，再生成公开链接","err");return;}
+  try{
+    const u=new URL(location.href);
+    u.search="";
+    u.searchParams.set("fc",cfg.factory);u.searchParams.set("rt",cfg.router);
+    u.searchParams.set("st",cfg.staking);u.searchParams.set("xp",cfg.xstork);
+    const link=u.toString();
+    const done=()=>toast("公开链接已复制 · 其他人打开即可看到已发盘项目","ok");
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(link).then(done).catch(()=>{prompt("复制公开链接（发给用户）",link);});}
+    else prompt("复制公开链接（发给用户）",link);
+  }catch(e){toast("生成链接失败："+e.message,"err");}
+}
 function openCfg(){
   const d=document.createElement("div");
   d.innerHTML=`<div class="mask on" id="cfgMask" onclick="if(event.target===this)this.remove()">
     <div class="box"><button class="x" onclick="this.parentElement.parentElement.remove()">✕</button>
     <h3>◈ 合约配置</h3>
+    <button class="btn ghost sm" onclick="copyShareLink()" style="margin:4px 0 8px;width:100%">🔗 复制公开访问链接（发盘后分享给用户）</button>
     <div id="deploySteps" style="display:grid;gap:6px;margin-top:4px"></div>
 
     <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
@@ -2098,7 +2117,7 @@ function deployOnlyCta(){
   if(!walletAddr){toast("请先连接钱包","err");return;}
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
   if(!needCfg()){
-    toast("4 合约已部署：XPR "+shortAddr(cfg.xstork)+" · Factory "+shortAddr(cfg.factory)+" · Router "+shortAddr(cfg.router)+" · Staking "+shortAddr(cfg.staking),"ok");
+    toast("4 合约已部署：XPR "+shortAddr(cfg.xstork)+" · Factory "+shortAddr(cfg.factory)+" · Router "+shortAddr(cfg.router)+" · Staking "+shortAddr(cfg.staking)+" · 配置面板可复制公开链接","ok");
     return;
   }
   deployAll();
