@@ -1161,14 +1161,15 @@ function openCfg(){
     <button class="btn primary wide" style="margin-top:14px" onclick="saveCfgBox()">保存配置</button>
     <button class="btn wide" style="margin-top:8px;border:1px solid var(--acc-line);color:var(--acc)" onclick="deployAll()">⚡ 一键部署 4 合约（连接钱包后 · 约 4 笔签名）</button>
     <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px">⚡ 一键起盘 · 指定 xStock 资产</div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">⚡ 一键起盘 · OKB × xStock 组 LP</div>
+      <div style="font-size:11.5px;color:var(--dim);margin-bottom:8px;line-height:1.6">默认 OKB + 你指定的 xStock 资产组成 LP 交易对；注入奖励从你的钱包直接冲入矿池（奖励币默认 XPR，可指定其他 ERC-20）</div>
       <div style="display:grid;gap:8px">
-        <input id="lgTok" list="lgTokList" placeholder="选择 xStock 资产（如 XAAPL）或粘贴地址" class="mono" style="font-size:12.5px">
+        <input id="lgTok" list="lgTokList" placeholder="选择 xStock 资产（如 XAAPL）· 与 OKB 自动组 LP" class="mono" style="font-size:12.5px">
         <datalist id="lgTokList"></datalist>
-        <input id="lgReward" placeholder="奖励币地址 · 留空默认 XPR（部署后自动填）" class="mono" style="font-size:12.5px">
+        <input id="lgReward" placeholder="奖励币地址 · 留空默认 XPR" class="mono" style="font-size:12.5px">
         <input id="lgRate" type="number" placeholder="每秒奖励（如 0.000001）" style="font-size:12.5px">
-        <input id="lgFund" type="number" placeholder="注入奖励数量（如 100000）" style="font-size:12.5px">
-        <button class="btn gold wide" onclick="launchAll()">⚡ 一键起盘：交易对 → 质押池 → 注入奖励</button>
+        <input id="lgFund" type="number" placeholder="冲入奖励数量 · 从钱包转入矿池（如 100000）" style="font-size:12.5px">
+        <button class="btn gold wide" onclick="launchAll()">⚡ 一键起盘：组 LP 交易对 → 质押池 → 冲入奖励</button>
       </div>
       <div id="lgLog" style="display:grid;gap:6px;margin-top:8px;font-size:12px"></div>
     </div>
@@ -1214,7 +1215,7 @@ async function launchAll(){
     if(bal<fundBN){toast("奖励币余额不足（当前 "+fmt(fromWei(bal,18))+")","err");return;}
     let pairAddr=ethers.ZeroAddress;
     qstate.steps=[];
-    qAdd("创建交易对 "+tok.sym+"/WOKB",async()=>{
+    qAdd("组 LP 交易对 "+tok.sym+"/OKB",async()=>{
       const f=new ethers.Contract(cfg.factory,FACTORY_ABI,signer);
       let pair=await f.getPair(tok.addr,WOKB_ADDR);
       if(pair===ethers.ZeroAddress){
@@ -1222,7 +1223,7 @@ async function launchAll(){
         pair=await f.getPair(tok.addr,WOKB_ADDR);
       }
       pairAddr=pair;
-      return"交易对 "+shortAddr(pair);
+      return"LP 合约 "+shortAddr(pair);
     });
     qAdd("创建质押池（质押 LP 凭证）",async()=>{
       const tx=await st.createPool(pairAddr,toWei(rate,18));await tx.wait();
@@ -1231,10 +1232,10 @@ async function launchAll(){
     qAdd("授权奖励币 → 矿池",async()=>{
       const tx=await rwTok.approve(cfg.staking,fundBN);await tx.wait();return"已授权";
     });
-    qAdd("注入 "+fund+" 奖励",async()=>{
-      const tx=await rwTok.transfer(cfg.staking,fundBN);await tx.wait();return"奖励已入池";
+    qAdd("冲入 "+fund+" 奖励 → 矿池",async()=>{
+      const tx=await rwTok.transfer(cfg.staking,fundBN);await tx.wait();return"已冲入矿池";
     });
-    qRun({ok:()=>{toast("一键起盘完成 · 可去 Pool 添加流动性","ok");refreshAll();},err:(e)=>{toast("起盘中断："+(e.shortMessage||e.message||e),"err");}});
+    qRun({ok:()=>{toast("一键起盘完成 · OKB×"+tok.sym+" LP 已就绪，可去 Pool 添加流动性","ok");refreshAll();},err:(e)=>{toast("起盘中断："+(e.shortMessage||e.message||e),"err");}});
   }catch(e){toast("起盘失败："+(e.message||e),"err");}
 }
 
@@ -1601,7 +1602,7 @@ async function poolQuote(){
   try{
     const info=await withRPC(async p=>{
       const f=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
-      const pair=await f.getPair(pA.addr,pB.addr);
+      const pair=await f.getPair(tokAddr(pA),tokAddr(pB));
       if(pair===ethers.ZeroAddress)return null;
       const pc=new ethers.Contract(pair,[...PAIR_ABI,"function totalSupply() view returns (uint256)"],p);
       const[t0,r]=await Promise.all([pc.token0(),pc.getReserves()]);
@@ -1658,17 +1659,34 @@ async function doAddLiquidity(){
     const amtA=toWei(a,pA.dec),amtB=toWei(b,pB.dec);
     qstate.steps=[];
     for(const[t,amt]of[[pA,amtA],[pB,amtB]]){
+      if(t.nat){ // 原生 OKB：检查原生余额，添加时自动包装
+        const nb=await signer.getBalance();
+        if(nb<amt){toast(t.sym+" 余额不足","err");return;}
+        continue;
+      }
       const tk=new ethers.Contract(t.addr,ERC20_ABI,signer);
       const bal=await tk.balanceOf(walletAddr);
       if(bal<amt){toast(t.sym+" 余额不足","err");return;}
       const allw=await tk.allowance(walletAddr,cfg.router);
       if(allw<amt)qAdd("授权 "+t.sym,async()=>{const r=await tk.approve(cfg.router,ethers.MaxUint256);await r.wait();return"已授权";});
     }
+    for(const[t,amt]of[[pA,amtA],[pB,amtB]]){
+      if(!t.nat)continue;
+      qAdd("包装 "+fmtPrice(Number(fromWei(amt,18)))+" OKB → WOKB",async()=>{
+        const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,signer);
+        const tx=await w.deposit({value:amt});await tx.wait();return"已包装";
+      });
+      qAdd("授权 WOKB → Router",async()=>{
+        const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,signer);
+        const tx=await w.approve(cfg.router,ethers.MaxUint256);await tx.wait();return"已授权";
+      });
+    }
     qAdd("添加流动性",async()=>{
       const r=new ethers.Contract(cfg.router,ROUTER_ABI,signer);
-      const tx=await r.addLiquidity(pA.addr,pB.addr,amtA,amtB,0,0,walletAddr,deadline());
+      const adA=pA.nat?WOKB_ADDR:pA.addr, adB=pB.nat?WOKB_ADDR:pB.addr;
+      const tx=await r.addLiquidity(adA,adB,amtA,amtB,0,0,walletAddr,deadline());
       await tx.wait();
-      return"已添加 "+fmtPrice(a)+" "+pA.sym+" / "+fmtPrice(b)+" "+pB.sym;
+      return"已添加 "+fmtPrice(a)+" "+pA.sym+" / "+fmtPrice(b)+" "+pB.sym+"（OKB 已自动包装）";
     });
     qRun();
   }catch(e){toast("添加失败："+(e.message||e),"err");}
@@ -1687,7 +1705,8 @@ async function removeQuote(){
         const pa=await fc.allPairs(i);
         const pc=new ethers.Contract(pa,[...PAIR_ABI,...ERC20_ABI,"function totalSupply() view returns (uint256)"],p);
         const[t0,t1]=await Promise.all([pc.token0(),pc.token1()]);
-        if(t0.toLowerCase()!==pR.addr.toLowerCase()&&t1.toLowerCase()!==pR.addr.toLowerCase())continue;
+        const raddr=tokAddr(pR);
+        if(t0.toLowerCase()!==raddr.toLowerCase()&&t1.toLowerCase()!==raddr.toLowerCase())continue;
         const[lpBal,lpTot,r]=await Promise.all([pc.balanceOf(walletAddr),pc.totalSupply(),pc.getReserves()]);
         $("prLp").textContent="LP: "+fmt(fromWei(lpBal,18));
         const amt=pct>0?lpBal*BigInt(Math.round(pct*1000))/1000n:0n;
@@ -2152,6 +2171,8 @@ window.addEventListener("load",()=>{
   if(window.ethereum)connectWallet().catch(()=>{});
   renderAssetList();
   initSlip();
+  const okbDef=XSTOCKS.find(x=>x.nat);if(okbDef&&!pA)pA=okbDef;
+  renderPoolSel();
 $("nav").innerHTML=[["swap",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg>',"兑换"],["pool",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg>',"流动性"],["farm",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg>',"质押"],["assets",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg>',"资产"]].map(([v,ic,zh])=>`<div class="n" data-v="${v}" onclick="go('${v}')">${ic}${zh}</div>`).join("");
   route();
   window.addEventListener("hashchange",route);
