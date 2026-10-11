@@ -1887,6 +1887,7 @@ async function poolQuote(){
   if(!pA||!pB)return;
   const a=Number($("paAmt").value),b=Number($("pbAmt").value);
   const el=$("poolErr");el.classList.remove("on");
+  /* 金额为 0 也继续查池状态/持仓（池是否存在、当前储备、我的 LP），仅跳过份额估算 */
   try{
     const info=await withRPC(async p=>{
       const f=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
@@ -2745,9 +2746,8 @@ async function renderMyLiq(){
 }
 function refreshView(){
   renderStats();
-  if(curView==="pool")renderMyLiq();
   if(curView==="swap")renderSwapSel();
-  if(curView==="pool")renderPoolSel();
+  if(curView==="pool"){renderMyLiq();renderPoolSel();poolQuote();}
   if(curView==="farm")renderFarm();
   if(curView==="assets"){renderAssetList();renderAssets();}
   renderCfgInfo();
