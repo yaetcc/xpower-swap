@@ -1188,7 +1188,8 @@ function logoSvg(sym,id,logo){
   if(NO_LOGO[sym])return `<span class="lg"${idAttr} style="background:${logoColor(sym)}">${esc(String(sym||"?")).slice(0,1)}</span>`;
   const _ox=OFFICIAL_XSTOCK[sym];
   const src=_ox?_ox.logo:`https://cdn.jsdelivr.net/gh/yaetcc/xpower-swap@main/assets/logos/${esc(sym)}.png`;
-  return `<span class="lg"${idAttr} style="position:relative;overflow:hidden;background:${logoColor(sym)}">${esc(String(sym||"?")).slice(0,1)}<img src="${src}" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:50%;background:#fff" onerror="if(!this.dataset.r){this.dataset.r='1';this.src=this.src.split('?')[0]+'?r='+Date.now();}else{this.remove();}"></span>`;
+  const gray=/static\.okx\.com|jsdelivr/.test(src)?'filter:grayscale(1);':'';
+  return `<span class="lg"${idAttr} style="position:relative;overflow:hidden;background:${logoColor(sym)}">${esc(String(sym||"?")).slice(0,1)}<img src="${src}" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:50%;background:#fff;${gray}padding:3px;box-sizing:border-box" onerror="if(!this.dataset.r){this.dataset.r='1';this.src=this.src.split('?')[0]+'?r='+Date.now();}else{this.remove();}"></span>`;
 }
 
 /* ============ ABI ============ */
