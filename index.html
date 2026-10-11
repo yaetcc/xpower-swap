@@ -47,7 +47,7 @@ button{font-family:inherit}
 ::-webkit-scrollbar-track{background:transparent}
 /* ===== 顶栏 ===== */
 header{position:sticky;top:0;z-index:90;background:rgba(255,255,255,.55);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border-bottom:1px solid rgba(255,255,255,.55)}
-.nav{max-width:1160px;margin:0 auto;display:flex;align-items:center;gap:20px;padding:12px 20px}
+.nav{width:100%;display:flex;align-items:center;gap:20px;padding:12px 24px}
 .logo{display:flex;align-items:center;gap:11px;cursor:pointer;user-select:none;flex-shrink:0}
 .logo .mark{width:32px;height:32px;border-radius:11px;background:var(--acc-grad);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(109,92,255,.4);border:1px solid rgba(255,255,255,.5)}
 .logo .nm{font-weight:900;font-size:17px;letter-spacing:-.2px;line-height:1.15;color:var(--fg)}
@@ -66,7 +66,7 @@ header{position:sticky;top:0;z-index:90;background:rgba(255,255,255,.55);backdro
 .chainpill{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:20px;border:1px solid rgba(255,255,255,.7);font-size:11px;color:var(--dim);background:rgba(255,255,255,.5);font-weight:700;flex-shrink:0;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .chainpill i{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
 /* ===== 主区 ===== */
-main{max-width:1160px;margin:0 auto;padding:26px 20px 80px}
+main{width:100%;padding:26px 24px 80px}
 .view{display:none}
 .view.on{display:block;animation:rise .28s cubic-bezier(.2,.7,.2,1)}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
