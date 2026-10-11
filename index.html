@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>XPower · 股票资产 Swap & DeFi</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F5197B'/%3E%3Cstop offset='1' stop-color='%237C3AED'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M26 14h6l-14 36h-6z' fill='%23fff'/%3E%3Cpath d='M38 14h14l-14 36h-14z' fill='%23fff' opacity='.92'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#F5197B">
+<link rel="manifest" href='data:application/manifest+json,{"name":"XPower Swap","short_name":"XPower","start_url":"./","display":"standalone","background_color":"%23fffdfe","theme_color":"%23F5197B","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Cdefs%3E%3ClinearGradient id=%27g%27 x1=%270%27 y1=%270%27 x2=%271%27 y2=%271%27%3E%3Cstop offset=%270%27 stop-color=%27%23F5197B%27/%3E%3Cstop offset=%271%27 stop-color=%27%237C3AED%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27url(%23g)%27/%3E%3Cpath d=%27M26 14h6l-14 36h-6z%27 fill=%27%23fff%27/%3E%3Cpath d=%27M38 14h14l-14 36h-14z%27 fill=%27%23fff%27 opacity=%27.92%27/%3E%3C/svg%3E","sizes":"any","type":"image/svg+xml","purpose":"any"}]}'>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="XPower">
 <style>
 :root{
   --bg:#f6f6f8; --card:#ffffff; --card2:#fbfbfc; --panel:#ffffff;
@@ -430,6 +436,8 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
 .farm-filt .t em{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
 .farm-filt .t.on{background:var(--acc-grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(245,25,123,.25)}
 .farm-filt .t.on em{color:rgba(255,255,255,.85)}
+.farm-filt .srt{margin-left:auto;padding:7px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--dim);font-size:12px;font-weight:800;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.farm-filt .srt.on{background:var(--acc-grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(245,25,123,.25)}
 #view-farm .poolcard{background:linear-gradient(168deg,#fff 0%,#fdfafd 60%,#f6f1fb 100%);border-radius:16px;padding:13px 14px;box-shadow:var(--shadow)}
 #view-farm .poolcard:hover{border-color:var(--acc-line);box-shadow:0 12px 30px rgba(245,25,123,.09),var(--shadow)}
 #view-farm .poolcard .top{border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
@@ -713,6 +721,7 @@ let pickCtx=null, slipPct=0.005;
 let sA=null,sB=null,pA=null,pB=null,pR=null,curView="swap";
 let assets=[];
 let tokPage=1,astPage=1,lastTokQ="",lastAstQ="";
+const balCache={};
 let cfg={factory:"",router:"",staking:"",xstork:"",xprs:"",xprsDiv:""};
 try{ Object.assign(cfg, JSON.parse(localStorage.getItem(STORAGE+"cfg")||"{}")); assets=JSON.parse(localStorage.getItem(STORAGE+"assets")||"[]"); }catch(e){}
 /* 公开分享链接：?fc=Factory&rt=Router&st=Staking&xp=XPR —— 访客打开即自动配置，无需本地存储 */
@@ -933,6 +942,34 @@ function shortAddr(a){if(!a)return"";a=String(a);return a.slice(0,6)+"…"+a.sli
 function fmtPrice(n){n=Number(n);if(!isFinite(n)||n===0)return"0";if(n<1e-6)return"0";if(n>=1000)return n.toLocaleString("en-US",{maximumFractionDigits:2});if(n>=0.001)return n.toFixed(4).replace(/0+$/,"").replace(/\.$/,"");return n.toFixed(8).replace(/0+$/,"").replace(/\.$/,"");}
 function fmt(n,d){n=Number(n);d=d==null?2:d;if(!isFinite(n))return"0";if(n>=1e6)return(n/1e6).toFixed(2)+"M";if(n>=1e4)return(n/1e3).toFixed(2)+"k";return n.toLocaleString("en-US",{maximumFractionDigits:d});}
 function toast(m,t){const e=document.createElement("div");e.className="toast"+(t==="err"?" err":t==="ok"?" ok":"");e.textContent=m;$("toasts").appendChild(e);setTimeout(()=>e.remove(),t==="err"?6000:3500);}
+function toastHtml(m,t){const e=document.createElement("div");e.className="toast"+(t==="err"?" err":t==="ok"?" ok":"");e.innerHTML=m;$("toasts").appendChild(e);setTimeout(()=>e.remove(),t==="err"?8000:6000);}
+function shortTx(h){return (h||"").slice(0,6)+"…"+(h||"").slice(-4);}
+function errMsg(e){
+  const m=String((e&&(e.reason||e.shortMessage||e.message))||e||"");
+  const l=m.toLowerCase();
+  if(/user rejected|user denied|action rejected|declined/i.test(m))return"用户取消了交易";
+  if(/insufficient_output_amount|slippage/i.test(l))return"滑点超限：请提高滑点或等待价格恢复后重试";
+  if(/insufficient funds|insufficient_funds/i.test(l))return"余额不足：请检查钱包内 OKB 与代币余额";
+  if(/transfer_from_failed|allowance/i.test(l))return"授权不足：已自动重试，若仍失败请手动授权";
+  if(/execution_reverted|reverted/i.test(l))return"交易被回滚：请检查参数后重试";
+  if(/unconfigured_name|ens/i.test(l))return"合约地址配置异常：请检查配置";
+  if(/chainid|wrong network|unsupported chain/i.test(l))return"网络错误：请切换到 X Layer（chainId 196）";
+  if(/nonce|already known|replacement transaction/i.test(l))return"交易冲突：上一笔未确认，请稍后重试";
+  if(/timeout|etimedout|network error|fetch/i.test(l))return"RPC 波动：已自动切换节点，请重试";
+  return m||"未知错误";
+}
+let autoTimer=null;
+function startAutoRefresh(){
+  if(autoTimer)return;
+  autoTimer=setInterval(()=>{
+    if(!walletAddr)return;
+    if(document.activeElement&&/input|textarea/i.test(document.activeElement.tagName))return;
+    loadAssetBals();
+    if(curView==="farm"&&$("farmList")&&$("farmList").children.length)renderFarm();
+    else if(curView==="pool")renderStats();
+    else if(curView==="swap")quoteSwap();
+  },20000);
+}
 function copyText(t){navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast("已复制"),()=>{});}
 /* 全局地址点击复制：任何带 data-copy 的元素点击即复制完整地址 */
 document.addEventListener("click",e=>{
@@ -993,7 +1030,8 @@ async function connectWallet(){
     $("wbtn").classList.add("ok");
     refreshAll();
     loadHdrBal();
-  }catch(e){toast("连接失败："+(e.message||e),"err");}
+    startAutoRefresh();
+  }catch(e){toast("连接失败："+errMsg(e),"err");}
   finally{wConnectBusy=false;if(wb)wb.classList.remove("busy");if(wt)wt.textContent=walletAddr?shortAddr(walletAddr):"连接钱包";}
 }
 function updateChainWarn(){
@@ -1120,16 +1158,16 @@ async function launchAll(){
     });
     qAdd("创建质押池（质押 LP 凭证）",async()=>{
       const tx=await st.createPool(pairAddr,toWei(rate,18));await tx.wait();
-      return"矿池已建 · 每秒 "+rate+" 奖励";
+      return tx.hash;
     });
     qAdd("授权奖励币 → 矿池",async()=>{
-      const tx=await rwTok.approve(cfg.staking,fundBN);await tx.wait();return"已授权";
+      const tx=await rwTok.approve(cfg.staking,fundBN);await tx.wait();return tx.hash;
     });
     qAdd("冲入 "+fund+" 奖励 → 矿池",async()=>{
-      const tx=await rwTok.transfer(cfg.staking,fundBN);await tx.wait();return"已冲入矿池";
+      const tx=await rwTok.transfer(cfg.staking,fundBN);await tx.wait();return tx.hash;
     });
-    qRun({ok:()=>{toast("一键起盘完成 · OKB×"+tok.sym+" LP 已就绪，可去 Pool 添加流动性","ok");refreshAll();},err:(e)=>{toast("起盘中断："+(e.shortMessage||e.message||e),"err");}});
-  }catch(e){toast("起盘失败："+(e.message||e),"err");}
+    qRun({ok:()=>{toast("一键起盘完成 · OKB×"+tok.sym+" LP 已就绪，可去 Pool 添加流动性","ok");refreshAll();},err:(e)=>{toast("起盘中断："+errMsg(e),"err");}});
+  }catch(e){toast("起盘失败："+errMsg(e),"err");}
 }
 
 /* ============ 资产名录 ============ */
@@ -1147,6 +1185,10 @@ function renderAssetList(){
   XSTOCKS.forEach(x=>{if(x.addr&&!u[x.addr.toLowerCase()])u[x.addr.toLowerCase()]={addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true,nat:x.nat};});
   const all=Object.values(u);
   const list=all.filter(a=>!q||(a.sym||"").toLowerCase().includes(q)||(a.name||"").toLowerCase().includes(q)||(a.addr||"").toLowerCase().includes(q));
+  if(walletAddr&&Object.keys(balCache).length){
+    const rank=a=>{const v=balCache[a.sym];return v?v:0;};
+    list.sort((a,b)=>rank(b)-rank(a)||(a.sym||"").localeCompare(b.sym||""));
+  }
   const cnt=$("assetCnt");if(cnt)cnt.textContent=list.length+"/"+all.length+" 项";
   const shown=list.slice(0,astPage*60);
   el.innerHTML=shown.length?shown.map(a=>a.addr?`    <div class="asset-card">
@@ -1179,7 +1221,7 @@ async function loadAssetBals(){
   if(!walletAddr)return;
   withRPC(async p=>{
     const okb=$("balOKB");
-    if(okb){try{const b=await p.getBalance(walletAddr);okb.textContent=fmt(fromWei(b,18));}catch(e){}}
+    if(okb){try{const b=await p.getBalance(walletAddr);okb.textContent=fmt(fromWei(b,18));balCache.OKB=Number(fromWei(b,18));}catch(e){}}
     const syms={};
     if(cfg.xstork)syms.XPR=cfg.xstork;
     if(cfg.xprs)syms.XPRS=cfg.xprs;
@@ -1187,7 +1229,7 @@ async function loadAssetBals(){
     for(const [sym,addr] of Object.entries(syms)){
       const el=$("bal"+sym.replace(/\W/g,''));
       if(!el)continue;
-      try{const b=await new ethers.Contract(addr,ERC20_ABI,p).balanceOf(walletAddr);el.textContent=fmt(fromWei(b,18));}catch(e){}
+      try{const b=await new ethers.Contract(addr,ERC20_ABI,p).balanceOf(walletAddr);el.textContent=fmt(fromWei(b,18));balCache[sym]=Number(fromWei(b,18));}catch(e){}
     }
   }).catch(()=>{});
 }
@@ -1311,7 +1353,7 @@ async function setMax(){
     const bal=sA.nat?await p.getBalance(walletAddr):await new ethers.Contract(sA.addr,ERC20_ABI,p).balanceOf(walletAddr);
     $("inAmt").value=fmtPrice(fromWei(bal,sA.dec));
     quoteSwap();
-  }).catch(e=>toast("读取余额失败："+(e.message||e),"err"));
+  }).catch(e=>toast("读取余额失败："+errMsg(e),"err"));
 }
 
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
@@ -1379,7 +1421,7 @@ async function quoteSwap(){
         else{inEl.style.borderColor="";}
       }).catch(()=>{});
     }
-  }catch(e){el.textContent="报价失败："+(e.message||e);el.classList.add("on");$("outAmt").value="";}
+  }catch(e){el.textContent="报价失败："+errMsg(e);el.classList.add("on");$("outAmt").value="";}
   updateSwapCta();
 }
 function updateSwapCta(){
@@ -1491,10 +1533,10 @@ async function doSwap(){
     if(!sA.nat){
       const tk=new ethers.Contract(sA.addr,ERC20_ABI,signer);
       const allw=await tk.allowance(walletAddr,cfg.router);
-      if(allw<amt)qAdd("授权 "+sA.sym,async()=>{const r=await tk.approve(cfg.router,ethers.MaxUint256);await r.wait();return"已授权";});
+      if(allw<amt)qAdd("授权 "+sA.sym,async()=>{const r=await tk.approve(cfg.router,ethers.MaxUint256);await r.wait();return r.hash;});
     }else{
       const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,signer);
-      qAdd("包装 "+fmtPrice(n)+" OKB（自动封装）",async()=>{const r=await w.deposit({value:amt});await r.wait();return"已包装";});
+      qAdd("包装 "+fmtPrice(n)+" OKB（自动封装）",async()=>{const r=await w.deposit({value:amt});await r.wait();return r.hash;});
     }
     qAdd("兑换 "+fmtPrice(n)+" "+sA.sym,async()=>{
       const amounts=await withRPC(async p=>new ethers.Contract(cfg.router,ROUTER_ABI,p).getAmountsOut(amt,[inTok,outTok]));
@@ -1507,10 +1549,10 @@ async function doSwap(){
         const w=new ethers.Contract(WOKB_ADDR,WOKB_ABI,signer);
         const rx=await w.withdraw(amounts[1]);await rx.wait();
       }
-      return"成交 ≈ "+fmtPrice(fromWei(amounts[1],sB.dec))+" "+sB.sym;
+      return tx.hash;
     });
     qRun();
-  }catch(e){toast("兑换失败："+(e.message||e),"err");}
+  }catch(e){toast("兑换失败："+errMsg(e),"err");}
 }
 
 /* ============ Pool ============ */
@@ -1600,7 +1642,7 @@ async function poolQuote(){
       if(!pbTouched)$("pbAmt").value=fmtPrice(need);
       $("poolShare").textContent=fmtPrice(a)+" "+pA.sym+" + "+fmtPrice(need)+" "+pB.sym+" · 份额≈"+(share*100).toFixed(2)+"%";
     }
-  }catch(e){el.textContent="读取池失败："+(e.message||e);el.classList.add("on");}
+  }catch(e){el.textContent="读取池失败："+errMsg(e);el.classList.add("on");}
   updateAddLiqCta();
 }
 function updateAddLiqCta(){
@@ -1645,7 +1687,7 @@ async function doAddLiquidity(){
       const bal=await tk.balanceOf(walletAddr);
       if(bal<amt){toast(t.sym+" 余额不足","err");return;}
       const allw=await tk.allowance(walletAddr,cfg.router);
-      if(allw<amt)qAdd("授权 "+t.sym,async()=>{const r=await tk.approve(cfg.router,ethers.MaxUint256);await r.wait();return"已授权";});
+      if(allw<amt)qAdd("授权 "+t.sym,async()=>{const r=await tk.approve(cfg.router,ethers.MaxUint256);await r.wait();return r.hash;});
     }
     for(const[t,amt]of[[pA,amtA],[pB,amtB]]){
       if(!t.nat)continue;
@@ -1663,10 +1705,10 @@ async function doAddLiquidity(){
       const adA=pA.nat?WOKB_ADDR:pA.addr, adB=pB.nat?WOKB_ADDR:pB.addr;
       const tx=await r.addLiquidity(adA,adB,amtA,amtB,0,0,walletAddr,deadline());
       await tx.wait();
-      return"已添加 "+fmtPrice(a)+" "+pA.sym+" / "+fmtPrice(b)+" "+pB.sym+"（OKB 已自动包装）";
+      return tx.hash;
     });
     qRun();
-  }catch(e){toast("添加失败："+(e.message||e),"err");}
+  }catch(e){toast("添加失败："+errMsg(e),"err");}
 }
 async function removeQuote(){
   if(!pR||!walletAddr)return;
@@ -1691,7 +1733,10 @@ async function removeQuote(){
           const share=Number(amt)/Number(lpTot);
           const aOut=fromWei(BigInt(Math.floor(Number(r[0])*share)),pR.dec);
           const bOut=fromWei(BigInt(Math.floor(Number(r[1])*share)),18);
-          $("prOut").textContent="≈ "+fmtPrice(aOut)+" "+pR.sym+" + "+fmtPrice(bOut)+" 另一币";
+          const otherAddr=t0.toLowerCase()===raddr.toLowerCase()?t1:t0;
+          let otherSym="另一币";
+          try{otherSym=await new ethers.Contract(otherAddr,ERC20_ABI,p).symbol();}catch(e){}
+          $("prOut").textContent="≈ "+fmtPrice(aOut)+" "+pR.sym+" + "+fmtPrice(bOut)+" "+otherSym;
         }
         return;
       }
@@ -1751,10 +1796,10 @@ async function doRemoveLiquidity(){
       const r=new ethers.Contract(cfg.router,ROUTER_ABI,signer);
       const tx=await r.removeLiquidity(pR.addr,other,amt,0,0,walletAddr,deadline());
       await tx.wait();
-      return"已移除 "+(pct*100).toFixed(0)+"%";
+      return tx.hash;
     });
     qRun();
-  }catch(e){toast("移除失败："+(e.message||e),"err");}
+  }catch(e){toast("移除失败："+errMsg(e),"err");}
 }
 
 /* ============ Farm ============ */
@@ -1770,6 +1815,8 @@ function setFarmFilt(v){
   const me=document.querySelector('#farmFilt .t[data-f="mine"] em');
   if(me)me.textContent=mineN;
 }
+let farmSort="def";
+function setFarmSort(v){farmSort=v;renderFarm();}
 async function renderFarm(){
   const el=$("farmList");
   if(!cfg.staking){el.innerHTML=`<div class="empty"><div class="big">◈</div>未配置 Staking 合约<br><div style="display:flex;gap:8px;margin-top:8px;justify-content:center"><button class="btn primary sm" onclick="openCfg()">去配置合约</button><button class="btn gold sm" onclick="location.hash='pool'">去 Pool 一键起盘</button></div></div>`;return;}
@@ -1830,11 +1877,14 @@ async function renderFarm(){
   try{
     if(!data.length){el.innerHTML=`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg></div>暂无质押池 · 由平台 owner 在下方面板一键创建</div>`;return;}
     const liveN=data.filter(p=>p.active).length;
+    const ds=[...data];if(farmSort==="rate")ds.sort((a,b)=>b.rate-a.rate);else ds.sort((a,b)=>a.pid-b.pid);
     el.innerHTML=`<div class="farm-filt" id="farmFilt">
       <span class="t on" data-f="all" onclick="setFarmFilt('all')">全部 <em>${data.length}</em></span>
       <span class="t" data-f="live" onclick="setFarmFilt('live')">挖矿中 <em>${liveN}</em></span>
       <span class="t" data-f="mine" onclick="setFarmFilt('mine')">我的质押</span>
-    </div>`+data.map(p=>`
+      <span class="srt${farmSort==="rate"?" on":""}" data-s="rate" onclick="setFarmSort('rate')">奖励高→低</span>
+      <span class="srt${farmSort!=="rate"?" on":""}" data-s="def" onclick="setFarmSort('def')">默认</span>
+    </div>`+ds.map(p=>`
       <div class="poolcard" data-live="${p.active?"1":"0"}">
         <div class="top">
           <div class="pair">${logoSvg(p.lpLg?p.lpLg.sym:p.sym,"",p.lpLg?p.lpLg.logo:p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?"XLP · ":""}#${p.pid} · <span class="cp" data-copy="${p.tok}" title="点击复制代币地址">${shortAddr(p.tok)}</span></div></div></div>
@@ -1942,9 +1992,9 @@ async function doWithdrawAmt(pid){
     const amt=toWei(n,dec);
     if(amt>u[0]){toast("超过我的质押量","err");return;}
     qstate.steps=[];
-    qAdd("提取 "+fmtPrice(n),async()=>{const tx=await st.withdraw(pid,amt);await tx.wait();return"已提取";});
+    qAdd("提取 "+fmtPrice(n),async()=>{const tx=await st.withdraw(pid,amt);await tx.wait();return tx.hash;});
     qRun();
-  }catch(e){toast("提取失败："+(e.message||e),"err");}
+  }catch(e){toast("提取失败："+errMsg(e),"err");}
 }
 async function maxStake(pid){
   if(!walletAddr){toast("请先连接钱包","err");return;}
@@ -1986,13 +2036,13 @@ async function doStake(pid){
     if(bal<amt){toast(pool.sym+" 余额不足","err");return;}
     qstate.steps=[];
     const allw=await tk.allowance(walletAddr,cfg.staking);
-    if(allw<amt)qAdd("授权 "+pool.sym,async()=>{const r=await tk.approve(cfg.staking,ethers.MaxUint256);await r.wait();return"已授权";});
+    if(allw<amt)qAdd("授权 "+pool.sym,async()=>{const r=await tk.approve(cfg.staking,ethers.MaxUint256);await r.wait();return r.hash;});
     qAdd("质押 "+fmtPrice(n)+" "+pool.sym,async()=>{
       const st=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
-      const tx=await st.stake(pid,amt);await tx.wait();return"质押成功";
+      const tx=await st.stake(pid,amt);await tx.wait();return tx.hash;
     });
     qRun();
-  }catch(e){toast("质押失败："+(e.message||e),"err");}
+  }catch(e){toast("质押失败："+errMsg(e),"err");}
 }
 async function doWithdraw(pid){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
@@ -2003,9 +2053,9 @@ async function doWithdraw(pid){
     const u=await st.userInfo(pid,walletAddr);
     if(u[0]<=0n){toast("无质押","err");return;}
     qstate.steps=[];
-    qAdd("提取质押",async()=>{const tx=await st.withdraw(pid,u[0]);await tx.wait();return"已提取";});
+    qAdd("提取质押",async()=>{const tx=await st.withdraw(pid,u[0]);await tx.wait();return tx.hash;});
     qRun();
-  }catch(e){toast("提取失败："+(e.message||e),"err");}
+  }catch(e){toast("提取失败："+errMsg(e),"err");}
 }
 async function doClaim(pid){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
@@ -2014,9 +2064,9 @@ async function doClaim(pid){
     const signer=await getSigner();
     const st=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
     qstate.steps=[];
-    qAdd("领取奖励",async()=>{const tx=await st.claim(pid);await tx.wait();return"已领取";});
+    qAdd("领取奖励",async()=>{const tx=await st.claim(pid);await tx.wait();return tx.hash;});
     qRun();
-  }catch(e){toast("领取失败："+(e.message||e),"err");}
+  }catch(e){toast("领取失败："+errMsg(e),"err");}
 }
 async function createPool(){
   if(qstate.running){toast("任务进行中，请稍候","err");return;}
@@ -2032,10 +2082,10 @@ async function createPool(){
     qstate.steps=[];
     qAdd("创建质押池",async()=>{
       const st=new ethers.Contract(cfg.staking,STAKING_ABI,signer);
-      const tx=await st.createPool(tok,toWei(rate,18));await tx.wait();return"池已创建";
+      const tx=await st.createPool(tok,toWei(rate,18));await tx.wait();return tx.hash;
     });
     qRun();
-  }catch(e){toast("创建失败："+(e.message||e),"err");}
+  }catch(e){toast("创建失败："+errMsg(e),"err");}
 }
 function configuredAssets(){
   const set=[];
@@ -2062,13 +2112,13 @@ async function fundFarm(){
     if(bal<amtBN){toast("XPR 余额不足（当前 "+fmt(fromWei(bal,18))+")","err");return;}
     qstate.steps=[];
     qAdd("授权 XPR → 矿池",async()=>{
-      const tx=await xpr.approve(cfg.staking,amtBN);await tx.wait();return"已授权";
+      const tx=await xpr.approve(cfg.staking,amtBN);await tx.wait();return tx.hash;
     });
     qAdd("注入 "+amt+" XPR 奖励",async()=>{
-      const tx=await xpr.transfer(cfg.staking,amtBN);await tx.wait();return"奖励已入池";
+      const tx=await xpr.transfer(cfg.staking,amtBN);await tx.wait();return tx.hash;
     });
     qRun();
-  }catch(e){toast("注入失败："+(e.message||e),"err");}
+  }catch(e){toast("注入失败："+errMsg(e),"err");}
 }
 
 async function createRecommendedPools(){
@@ -2297,14 +2347,15 @@ async function qRun(){
     const s=qstate.steps[i];
     if(s.status==="done"){qstate.idx=i;continue;}
     qstate.idx=i;s.status="run";s.extra="";qRender();
-    try{const r=await s.fn();s.status="done";s.extra=r||"";}
-    catch(e){s.status="err";s.extra=e.message||"失败";qRender();toast("第 "+(i+1)+" 步失败："+(e.message||"未知错误"),"err");}
+    try{const r=await s.fn();s.status="done";s.extra=r||"";if(typeof r==="string"&&/^0x[0-9a-fA-F]{64}$/.test(r))s.hash=r;}
+    catch(e){s.status="err";s.extra=errMsg(e);qRender();toast("第 "+(i+1)+" 步失败："+errMsg(e),"err");}
     qRender();
   }
   qstate.running=false;
   const failed=qstate.steps.some(s=>s.status==="err");
   const done=qstate.steps.filter(s=>s.status==="done").length;
-  toast(failed?`队列完成，${done}/${qstate.steps.length} 成功`:`队列完成 ${done}/${qstate.steps.length} 全部成功`,failed?"err":"ok");
+  const lastHash=qstate.steps.filter(s=>s.hash).map(s=>s.hash).pop();
+  toastHtml(failed?`队列完成，${done}/${qstate.steps.length} 成功`:`队列完成 ${done}/${qstate.steps.length} 全部成功`+(lastHash?` · <a href="${EXPLORER}tx/${lastHash}" target="_blank" rel="noopener" style="color:var(--acc);font-weight:800">交易 ${shortTx(lastHash)} ↗</a>`:""),failed?"err":"ok");
   qRender();
 }
 function qStop(){qstate.stopped=true;toast("已终止后续任务");}
@@ -2313,7 +2364,7 @@ function qRender(){
   const b=$("qbody");if(!b)return;
   b.innerHTML=qstate.steps.map((s,i)=>{
     const st=s.status==="done"?"done":s.status==="err"?"err":(qstate.running&&i===qstate.idx)?"run":"";
-    return`<div class="qstep ${st}"><div class="st">${s.status==="done"?"✓":s.status==="err"?"✕":i+1}</div><div class="tl">${esc(s.label)}${s.extra?`<small>${esc(s.extra)}</small>`:""}</div></div>`;
+    return`<div class="qstep ${st}"><div class="st">${s.status==="done"?"✓":s.status==="err"?"✕":i+1}</div><div class="tl">${esc(s.label)}${s.hash?`<small><a href="${EXPLORER}tx/${s.hash}" target="_blank" rel="noopener">${shortTx(s.hash)} ↗</a></small>`:s.extra?`<small>${esc(s.extra)}</small>`:""}</div></div>`;
   }).join("");
 }
 
@@ -2395,7 +2446,7 @@ function renderCfgInfo(){
   const el=$("cfgInfo");if(!el)return;
   el.innerHTML=needCfg()
     ?`<button class="btn ghost sm" onclick="openCfg()">未配置合约 · 点击配置</button>`
-    :`<span class="mono" style="font-size:11px">F <span class="cp" data-copy="${cfg.factory}" title="点击复制">${shortAddr(cfg.factory)}</span> · R <span class="cp" data-copy="${cfg.router}" title="点击复制">${shortAddr(cfg.router)}</span> · S <span class="cp" data-copy="${cfg.staking}" title="点击复制">${shortAddr(cfg.staking)}</span> · X <span class="cp" data-copy="${cfg.xstork}" title="点击复制">${shortAddr(cfg.xstork)}</span> <button class="btn ghost sm" onclick="openCfg()" style="margin-left:6px">改</button></span>`;
+    :`<span class="mono" style="font-size:11px">F <span class="cp" data-copy="${cfg.factory}" title="点击复制">${shortAddr(cfg.factory)}</span> · R <span class="cp" data-copy="${cfg.router}" title="点击复制">${shortAddr(cfg.router)}</span> · S <span class="cp" data-copy="${cfg.staking}" title="点击复制">${shortAddr(cfg.staking)}</span> · X <span class="cp" data-copy="${cfg.xstork}" title="点击复制">${shortAddr(cfg.xstork)}</span>${walletAddr?`<button class="btn ghost sm" onclick="openCfg()" style="margin-left:6px">改</button>`:""}</span>`;
 }
 
 /* 滑点选择 */
