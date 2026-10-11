@@ -548,6 +548,92 @@ html[data-theme="dark"] .pagehead h1 .ico,html[data-theme="dark"] .fa-ico,html[d
   .pricebar{flex-wrap:wrap}
 }
 
+/* ============ v31 瑞士精修 · 动效 · 布局（全部推进） ============ */
+/* ---- 表面灰阶四级（瑞士网格） ---- */
+:root{--s0:#ffffff;--s1:#fafafa;--s2:#f2f2f2;--s3:#e8e8e8}
+html[data-theme="dark"]{--s0:#101010;--s1:#161616;--s2:#1d1d1d;--s3:#262626}
+/* ---- 数字统一等宽数字 ---- */
+body{font-variant-numeric:tabular-nums}
+/* ---- 1. 导航 hover 滑动下划线 ---- */
+.navlinks .n{position:relative;overflow:hidden}
+.navlinks .n::after{content:"";position:absolute;left:10px;right:10px;bottom:3px;height:2px;background:var(--fg);transform:scaleX(0);transform-origin:left;transition:transform .2s cubic-bezier(.2,.7,.2,1)}
+.navlinks .n:hover::after{transform:scaleX(1)}
+.navlinks .n.on::after{display:none}
+/* ---- 2. 按压反馈（≤0.3s 位移/尺度） ---- */
+.btn,.pct-btn,.seg div,.mini-btn,.ico-btn,.op,.farm-filt .t,.farm-filt .srt,.pmode button,.liq-tabs button,.liq-swap svg,.arrow-mid button,.tokbtn,.maxbtn,.tabbar .tb{transition:transform .12s ease,border-color .15s,color .15s,background .15s,box-shadow .15s}
+.btn:active,.pct-btn:active,.seg div:active,.mini-btn:active,.ico-btn:active,.op:active,.farm-filt .t:active,.farm-filt .srt:active,.pmode button:active,.liq-tabs button:active,.liq-swap svg:active,.maxbtn:active,.tabbar .tb:active{transform:scale(.96)}
+.tokbtn:active{transform:scale(.985)}
+.arrow-mid button:active,.liq-swap svg:active{transform:rotate(180deg) scale(.94)}
+/* ---- 3. 数字更新闪动 ---- */
+@keyframes numflash{0%{opacity:.35;transform:translateY(2px)}100%{opacity:1;transform:none}}
+.numflash{animation:numflash .25s cubic-bezier(.2,.7,.2,1)}
+.stat .v,.stat-num,.item .val,.apr .v,.poolmeta .v,.liq-meta .v,.ac-bal .v,.bal-card .amt,.pricebar b,.info-row b{will-change:opacity}
+/* ---- 4. 移除滑杆刻度 ---- */
+.rngwrap{position:relative;padding-top:4px}
+.rngwrap .ticks{display:flex;justify-content:space-between;position:relative;height:14px;margin-top:-2px}
+.rngwrap .ticks i{position:relative;width:1px;height:6px;background:var(--line2)}
+.rngwrap .ticks span{position:absolute;top:8px;font-size:9px;color:var(--faint);font-weight:700;font-family:var(--mono);transform:translateX(-50%)}
+#prPct::-webkit-slider-thumb{transition:transform .15s}
+#prPct:active::-webkit-slider-thumb{transform:scale(1.22)}
+/* ---- 5. 涨跌闪色（Swiss 功能色一次闪现） ---- */
+@keyframes upflash{0%{background:rgba(10,125,51,.14)}100%{background:transparent}}
+@keyframes downflash{0%{background:rgba(208,0,0,.12)}100%{background:transparent}}
+@keyframes upflashD{0%{background:rgba(34,197,94,.22)}100%{background:transparent}}
+@keyframes downflashD{0%{background:rgba(239,68,68,.2)}100%{background:transparent}}
+.ac-cp.upflash{animation:upflash .8s ease}
+.ac-cp.downflash{animation:downflash .8s ease}
+html[data-theme="dark"] .ac-cp.upflash{animation:upflashD .8s ease}
+html[data-theme="dark"] .ac-cp.downflash{animation:downflashD .8s ease}
+/* ---- 6. 圆点呼吸 ---- */
+.wbtn.ok .dot{animation:dotPulse 2.2s ease-in-out infinite}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(10,125,51,.35)}50%{box-shadow:0 0 0 4px rgba(10,125,51,0)}}
+html[data-theme="dark"] .wbtn.ok .dot{animation-name:dotPulseD}
+@keyframes dotPulseD{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
+/* ---- 7. 卡片轻抬补齐 ---- */
+.stat:hover,.bal-card:hover,.pb-card:hover{transform:translateY(-1px)}
+.poolcard,.asset-card,.liq-card,.fa-card,.item{transition:transform .16s cubic-bezier(.2,.7,.2,1),border-color .16s}
+.poolcard:hover,.asset-card:hover,.liq-card:hover,.fa-card:hover{transform:translateY(-1px)}
+/* ---- 10. 弹窗 scale 进入 ---- */
+.mask .box{animation:boxIn .2s cubic-bezier(.2,.7,.2,1)}
+@keyframes boxIn{from{opacity:0;transform:scale(.965) translateY(4px)}to{opacity:1;transform:none}}
+/* ---- 14. 收藏星标弹跳 ---- */
+@keyframes favBounce{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.pb-fav.bounce,.ac-ops .op.bounce{animation:favBounce .3s cubic-bezier(.2,.7,.2,1)}
+/* ============ 布局 13 项 ============ */
+/* 1. 统一 1200px 容器 */
+main{max-width:1240px;margin:0 auto}
+header .nav{max-width:1188px;margin:0 auto;width:100%}
+.view.on{max-width:1240px;margin:0 auto;width:100%}
+#shareCard>div{max-width:1240px}
+@media(max-width:1240px){main{padding-left:16px;padding-right:16px}.nav{padding-left:16px;padding-right:16px}}
+/* 2. 价格行强化 */
+.pricebar{padding:11px 14px;gap:10px}
+.pricebar b{font-size:19px;letter-spacing:-.4px}
+#rateBig{min-width:52px;text-align:center}
+/* 3. 分享卡折叠单行 */
+.shc-head{cursor:pointer;user-select:none}
+.shc-head .chev{transition:transform .2s;font-size:11px;color:var(--dim)}
+.shc.open .chev{transform:rotate(180deg)}
+.shc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .22s cubic-bezier(.2,.7,.2,1)}
+.shc.open .shc-body{grid-template-rows:1fr}
+.shc-body>div{overflow:hidden;min-height:0}
+/* 4. 网格对齐统一 */
+.pb-grid,.asset-grid,.farm-wrap,.skel-farm{gap:12px}
+/* 5. 中间断点 1080 */
+@media(max-width:1080px){
+  .farm-wrap{grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
+}
+/* 8/9. 卡片最小宽 */
+.farm-wrap{grid-template-columns:repeat(auto-fill,minmax(318px,1fr))}
+.asset-grid{grid-template-columns:repeat(auto-fill,minmax(228px,1fr))}
+/* 11. 瑞士页脚 */
+footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px 54px}
+.foot-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.foot-grid .cfgcard{background:var(--card2);border-color:var(--line)}
+.foot-copy{font-size:10px;letter-spacing:.06em;color:var(--faint)}
+/* 13. logo X 几何化 + hover 微动 */
+.logo .mark{transition:transform .2s cubic-bezier(.2,.7,.2,1)}
+.logo:hover .mark{transform:rotate(-6deg) scale(1.05)}
 /* ===== v29 专业改进批次 ===== */
 .pb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;max-height:46vh;overflow:auto;padding-right:4px}
 .pb-card{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;transition:.16s}
@@ -579,7 +665,7 @@ html[data-theme="dark"] .pagehead h1 .ico,html[data-theme="dark"] .fa-ico,html[d
 <header>
   <div class="nav">
     <div class="logo" onclick="location.hash='swap'">
-      <div class="mark"><svg width="18" height="18" viewBox="0 0 64 64" fill="none"><path d="M14 46V26l10 12 8-22 10 24 8-16v22" stroke="#ffffff" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="mark"><svg width="18" height="18" viewBox="0 0 64 64" fill="none"><path d="M15 15l34 34M49 15L15 49" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/></svg></div>
       <div class="nm">XPower<small>Swap · DeFi</small></div>
     </div>
     <div class="navlinks" id="nav"></div>
@@ -691,7 +777,10 @@ html[data-theme="dark"] .pagehead h1 .ico,html[data-theme="dark"] .fa-ico,html[d
       <div id="liqRm" style="display:none">
         <div><label>交易对</label><div class="tokbtn" id="prBtn" onclick="pickToken('pr')"><span class="lg" id="prLg">?</span><span><span class="nm2" id="prNm">选择资产</span></span><span class="caret">▼</span></div></div>
         <div style="margin-top:14px"><label>移除比例</label>
+          <div class="rngwrap">
           <input id="prPct" type="range" min="0" max="100" value="0" oninput="setRmPctActive();removeQuote()">
+          <div class="ticks"><i></i><i></i><i></i><i></i><i></i><span style="left:0">0</span><span style="left:25%">25</span><span style="left:50%">50</span><span style="left:75%">75</span><span style="left:100%">100</span></div>
+          </div>
           <div style="display:flex;gap:6px;margin-top:6px">
             <button type="button" class="pct-btn" onclick="setRmPct(25)">25%</button>
             <button type="button" class="pct-btn" onclick="setRmPct(50)">50%</button>
@@ -870,8 +959,9 @@ html[data-theme="dark"] .pagehead h1 .ico,html[data-theme="dark"] .fa-ico,html[d
 </div>
 
 <footer>
-  <div><b>XPower</b> · 股票资产 Swap & DeFi — xStock 1:1 真实股票背书资产 · 恒定乘积 AMM · 质押挖矿</div>
-  <div class="footlinks"><span id="cfgInfo"></span></div>
+  <div><b>XPower</b> · 股票资产 Swap &amp; DeFi — xStock 1:1 真实股票背书资产 · 恒定乘积 AMM · 质押挖矿</div>
+  <div class="foot-grid" id="cfgInfo"></div>
+  <div class="foot-copy">X LAYER · CHAIN 196 · XPower Swap DApp</div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
@@ -931,23 +1021,28 @@ function renderShareCard(){
     ["XPRS 分红币",cfg.xprs]
   ].filter(r=>isAddr(r[1]));
   el.style.display="block";
-  el.innerHTML=`<div style="max-width:1200px;margin:0 auto;padding:12px 16px">
-    <div style="border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);padding:14px 16px">
-      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px">
-        <b style="font-size:14px;letter-spacing:-.2px"><span data-i18n="sharec">XPower · 项目已发盘</span></b>
-        <span style="font-size:10.5px;color:var(--faint);font-weight:700">通过分享链接进入 · 合约配置已自动载入</span>
+  el.innerHTML=`<div style="max-width:1240px;margin:0 auto;padding:10px 16px">
+    <div class="shc" id="shc" style="border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card)">
+      <div class="shc-head" style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 14px" onclick="toggleShc()">
+        <b style="font-size:13.5px;letter-spacing:-.2px"><span data-i18n="sharec">XPower · 项目已发盘</span></b>
+        <span style="font-size:10.5px;color:var(--faint);font-weight:700;flex:1;min-width:120px">通过分享链接进入 · 合约配置已自动载入</span>
+        <span style="font-size:10px;color:var(--dim);font-weight:800;font-family:var(--mono)">${rows.length} 份合约</span>
+        <span class="chev">▼</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:7px">
-        ${rows.map(r=>`<div style="display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:10.5px;background:var(--card2)">
-          <span style="color:var(--dim);font-weight:700;flex-shrink:0">${esc(r[0])}</span>
-          <span class="mono cp" data-copy="${r[1]}" title="点击复制" style="flex:1;color:var(--acc);font-weight:700">${shortAddr(r[1])}</span>
-          <a href="${EXPLORER}address/${r[1]}" target="_blank" rel="noopener" style="color:var(--dim);flex-shrink:0">↗</a>
-        </div>`).join("")}
-      </div>
-      <div style="margin-top:10px;font-size:10.5px;color:var(--faint);line-height:1.5">⚠ 合约地址来自分享链接 / 项目官方配置 · 请核对后交易。本项目为 DeFi 实验性产品，合约未经第三方审计，请仅投入可承受损失的资金。</div>
+      <div class="shc-body"><div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:7px;padding:0 14px 11px">
+          ${rows.map(r=>`<div style="display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:10.5px;background:var(--card2)">
+            <span style="color:var(--dim);font-weight:700;flex-shrink:0">${esc(r[0])}</span>
+            <span class="mono cp" data-copy="${r[1]}" title="点击复制" style="flex:1;color:var(--acc);font-weight:700">${shortAddr(r[1])}</span>
+            <a href="${EXPLORER}address/${r[1]}" target="_blank" rel="noopener" style="color:var(--dim);flex-shrink:0">↗</a>
+          </div>`).join("")}
+        </div>
+        <div style="padding:0 14px 12px;font-size:10.5px;color:var(--faint);line-height:1.5">⚠ 合约地址来自分享链接 / 项目官方配置 · 请核对后交易。本项目为 DeFi 实验性产品，合约未经第三方审计，请仅投入可承受损失的资金。</div>
+      </div></div>
     </div>
   </div>`;
 }
+function toggleShc(){const s=$("shc");if(s)s.classList.toggle("open");}
 /* 配置迁移 v2：新 XPR（含LOGO登记诉求）替换旧 XPR / 新 Staking（绑定新XPR）替换旧 Staking */
 const CFG_MIG={
   xstork:{
@@ -3161,6 +3256,10 @@ function toggleFav(addr){
   if(i>=0)a.splice(i,1);else a.push(k);
   favSave(a);
   toast(i>=0?"已取消收藏":"已收藏","ok");
+  try{document.querySelectorAll(".pb-fav,.ac-ops .op").forEach(b=>{
+    const o=b.getAttribute("onclick")||"";
+    if(o.includes(addr)){b.classList.remove("bounce");void b.offsetWidth;b.classList.add("bounce");}
+  });}catch(e){}
   if(curView==="pool")loadPairBrowse();
   else if(curView==="assets")renderAssetList();
 }
@@ -3395,6 +3494,32 @@ applyLang();
   if(needCfg())setTimeout(()=>{if(needCfg())toast("当前为未发盘状态 · 官方入口见项目官方链接 / 联系运营获取","warn");},600);
 
 });
+/* v31 动效：数字更新闪动 + 资产涨跌闪色（MutationObserver 低侵入挂接） */
+(function(){
+  const NUM_SEL=".stat .v,.stat-num,.item .val,.apr .v,.poolmeta .v,.liq-meta .v,.ac-bal .v,.bal-card .amt,.pricebar b,#rateBig,#rateTxt,#minTxt,#depthTxt,#prPctTxt,.pb-res b,.hdrBal,.amt-body input";
+  const CP_SEL=".ac-cp";
+  function flash(el){
+    if(!el)return;
+    try{el.classList.remove("numflash");void el.offsetWidth;el.classList.add("numflash");}catch(e){}
+  }
+  function cpFlash(el,dir){
+    if(!el)return;
+    try{el.classList.remove("upflash","downflash");void el.offsetWidth;el.classList.add(dir);}catch(e){}
+  }
+  const mo=new MutationObserver(muts=>{
+    for(const m of muts){
+      if(m.type!=="characterData")continue;
+      const el=m.target.parentElement;if(!el)continue;
+      if(el.matches&&el.matches(NUM_SEL))flash(el);
+      else if(el.matches&&el.matches(CP_SEL)){
+        const t=(m.target.textContent||"").trim();
+        if(/^[+＋]/.test(t))cpFlash(el,"upflash");
+        else if(/^[-－]/.test(t))cpFlash(el,"downflash");
+      }
+    }
+  });
+  mo.observe(document.body,{subtree:true,characterData:true});
+})();
 </script>
 </body>
 </html>
