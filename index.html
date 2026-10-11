@@ -777,6 +777,11 @@ html[data-theme="dark"] .pagehead h1 .ico,html[data-theme="dark"] .fa-ico,html[d
         <div class="empty" style="grid-column:1/-1"><div class="big">◉</div>连接钱包后显示余额<button class="btn primary sm cta" onclick="connectWallet()">连接钱包</button></div>
       </div>
     </div>
+    <div class="panel" id="walletTokPanel" style="margin-top:16px;display:none">
+      <h2><span class="bar"></span>钱包内其他代币 <span id="walletTokCnt" class="mono" style="color:var(--faint);font-weight:600;font-size:11px"></span></h2>
+      <p style="font-size:11px;color:var(--faint);margin-bottom:10px">自动扫描钱包收币记录发现的清单外 ERC20 · 每 5 分钟刷新 · 余额大于 0 才展示</p>
+      <div id="walletTok" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px"></div>
+    </div>
   </section>
 </main>
 
@@ -1076,6 +1081,13 @@ function toast(m,t){const e=document.createElement("div");e.className="toast"+(t
 function toastHtml(m,t){const e=document.createElement("div");e.className="toast"+(t==="err"?" err":t==="ok"?" ok":"");e.innerHTML=m;$("toasts").appendChild(e);setTimeout(()=>e.remove(),t==="err"?8000:6000);}
 function shortTx(h){return (h||"").slice(0,6)+"…"+(h||"").slice(-4);}
 function errMsg(e){
+  /* 常见 AMM 错误码 selector 解析（Revert reason 为空时的专业兜底） */
+  try{
+    const d=e&&(e.data||(e.error&&e.error.data));
+    const sel=typeof d==="string"&&d.startsWith("0x")?d.slice(0,10):(d&&typeof d==="object"&&d.data&&String(d.data).startsWith("0x")?String(d.data).slice(0,10):"");
+    const SEL={0x90b8ec18:"滑点超限：输出不足，请提高滑点或等待价格恢复",0xcf479181:"输入不足：池内储备不够完成兑换",0x791ac947:"路径失效：请刷新页面后重试",0x9cd8c0f2:"授权金额不足：请提高授权额度",0x1ffa7e4f:"交易对不存在：请选择已创建的池子",0x08c379a0:"交易被回滚：请检查参数后重试"};
+    if(SEL[sel])return SEL[sel];
+  }catch(e2){}
   const m=String((e&&(e.reason||e.shortMessage||e.message))||e||"");
   const l=m.toLowerCase();
   if(/user rejected|user denied|action rejected|declined/i.test(m))return"用户取消了交易";
@@ -1419,6 +1431,101 @@ function renderAssetList(){
     </div>`).join("")+(list.length>shown.length?`<div style="text-align:center;padding:10px 0 2px"><button class="btn ghost sm" onclick="astPage++;renderAssetList()">显示更多 ${list.length-shown.length} 项</button></div>`:"")
   :`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg></div>暂无资产</div>`;
   loadAssetBals();
+  if(walletAddr)setTimeout(discoverWalletTokens,900);
+}
+
+/* ===== 钱包代币发现：eth_getLogs 扫描 + MC3 批量读（P0 钱包地址直读） ===== */
+const WTOK_TOPIC="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+const ERC20_META_ABI=["function symbol() view returns (string)","function decimals() view returns (uint8)","function balanceOf(address) view returns (uint256)"];
+/* 多 target 批量读：calls=[[target,args],...] */
+async function mcBatchMulti(p,abi,frag,calls){
+  const mc=new ethers.Contract(MC3,MC3_ABI,p);
+  const iface=new ethers.Interface(abi);
+  const cs=calls.map(c=>({target:c[0],callData:iface.encodeFunctionData(frag,c[1])}));
+  const res=await mc.aggregate3(cs);
+  return res.map((r,i)=>r.success?iface.decodeFunctionResult(frag,r.returnData):null);
+}
+let wtokState={t:0,busy:false};
+async function discoverWalletTokens(){
+  const panel=$("walletTokPanel");if(!panel||!walletAddr)return;
+  if(wtokState.busy)return;
+  if(Date.now()-wtokState.t<300000)return; /* 5 分钟节流 */
+  wtokState.busy=true;wtokState.t=Date.now();
+  panel.style.display="block";
+  const box=$("walletTok"),cnt=$("walletTokCnt");
+  if(box)box.innerHTML=`<div class="empty" style="grid-column:1/-1;padding:16px"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>正在扫描钱包收币记录…</div>`;
+  /* 已知清单：内置 xStock / XPR / XPRS / OKB / 自定义资产 */
+  const known=new Set();
+  XSTOCKS.forEach(x=>{if(x.addr)known.add(x.addr.toLowerCase());});
+  if(cfg.xstork)known.add(cfg.xstork.toLowerCase());
+  if(cfg.xprs)known.add(cfg.xprs.toLowerCase());
+  assets.forEach(a=>{if(a.addr)known.add(a.addr.toLowerCase());});
+  known.add(WOKB_ADDR.toLowerCase());
+  /* 1) 扫描 Transfer → to=钱包 的 ERC20，逐级缩小范围直到有数据 */
+  const addr=walletAddr.toLowerCase();
+  const pad="0x"+addr.slice(2).padStart(64,"0");
+  let toks=new Set(),found=false;
+  for(const range of [5000,2000,800,300]){
+    try{
+      const logs=await withRPC(async p=>{
+        const blk=await p.getBlockNumber();
+        const from=Math.max(0,blk-range);
+        try{return await p.send("eth_getLogs",[{fromBlock:"0x"+from.toString(16),toBlock:"latest",topics:[WTOK_TOPIC,null,pad]}]);}
+        catch(e){return [];}
+      });
+      if(logs&&logs.length){
+        for(const l of logs){
+          const t=l&&l.topics&&l.topics[2];
+          if(t&&t.length===66){const ta="0x"+t.slice(26);if(/^0x[a-fA-F0-9]{40}$/.test(ta))toks.add(ta.toLowerCase());}
+        }
+        found=true;
+      }
+      if(found)break;
+    }catch(e){}
+  }
+  const fresh=[...toks].filter(t=>!known.has(t));
+  if(!fresh.length){
+    panel.style.display="none";
+    wtokState.busy=false;
+    return;
+  }
+  /* 2) MC3 批量读余额，过滤 >0 */
+  try{
+    await withRPC(async p=>{
+      const balRes=await mcBatchMulti(p,ERC20_META_ABI,"balanceOf",fresh.map(a=>[a,[walletAddr]]));
+      const held=[];
+      fresh.forEach((a,i)=>{try{if(balRes[i]&&Number(balRes[i])>0)held.push(a);}catch(e){}});
+      if(!held.length){panel.style.display="none";return;}
+      /* 3) 读 symbol/decimals */
+      const symRes=await mcBatchMulti(p,ERC20_META_ABI,"symbol",held.map(a=>[a,[]]));
+      const decRes=await mcBatchMulti(p,ERC20_META_ABI,"decimals",held.map(a=>[a,[]]));
+      const rows=held.map((a,i)=>{
+        let sym="?",dec=18;
+        try{sym=String(symRes[i]||"?").slice(0,14)||"?";}catch(e){}
+        try{dec=Number(decRes[i]);if(!dec||dec<0||dec>36)dec=18;}catch(e){dec=18;}
+        return {addr:a,sym:sym,dec:dec};
+      });
+      rows.sort((x,y)=>x.sym.localeCompare(y.sym));
+      if(cnt)cnt.textContent=rows.length+" 个";
+      if(box)box.innerHTML=rows.map(r=>`    <div class="asset-card">
+        <div class="ac-hd">${logoSvg(r.sym,"", "")}
+          <div class="ac-id"><b>${esc(r.sym)}</b><span style="font-size:9.5px">钱包发现 · 未收录清单</span></div>
+        </div>
+        <div class="ac-addr"><span class="cp" data-copy="${r.addr}" title="点击复制合约地址">${shortAddr(r.addr)}</span></div>
+        <div class="ac-bal"><span class="k">余额</span><span class="v" id="wbal${r.addr.slice(2,8)}">…</span></div>
+        <div class="ac-ops">
+          <a class="op" href="${EXPLORER}address/${r.addr}" target="_blank" rel="noopener">查看 ↗</a>
+          <button class="op" onclick="copyText('${r.addr}')">复制</button>
+        </div>
+      </div>`).join("");
+      /* 4) 补余额展示 */
+      try{
+        const b2=await mcBatchMulti(p,ERC20_META_ABI,"balanceOf",rows.map(r=>[r.addr,[walletAddr]]));
+        rows.forEach((r,i)=>{const el=$("wbal"+r.addr.slice(2,8));if(el&&b2[i])el.textContent=fmt(Number(b2[i])/10**r.dec);});
+      }catch(e){}
+    });
+  }catch(e){panel.style.display="none";}
+  wtokState.busy=false;
 }
 
 /* 资产页余额（连接后读取平台币+自定义资产） */
