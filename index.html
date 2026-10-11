@@ -912,6 +912,8 @@ function probeRPCs(){
     rpcIdx=0;
   }).catch(()=>{});
 }
+/* 并发读取（限制并发数，避免 RPC 限流） */
+async function mapLimit(arr,n,fn){const out=new Array(arr.length);let i=0;async function w(){while(i<arr.length){const j=i++;out[j]=await fn(arr[j]);}}await Promise.all(Array.from({length:Math.min(n,arr.length)},w));return out;}
 function withRPC(fn){return new Promise((res,rej)=>{
   if(!rpcProbed){rpcProbed=true;probeRPCs();}
   let t=0,round=0;const go=()=>{t++;
@@ -1701,46 +1703,54 @@ async function renderFarm(){
   const el=$("farmList");
   if(!cfg.staking){el.innerHTML=`<div class="empty"><div class="big">◈</div>未配置 Staking 合约<br><div style="display:flex;gap:8px;margin-top:8px;justify-content:center"><button class="btn primary sm" onclick="openCfg()">去配置合约</button><button class="btn gold sm" onclick="location.hash='pool'">去 Pool 一键起盘</button></div></div>`;return;}
   renderXprsDivCard();
-  el.innerHTML=`<div class="empty">读取质押池…</div>`;
-  try{
-    const data=await withRPC(async p=>{
-      const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
-      const len=await st.poolLength();
-      const pools=[];
-      const lpMap={};
-      if(cfg.factory){
-        try{
-          const fc=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
-          const fl=Number(await fc.allPairsLength());
-          for(let j=0;j<fl;j++){
-            try{
-              const pa=await fc.allPairs(j);
-              const pc=new ethers.Contract(pa,PAIR_ABI,p);
-              const t0=await pc.token0(),t1=await pc.token1();
-              lpMap[pa.toLowerCase()]={t0,t1};
-            }catch(e){}
-          }
-        }catch(e){}
-      }
-      for(let i=0;i<Number(len);i++){
-        const info=await st.poolInfo(i);
-        const known=XSTOCKS.find(x=>x.addr&&x.addr.toLowerCase()===info[0].toLowerCase());
-        let meta=known?{sym:known.sym,name:known.name,dec:18,logo:known.logo}:tokenCache[info[0]];
-        if(!meta){
-          const tk=new ethers.Contract(info[0],ERC20_ABI,p);
-          meta={sym:await tk.symbol().catch(()=>"?"),name:await tk.name().catch(()=>"?"),dec:await tk.decimals().catch(()=>18)};
-          if(info[0].toLowerCase()===WOKB_ADDR){meta.sym="OKB";meta.nat=1;}
-          if(cfg.xstork&&info[0].toLowerCase()===cfg.xstork.toLowerCase()){meta.sym="XPR";meta.logo=XPR_LOGO;}
+  const _now=Date.now(),_ck="xps_pools_"+(cfg.staking||"").toLowerCase();
+  let data=null;
+  try{const _j=JSON.parse(sessionStorage.getItem(_ck)||"null");if(_j&&_j.t>_now-30000&&Array.isArray(_j.data))data=_j.data;}catch(e){}
+  if(!data){
+    el.innerHTML=`<div class="empty">读取质押池…</div>`;
+    try{
+      data=await withRPC(async p=>{
+        const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
+        const len=await st.poolLength();
+        const lpMap={};
+        if(cfg.factory){
+          try{
+            const fc=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
+            const fl=Number(await fc.allPairsLength());
+            const pairs=await mapLimit(Array.from({length:fl},(_,j)=>j),4,async j=>{
+              try{
+                const pa=await fc.allPairs(j);
+                const pc=new ethers.Contract(pa,PAIR_ABI,p);
+                const [t0,t1]=await Promise.all([pc.token0(),pc.token1()]);
+                return [pa.toLowerCase(),{t0,t1}];
+              }catch(e){return null;}
+            });
+            pairs.forEach(x=>{if(x)lpMap[x[0]]=x[1];});
+          }catch(e){}
         }
-        tokenCache[info[0]]=meta;
-        const lpk=lpMap[info[0].toLowerCase()];
-        const lpObj=lpk?{t0:tokInfo(lpk.t0),t1:tokInfo(lpk.t1)}:null;
-        const lpLg=lpObj?(lpObj.t0.nat&&!lpObj.t1.nat)?lpObj.t1:(lpObj.t1.nat&&!lpObj.t0.nat)?lpObj.t0:lpObj.t0:null;
-        pools.push({pid:i,tok:info[0],sym:meta.sym,name:meta.name,dec:Number(meta.dec),rate:Number(info[1]),total:Number(info[4]),active:info[5],logo:meta.logo,
-          lp:lpObj,lpLg});
-      }
-      return pools;
-    });
+        const infos=await mapLimit(Array.from({length:Number(len)},(_,i)=>i),4,async i=>{
+          const info=await st.poolInfo(i);
+          const known=XSTOCKS.find(x=>x.addr&&x.addr.toLowerCase()===info[0].toLowerCase());
+          let meta=known?{sym:known.sym,name:known.name,dec:18,logo:known.logo}:tokenCache[info[0]];
+          if(!meta){
+            const tk=new ethers.Contract(info[0],ERC20_ABI,p);
+            const [sym,nm,dc]=await Promise.all([tk.symbol().catch(()=>"?"),tk.name().catch(()=>"?"),tk.decimals().catch(()=>18)]);
+            meta={sym,name:nm,dec:dc};
+            if(info[0].toLowerCase()===WOKB_ADDR){meta.sym="OKB";meta.nat=1;}
+            if(cfg.xstork&&info[0].toLowerCase()===cfg.xstork.toLowerCase()){meta.sym="XPR";meta.logo=XPR_LOGO;}
+          }
+          tokenCache[info[0]]=meta;
+          const lpk=lpMap[info[0].toLowerCase()];
+          const lpObj=lpk?{t0:tokInfo(lpk.t0),t1:tokInfo(lpk.t1)}:null;
+          const lpLg=lpObj?(lpObj.t0.nat&&!lpObj.t1.nat)?lpObj.t1:(lpObj.t1.nat&&!lpObj.t0.nat)?lpObj.t0:lpObj.t0:null;
+          return {pid:i,tok:info[0],sym:meta.sym,name:meta.name,dec:Number(meta.dec),rate:Number(info[1]),total:Number(info[4]),active:info[5],logo:meta.logo,lp:lpObj,lpLg};
+        });
+        return infos;
+      });
+      try{sessionStorage.setItem(_ck,JSON.stringify({t:_now,data}));}catch(e){}
+    }catch(e){el.innerHTML=`<div class="empty">读取失败：${esc(e.message)}<br><br><button class="btn ghost sm" onclick="renderFarm()">重试</button></div>`;return;}
+  }
+  try{
     if(!data.length){el.innerHTML=`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg></div>暂无质押池 · 由平台 owner 在下方面板一键创建</div>`;return;}
     const liveN=data.filter(p=>p.active).length;
     el.innerHTML=`<div class="farm-filt" id="farmFilt">
@@ -1778,7 +1788,7 @@ async function renderFarm(){
     if(walletAddr){
       withRPC(async p=>{
         const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
-        for(const pg of data){
+        await mapLimit(data,4,async pg=>{
           const u=await st.userInfo(pg.pid,walletAddr);
           const pend=await st.pendingReward(pg.pid,walletAddr);
           const e1=$("myStk"+pg.pid),e2=$("pend"+pg.pid),e3=$("wbal"+pg.pid);
@@ -1786,8 +1796,8 @@ async function renderFarm(){
           if(u[0]>0n){const pc=$("myStk"+pg.pid);if(pc)pc.closest(".poolcard").dataset.mine="1";}
           if(e3){try{const wb=await new ethers.Contract(pg.tok,ERC20_ABI,p).balanceOf(walletAddr);e3.textContent=fmt(fromWei(wb,pg.dec))+" "+pg.sym;e3.style.color=wb>0n?"var(--ok)":"var(--faint)";}catch(err){e3.textContent="—";}}
           if(e2)e2.innerHTML=pend>0n?`<span class="badge-gold">${fmt(fromWei(pend,18))} XPR</span>`:fmt(fromWei(pend,18))+" XPR";
-        const cb=$("claimBtn"+pg.pid);if(cb){if(pend>0n)cb.classList.add("claim-avail");else cb.classList.remove("claim-avail");}
-        }
+          const cb=$("claimBtn"+pg.pid);if(cb){if(pend>0n)cb.classList.add("claim-avail");else cb.classList.remove("claim-avail");}
+        });
         if(cfg.xstork){
           const poolXprBal=await new ethers.Contract(cfg.xstork,ERC20_ABI,p).balanceOf(cfg.staking);
           const sumRate=data.reduce((a,b)=>a+b.rate,0);
@@ -2289,7 +2299,7 @@ function refreshView(){
   if(curView==="assets"){renderAssetList();renderAssets();}
   renderCfgInfo();
 }
-function refreshAll(){refreshView();if(curView==="swap")quoteSwap();}
+function refreshAll(){try{if(cfg.staking)sessionStorage.removeItem("xps_pools_"+cfg.staking.toLowerCase());}catch(e){}refreshView();if(curView==="swap")quoteSwap();}
 function renderCfgInfo(){
   const el=$("cfgInfo");if(!el)return;
   el.innerHTML=needCfg()
