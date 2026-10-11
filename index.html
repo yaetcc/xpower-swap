@@ -485,7 +485,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .liq-card .lp-row b{font-size:12.5px}
 .liq-card .badge.live{background:var(--card2);color:var(--ok);border:1px solid var(--line2);font-size:10.5px;padding:2px 8px;border-radius:3px;font-weight:800}
 /* ===== 深色模式 ===== */
-html[data-theme="dark"]{--bg:#0a0a0a;--card:#101010;--card2:#1a1a1a;--line:rgba(255,255,255,.14);--line2:rgba(255,255,255,.3);--fg:#f5f5f5;--dim:#a3a3a3;--faint:#6b6b6b;--gold:#d4a017;--shadow:0 1px 1px rgba(0,0,0,.5);--shadow-lg:0 12px 40px rgba(0,0,0,.6);--acc:#f5f5f5;--acc-ink:#0a0a0a}
+html[data-theme="dark"]{--bg:#0a0a0a;--card:#101010;--card2:#1a1a1a;--line:rgba(255,255,255,.16);--line2:rgba(255,255,255,.32);--fg:#f7f7f7;--dim:#b3b3b3;--faint:#8a8a8a;--gold:#e0b341;--err:#ff6b6b;--ok:#34d399;--shadow:0 1px 1px rgba(0,0,0,.5);--shadow-lg:0 12px 40px rgba(0,0,0,.6);--acc:#f7f7f7;--acc-ink:#0a0a0a}
 html[data-theme="dark"] body{background:#0a0a0a}
 html[data-theme="dark"] header{background:#0a0a0a;border-bottom-color:rgba(255,255,255,.14)}
 html[data-theme="dark"] .panel,html[data-theme="dark"] .poolcard,html[data-theme="dark"] .asset-card,html[data-theme="dark"] .bal-card,html[data-theme="dark"] .liq-panel,html[data-theme="dark"] .swap-card,html[data-theme="dark"] .item,html[data-theme="dark"] .liq-card,html[data-theme="dark"] .fa-card,html[data-theme="dark"] .skel-card,html[data-theme="dark"] .stat{background:#101010;border-color:rgba(255,255,255,.14)}
@@ -529,6 +529,9 @@ html[data-theme="dark"] .stat::before{background:#f5f5f5}
 html[data-theme="dark"] input[type=text],html[data-theme="dark"] input[type=number]{background:#101010;border-color:rgba(255,255,255,.22);color:var(--fg)}
 html[data-theme="dark"] .amt-body input[type=text],html[data-theme="dark"] .amt-body input[type=number]{background:transparent;border:none!important}
 html[data-theme="dark"] .pagehead h1 .ico,html[data-theme="dark"] .fa-ico,html[data-theme="dark"] .empty .big,html[data-theme="dark"] .logo .mark{background:#f5f5f5;color:#0a0a0a}
+html[data-theme="dark"] .lg,html[data-theme="dark"] .pb-lg .lg{box-shadow:0 0 0 1px rgba(255,255,255,.14)}
+html[data-theme="dark"] input::placeholder{color:#9a9a9a}
+html[data-theme="dark"] ::selection{background:#f7f7f7;color:#0a0a0a}
 /* ===== 钱包菜单/确认弹窗 ===== */
 .wmenu{position:fixed;top:64px;right:16px;z-index:60;width:218px;background:#fff;border:1px solid var(--fg);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:6px;animation:wmIn .14s ease}
 @keyframes wmIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
