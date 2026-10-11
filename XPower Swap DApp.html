@@ -985,11 +985,12 @@ function rpcHost(u){try{return new URL(u).host;}catch(e){return u;}}
 function probeRPCs(){
   Promise.all(RPCS.map(u=>new Promise(r=>{
     const p=new ethers.JsonRpcProvider(u,CHAIN_ID,{staticNetwork:true});
+    const t0=Date.now();
     Promise.race([p.getBlockNumber(),new Promise(res=>setTimeout(()=>res(-1),2500))])
-      .then(bn=>r({u,bn}))
-      .catch(()=>r({u,bn:-1}));
+      .then(bn=>r({u,bn,ms:Date.now()-t0}))
+      .catch(()=>r({u,bn:-1,ms:1e9}));
   }))).then(list=>{
-    const ok=list.filter(x=>x.bn>0).sort((a,b)=>b.bn-a.bn);
+    const ok=list.filter(x=>x.bn>0).sort((a,b)=>a.ms-b.ms);
     if(!ok.length)return;
     const order=ok.map(x=>x.u);
     RPCS.forEach(u=>{if(!order.includes(u))order.push(u);});
@@ -1226,7 +1227,25 @@ async function loadAssetBals(){
     if(cfg.xstork)syms.XPR=cfg.xstork;
     if(cfg.xprs)syms.XPRS=cfg.xprs;
     assets.forEach(a=>{if(a.addr)syms[a.sym]=a.addr;});
-    for(const [sym,addr] of Object.entries(syms)){
+    const entries=Object.entries(syms);
+    if(!entries.length)return;
+    try{
+      const iface=new ethers.Interface(ERC20_ABI);
+      const mc=new ethers.Contract(MC3,MC3_ABI,p);
+      const calls=entries.map(([sym,addr])=>({target:addr,callData:iface.encodeFunctionData("balanceOf",[walletAddr])}));
+      const res=await mc.aggregate3(calls);
+      res.forEach((r,i)=>{
+        const sym=entries[i][0];
+        const el=$("bal"+sym.replace(/\W/g,''));
+        if(r.success){
+          const v=iface.decodeFunctionResult("balanceOf",r.returnData)[0];
+          if(el)el.textContent=fmt(fromWei(v,18));
+          balCache[sym]=Number(fromWei(v,18));
+        }
+      });
+      return;
+    }catch(e){}
+    for(const [sym,addr] of entries){
       const el=$("bal"+sym.replace(/\W/g,''));
       if(!el)continue;
       try{const b=await new ethers.Contract(addr,ERC20_ABI,p).balanceOf(walletAddr);el.textContent=fmt(fromWei(b,18));balCache[sym]=Number(fromWei(b,18));}catch(e){}
@@ -1823,7 +1842,7 @@ async function renderFarm(){
   renderXprsDivCard();
   const _now=Date.now(),_ck="xps_pools_"+(cfg.staking||"").toLowerCase();
   let data=null;
-  try{const _j=JSON.parse(sessionStorage.getItem(_ck)||"null");if(_j&&_j.t>_now-30000&&Array.isArray(_j.data))data=_j.data;}catch(e){}
+  try{const _j=JSON.parse(sessionStorage.getItem(_ck)||"null");if(_j&&_j.t>_now-90000&&Array.isArray(_j.data))data=_j.data;}catch(e){}
   if(!data){
     el.innerHTML=`<div class="empty">读取质押池…</div>`;
     try{
