@@ -346,6 +346,26 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .apy-ring{width:48px;height:48px;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--p,0)*1%),rgba(255,154,61,.14) 0);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
 .apy-ring::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--card)}
 .apy-ring span{position:relative;font-size:9px;font-weight:800;color:var(--gold);font-family:var(--mono)}
+/* ===== v24 pool/assets 统一 ===== */
+.liq-panel{border:1px solid var(--line2);background:linear-gradient(180deg,var(--card),rgba(255,255,255,.5))}
+.tokbtn{background:linear-gradient(165deg,var(--card2),rgba(255,255,255,.35))}
+.tokbtn .lg{width:36px;height:36px;border-radius:11px;font-size:12.5px}
+.liq-meta .m{position:relative;overflow:hidden;background:linear-gradient(165deg,var(--card2),rgba(255,255,255,.4))}
+.liq-meta .m::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2.5px;background:var(--acc-grad);opacity:.8}
+.liq-swap svg{background:var(--acc-grad);color:#fff;border:none;box-shadow:0 4px 12px rgba(245,25,123,.28)}
+.liq-swap svg:hover{transform:rotate(180deg) scale(1.06)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:6px;background:linear-gradient(90deg,rgba(245,25,123,.55),rgba(124,58,237,.55));outline:none;cursor:pointer;width:100%}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--acc);box-shadow:0 2px 8px rgba(245,25,123,.35);cursor:pointer}
+.asset-card{background:linear-gradient(180deg,var(--card),rgba(255,255,255,.5))}
+.asset-card:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(245,25,123,.1),var(--shadow)}
+.asset-card .ac-hd .lg{width:40px;height:40px;border-radius:12px;font-size:13px}
+.bal-card{background:linear-gradient(180deg,var(--card),rgba(255,255,255,.5))}
+.bal-card:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(245,25,123,.1)}
+input[type=text],input[type=number],input[type=search]{transition:border-color .16s,box-shadow .16s}
+input[type=text]:focus,input[type=number]:focus,input[type=search]:focus{outline:none;border-color:var(--acc)!important;box-shadow:0 0 0 3px rgba(245,25,123,.12)}
+#assetCnt{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;background:var(--acc-soft);border:1px solid var(--acc-line);color:var(--acc);font-size:11px;font-weight:800;white-space:nowrap}
+.pagehead h1{display:flex;align-items:center;gap:10px}
+.pagehead h1 .ico{width:34px;height:34px;border-radius:11px;background:linear-gradient(150deg,rgba(245,25,123,.12),rgba(124,58,237,.12));border:1px solid var(--acc-line);display:flex;align-items:center;justify-content:center;color:var(--acc)}
 .poolacts{display:flex;flex-direction:column;gap:6px}
 #view-farm .pmode{width:auto;margin-bottom:0}
 .pmode{display:flex;gap:2px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:2px;width:100%}
