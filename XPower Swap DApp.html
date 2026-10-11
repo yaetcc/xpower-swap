@@ -1119,11 +1119,20 @@ const DIV_ABI=["function userPending(address) view returns (uint256)","function 
 /* Multicall3 聚合读取：一批 RPC 请求并行读取多条链上数据 */
 const MC3="0xcA11bde05977b3631167028862bE2a173976CA11";
 const MC3_ABI=["function aggregate3(tuple(address target,bytes callData)[] calls) payable returns (tuple(bool success,bytes returnData)[])"];
+/* 批量调用：优先 MC3 aggregate3；X Layer 上 MC3 兼容性差（连单调用都 revert）时自动降级为 16 路并发单查 */
 async function mcBatch(p,ct,frag,argsList){
   const mc=new ethers.Contract(MC3,MC3_ABI,p);
   const calls=argsList.map(a=>({target:ct.target,callData:ct.interface.encodeFunctionData(frag,a)}));
-  const res=await mc.aggregate3(calls);
-  return res.map((r,i)=>r.success?ct.interface.decodeFunctionResult(frag,r.returnData):null);
+  try{
+    const res=await mc.aggregate3(calls);
+    return res.map((r,i)=>r.success?ct.interface.decodeFunctionResult(frag,r.returnData):null);
+  }catch(e){
+    const out=new Array(argsList.length).fill(null);
+    let i=0;
+    const worker=async()=>{while(i<argsList.length){const j=i++;try{out[j]=await ct[frag.name](...argsList[j]);}catch(e){out[j]=null;}}};
+    await Promise.all(Array.from({length:16},worker));
+    return out;
+  }
 }
 function setCfgF(k,v){
   v=(v||"").trim();
@@ -1676,6 +1685,23 @@ function setAssetSync(st,msg){
   t.className="synctag "+st;
   t.innerHTML=`<i></i>${esc(msg||(st==="ok"?"刚刚更新 "+new Date().toLocaleTimeString([],{hour12:false}):st==="lag"?"数据可能滞后":"同步中…"))}`;
 }
+/* 并行分批余额查询：拆 ≤3 批并行发 MC3，每批完成即回调进度 —— 总耗时≈单批耗时，告别 0/N 卡死 */
+async function fetchBalsChunked(p,erc,addrs,onProg,owner){
+  const out={};
+  if(!addrs.length)return out;
+  const who=owner||walletAddr;
+  const B=Math.ceil(addrs.length/3)||1;
+  const chunks=[];
+  for(let i=0;i<addrs.length;i+=B)chunks.push(addrs.slice(i,i+B));
+  let done=0;
+  await Promise.all(chunks.map(async c=>{
+    const r=await mcBatch(p,erc,"balanceOf",c.map(a=>[who]));
+    c.forEach((a,idx)=>{if(r[idx]!==null)out[a.toLowerCase()]=r[idx].toString();});
+    done+=c.length;
+    try{if(onProg)onProg(done);}catch(e){}
+  }));
+  return out;
+}
 async function loadAssetBals(){
   const t=$("syncTagAsset");
   if(!walletAddr){if(t){t.style.display="none";}return;}
@@ -1689,18 +1715,27 @@ async function loadAssetBals(){
     assets.forEach(a=>{if(a.addr)syms[a.sym]=a.addr;});
     const entries=Object.entries(syms);
     if(!entries.length){setAssetSync("ok");return;}
+    /* 45s 内存缓存：20s 自动刷新跳过一次全量重查 */
+    if(balCache._t&&Date.now()-balCache._t<45e3){
+      entries.forEach(([sym,addr])=>{
+        const el=$("bal"+sym.replace(/\W/g,''));
+        if(el&&balCache[sym]!==undefined)el.textContent=fmt(balCache[sym]);
+      });
+      setAssetSync("ok");
+      return;
+    }
+    balCache._t=Date.now();
     try{
       const iface=new ethers.Interface(ERC20_ABI);
-      const mc=new ethers.Contract(MC3,MC3_ABI,p);
-      const calls=entries.map(([sym,addr])=>({target:addr,callData:iface.encodeFunctionData("balanceOf",[walletAddr])}));
-      const res=await mc.aggregate3(calls);
-      res.forEach((r,i)=>{
-        const sym=entries[i][0];
+      const erc=new ethers.Contract(entries[0][1],ERC20_ABI);
+      const res=await fetchBalsChunked(p,erc,entries.map(e=>e[1]),(d)=>{});
+      entries.forEach(([sym,addr])=>{
         const el=$("bal"+sym.replace(/\W/g,''));
-        if(r.success){
-          const v=iface.decodeFunctionResult("balanceOf",r.returnData)[0];
-          if(el)el.textContent=fmt(fromWei(v,18));
-          balCache[sym]=Number(fromWei(v,18));
+        const v=res[addr.toLowerCase()];
+        if(v!==undefined){
+          const n=Number(fromWei(BigInt(v),18));
+          if(el)el.textContent=fmt(n);
+          balCache[sym]=n;
         }
       });
       setAssetSync("ok");
@@ -2726,14 +2761,12 @@ async function renderAssets(){
       const pr=$("balProg");if(pr)pr.textContent=`0/${todo.length}`;
       const erc=new ethers.Contract(todo[0],ERC20_ABI);
       try{
-        /* 主路径：Multicall3 单次批量 —— 1 次 eth_call 拿全量余额（≤100/批防 payload 超限） */
+        /* 主路径：并行分批 MC3 —— ≤3 批同时发，每批完成即时推进进度（告别 0/N 卡死） */
         await withRPC(async p=>{
-          for(let i=0;i<todo.length;i+=100){
-            const chunk=todo.slice(i,i+100);
-            const res=await mcBatch(p,erc,"balanceOf",chunk.map(a=>[walletAddr]));
-            chunk.forEach((a,idx)=>{const r=res[idx];if(r!==null)found[a]=r.toString();});
-            const e=$("balProg");if(e)e.textContent=`${Math.min(i+100,todo.length)}/${todo.length}`;
-          }
+          const found2=await fetchBalsChunked(p,erc,todo,(d)=>{
+            const e=$("balProg");if(e)e.textContent=`${d}/${todo.length}`;
+          });
+          Object.assign(found,found2);
         });
       }catch(e){
         /* 回退：逐地址并发读取（MC3 异常时兜底） */
