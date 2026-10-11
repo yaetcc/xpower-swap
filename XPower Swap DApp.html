@@ -2796,14 +2796,21 @@ function initSlip(){
 
 /* ============ 初始化 ============ */
 window.addEventListener("load",()=>{
-  /* 静默恢复已授权连接（eth_accounts 不弹窗）：OKX 内嵌浏览器/已授权钱包刷新后自动恢复，
-     未授权则保持「连接钱包」按钮，避免 eth_requestAccounts 在加载时打扰 */
-  if(window.ethereum){
+  /* 静默恢复已授权连接：等待钱包注入(部分环境 ethereum 晚于 load 注入) →
+     eth_accounts 取已授权地址 → 空则补一次 requestAccounts(已授权时静默返回，不打扰) */
+  function tryRestoreWallet(n){
+    if(!window.ethereum){if(n<6)setTimeout(()=>tryRestoreWallet(n+1),800);return;}
     window.ethereum.request({method:"eth_accounts"}).then(a=>{
-      if(a&&a[0])walletAddr=a[0].toLowerCase();
-      return window.ethereum.request({method:"eth_chainId"}).then(ch=>{chainOk=parseInt(ch,16)===CHAIN_ID;});
-    }).then(()=>{applyWalletUI();refreshAll();loadHdrBal();startAutoRefresh();}).catch(()=>{applyWalletUI();});
+      if(a&&a[0]){walletAddr=a[0].toLowerCase();return Promise.resolve();}
+      return window.ethereum.request({method:"eth_requestAccounts"}).then(a2=>{
+        if(a2&&a2[0])walletAddr=a2[0].toLowerCase();
+      });
+    }).then(()=>window.ethereum.request({method:"eth_chainId"})
+      .then(ch=>{chainOk=parseInt(ch,16)===CHAIN_ID;}))
+      .then(()=>{applyWalletUI();refreshAll();loadHdrBal();startAutoRefresh();})
+      .catch(()=>applyWalletUI());
   }
+  tryRestoreWallet(0);
   renderAssetList();
   initSlip();
   const okbDef=XSTOCKS.find(x=>x.nat);if(okbDef&&!pA)pA=okbDef;
