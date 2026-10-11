@@ -267,19 +267,28 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .liq-card{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;background:#fff;transition:border-color .18s}
 .liq-card:hover{border-color:var(--fg)}
 .liq-panel{border:1px solid var(--fg)}
-.liq-tabs{display:flex;gap:0;background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:3px;margin-bottom:14px}
-.liq-tabs button{flex:1;padding:8px 0;border:none;background:transparent;border-radius:4px;font-size:12.5px;font-weight:800;color:var(--dim);cursor:pointer;transition:.15s}
-.liq-tabs button.on{background:var(--fg);color:#fff}
+.liq-tabs{display:flex;gap:0;background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:3px;margin-bottom:14px;position:relative;overflow:hidden}
+.liq-tabs button{flex:1;padding:8px 0;border:none;background:transparent;border-radius:4px;font-size:12.5px;font-weight:800;color:var(--dim);cursor:pointer;transition:.15s;position:relative;z-index:1}
+.liq-tabs button.on{color:#fff}
+.liq-tabs::before{content:"";position:absolute;top:3px;left:3px;bottom:3px;width:calc(50% - 3px);background:var(--fg);border-radius:4px;transition:transform .22s cubic-bezier(.2,.7,.2,1)}
+.liq-tabs[data-m="rm"]::before{transform:translateX(100%)}
 .liq-swap{display:flex;align-items:center;justify-content:center;margin:-6px 0;position:relative;z-index:1}
 .liq-swap svg{background:var(--fg);color:#fff;border:none;border-radius:50%;padding:6px;width:30px;height:30px;cursor:pointer;transition:.2s}
 .liq-swap svg:hover{transform:rotate(180deg) scale(1.06)}
-.liq-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.liq-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;transition:.2s}
 .liq-meta .m{position:relative;overflow:hidden;background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:9px 11px}
 .liq-meta .m::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2.5px;background:var(--fg);opacity:.7}
 .liq-meta .m .k{font-size:10px;color:var(--faint);font-weight:700}
 .liq-meta .m .v{font-size:12.5px;font-weight:700;font-family:var(--mono);font-variant-numeric:tabular-nums;margin-top:1px;line-height:1.45;word-break:break-word}
 .liq-meta .m .v.ellip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .liq-meta .m .v .unit{color:var(--fg);font-size:10px;font-weight:800}
+.liq-meta.off{grid-template-columns:1fr}
+.liq-meta .m.guide{display:none}
+.liq-meta.off .m.guide{display:block}
+.liq-meta.off .m:not(.guide){display:none}
+.liq-ratio{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 -4px;padding:7px 10px;border:1px dashed var(--line2);border-radius:6px;font-size:11.5px;color:var(--dim);font-family:var(--mono);font-variant-numeric:tabular-nums}
+.liq-ratio .mini-btn{background:var(--card2);border:1px solid var(--line2);border-radius:5px;padding:4px 9px;font-size:11px;font-weight:800;color:var(--fg);cursor:pointer;transition:.15s}
+.liq-ratio .mini-btn:active{transform:scale(.96)}
 /* ===== 矿池管理 owner ===== */
 .farm-admin{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
 .fa-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:14px;display:grid;gap:10px;align-content:start;transition:border-color .18s}
@@ -313,6 +322,9 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 #view-farm .apr .v{font-size:16px}
 #view-farm .poolmeta{margin-bottom:8px;gap:6px}
 #view-farm .poolmeta .m{padding:6px 8px;border-radius:4px;background:var(--card2)}
+/* v32-待领取强化: 金色加粗 mono, 其余格弱化 */
+#view-farm .poolcard:not(.collapsed) .poolmeta .m:nth-child(3) .v{color:var(--gold);font-weight:800;font-size:13.5px}
+#view-farm .poolcard:not(.collapsed) .poolmeta .m:nth-child(1) .v{color:var(--fg);font-weight:700}
 #view-farm .poolmeta .m .k{font-size:9.5px}
 #view-farm .poolmeta .m .v{font-size:12.5px}
 #view-farm .poolmeta .m[style*="grid-column:1/4"],#view-farm .poolmeta .m.full{grid-column:1/4;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card2);border-color:var(--fg)}
@@ -330,9 +342,10 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .badge-gold.claim-glow{animation:glowg 2s infinite}
 @keyframes glowg{0%,100%{box-shadow:0 0 0 0 rgba(161,98,7,.35)}50%{box-shadow:0 0 8px 1px rgba(161,98,7,.4)}}
 @keyframes pulse2{0%{box-shadow:0 0 0 0 rgba(10,125,51,.5)}70%{box-shadow:0 0 0 6px rgba(10,125,51,0)}100%{box-shadow:0 0 0 0 rgba(10,125,51,0)}}
-.apy-ring{width:48px;height:48px;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--p,0)*1%),rgba(161,98,7,.12) 0);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+.apy-ring{width:48px;height:48px;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--p,0)*1%),rgba(161,98,7,.12) 0);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;transition:transform .2s}
+.apy-ring:hover{transform:scale(1.08)}
 .apy-ring::before{content:"";position:absolute;inset:4px;border-radius:50%;background:#fff}
-.apy-ring span{position:relative;font-size:9px;font-weight:800;color:var(--gold);font-family:var(--mono)}
+.apy-ring span{position:relative;font-size:9px;font-weight:800;color:var(--gold);font-family:var(--mono);font-variant-numeric:tabular-nums}
 /* 骨架 */
 .skel-farm{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .skel-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:15px}
@@ -382,28 +395,52 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .farm-filt .t.on em{color:rgba(255,255,255,.8)}
 .farm-filt .srt{margin-left:auto;padding:7px 13px;border-radius:4px;border:1px solid var(--line);background:#fff;color:var(--dim);font-size:12px;font-weight:800;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
 .farm-filt .srt.on{background:var(--fg);color:#fff;border-color:var(--fg)}
-.ast-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center}
-.ast-row .bal{min-width:96px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--dim)}
-.ast-row .bal .s{display:block;font-size:9.5px;color:var(--faint);font-weight:600;font-family:var(--sans)}
-.ast-row:hover .bal{color:var(--fg)}
 .asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;max-height:56vh;overflow:auto;padding-right:4px}
-.asset-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;transition:.16s}
+.asset-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 11px;display:flex;flex-direction:column;gap:6px;transition:.16s}
 .asset-card:hover{border-color:var(--fg)}
+.asset-card.held{border-left:3px solid var(--gold);background:#fffdf7}
 .asset-card .ac-hd{display:flex;align-items:center;gap:9px}
-.asset-card .ac-hd .lg{width:40px;height:40px;border-radius:8px;font-size:13px}
-.asset-card .ac-id b{font-size:13.5px}
-.asset-card .ac-id span{display:block;font-size:10px;color:var(--faint);margin-top:1px;line-height:1.3}
-.asset-card .ac-addr{font-size:10px;font-family:var(--mono);color:var(--faint)}
-.asset-card .ac-bal{display:flex;justify-content:space-between;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+.asset-card .ac-hd .lg{width:34px;height:34px;border-radius:8px;font-size:12px}
+.asset-card .ac-id{flex:1;min-width:0}
+.asset-card .ac-id b{font-size:13px}
+.asset-card .ac-id span{display:block;font-size:10px;color:var(--faint);margin-top:1px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asset-card .ac-star{border:none;background:transparent;font-size:14px;padding:2px 4px;cursor:pointer;color:var(--faint);transition:.2s}
+.asset-card .ac-star.fav-on{color:var(--gold)}
+.asset-card .ac-mid{display:flex;align-items:center;gap:8px}
+.asset-card .ac-bal{display:flex;justify-content:space-between;align-items:center;gap:6px;flex:1;min-width:0;background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
 .asset-card .ac-bal .k{font-size:10px;color:var(--faint);font-weight:700}
-.asset-card .ac-bal .v{font-size:12.5px;font-weight:700;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--dim)}
-.asset-card .ac-cp{font-size:10px;color:var(--faint);margin-top:6px;min-height:13px;line-height:1.45;font-variant-numeric:tabular-nums}
-.asset-card .ac-ops{display:flex;gap:6px}
-.asset-card .ac-ops .op{flex:1;text-align:center;font-size:11px;font-weight:800;padding:6px 0;border-radius:4px;border:1px solid var(--line);color:var(--dim);background:#fff;cursor:pointer;text-decoration:none;transition:.15s}
+.asset-card .ac-bal .v{font-size:14px;font-weight:800;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asset-card.held .ac-bal .v{color:var(--gold)}
+.asset-card .ac-cp{font-size:9.5px;color:var(--faint);min-height:12px;line-height:1.4;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.asset-card .ac-addr{font-size:9.5px;font-family:var(--mono);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asset-card .ac-ops{display:flex;gap:5px;border-top:1px dashed var(--line2);padding-top:5px}
+.asset-card .ac-ops .op{flex:1;text-align:center;font-size:10.5px;font-weight:800;padding:4px 0;border-radius:4px;border:1px solid var(--line);color:var(--dim);background:#fff;cursor:pointer;text-decoration:none;transition:.15s}
 .asset-card .ac-ops .op:hover{color:var(--fg);border-color:var(--fg)}
 .asset-card .ac-ops .op.danger{color:var(--err);border-color:var(--err)}
 #view-assets .th-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;padding:0 14px 8px;font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
 #view-assets .th-row span:nth-child(3){min-width:96px;text-align:right}
+/* v32-资产工具条: 筛选 chips + 视图切换 */
+.ast-tools{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.ast-chips{display:flex;gap:6px}
+.ast-chips .t{padding:6px 12px;border-radius:4px;border:1px solid var(--line);background:#fff;color:var(--dim);font-size:12px;font-weight:800;cursor:pointer;transition:.15s}
+.ast-chips .t.on{background:var(--fg);color:#fff;border-color:var(--fg)}
+/* v32-列表视图 */
+.asset-grid.ast-list{display:flex;flex-direction:column;gap:6px}
+.ast-row{display:grid;grid-template-columns:30px 72px minmax(110px,1.2fr) minmax(90px,1fr) minmax(110px,1fr) auto;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:7px;background:#fff;transition:.16s}
+.ast-row:hover{border-color:var(--fg)}
+.ast-row.held{border-left:3px solid var(--gold);background:#fffdf7}
+.ast-row .ar-lg .lg,.ast-row .ar-lg img{width:28px;height:28px;border-radius:6px;font-size:11px}
+.ast-row .ar-sym{font-size:12.5px}
+.ast-row .ar-name{font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ast-row .ar-addr{font-size:10px;font-family:var(--mono);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ast-row .ar-bal{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;font-weight:800;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.ast-row.held .ar-bal{color:var(--gold)}
+.ast-row .ac-cp{font-size:9.5px;color:var(--faint)}
+.ast-row .ac-ops{display:flex;gap:4px}
+.ast-row .ac-ops .op{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:4px;border:1px solid var(--line);color:var(--dim);background:#fff;cursor:pointer;text-decoration:none;transition:.15s}
+.ast-row .ac-ops .op:hover{color:var(--fg);border-color:var(--fg)}
+.ast-row .ac-ops .op.danger{color:var(--err);border-color:var(--err)}
+.ast-row .ac-ops .op.fav-on{color:var(--gold)}
 .bal-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:6px;transition:border-color .18s;align-content:start}
 .bal-card:hover{border-color:var(--fg)}
 .bal-card .symrow{display:flex;align-items:center;gap:8px}
@@ -441,6 +478,9 @@ html[data-theme="dark"]{--bg:#0a0a0a;--card:#101010;--card2:#1a1a1a;--line:rgba(
 html[data-theme="dark"] body{background:#0a0a0a}
 html[data-theme="dark"] header{background:#0a0a0a;border-bottom-color:rgba(255,255,255,.14)}
 html[data-theme="dark"] .panel,html[data-theme="dark"] .poolcard,html[data-theme="dark"] .asset-card,html[data-theme="dark"] .bal-card,html[data-theme="dark"] .liq-panel,html[data-theme="dark"] .swap-card,html[data-theme="dark"] .item,html[data-theme="dark"] .liq-card,html[data-theme="dark"] .fa-card,html[data-theme="dark"] .skel-card,html[data-theme="dark"] .stat{background:#101010;border-color:rgba(255,255,255,.14)}
+html[data-theme="dark"] .asset-card.held,html[data-theme="dark"] .ast-row.held{background:#1b1505;border-left-color:var(--gold)}
+html[data-theme="dark"] .ast-row,html[data-theme="dark"] .ast-chips .t{background:#101010;border-color:rgba(255,255,255,.14)}
+html[data-theme="dark"] .ast-chips .t.on,html[data-theme="dark"] .ast-chips .t.on em{background:#f5f5f0;color:#111;border-color:#f5f5f0}
 html[data-theme="dark"] .chainpill,html[data-theme="dark"] .wbtn,html[data-theme="dark"] .navlinks,html[data-theme="dark"] input,html[data-theme="dark"] select{background:#101010;border-color:rgba(255,255,255,.22);color:var(--fg)}
 html[data-theme="dark"] .wbtn:hover{border-color:#f5f5f5}
 html[data-theme="dark"] .navlinks .n:hover{background:#1a1a1a}
@@ -513,8 +553,8 @@ html[data-theme="dark"] .pagehead h1 .ico,html[data-theme="dark"] .fa-ico,html[d
 /* 池卡折叠 */
 .poolcard .pf-old,.poolcard .pf-new{display:none;font-size:10.5px;font-weight:800;color:var(--fg);margin-left:10px;white-space:nowrap}
 .poolcard.collapsed .pf-new{display:inline-flex;align-items:center;gap:2px}
-.poolcard.collapsed .poolacts{display:none}
-.poolcard.collapsed .poolmeta .m:nth-child(n+3){opacity:.45}
+#view-farm .poolcard.collapsed .poolacts{display:none}
+#view-farm .poolcard.collapsed .poolmeta .m:nth-child(n+3){opacity:.45}
 /* ===== v29 网络体验 ===== */
 .chainpill i{transition:.25s}
 .chainpill:not(.conn) i{background:#999;box-shadow:none;animation:pillPulse 1.2s ease-in-out infinite}
@@ -637,6 +677,9 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
 /* ===== v29 专业改进批次 ===== */
 .pb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;max-height:46vh;overflow:auto;padding-right:4px}
 .pb-card{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;transition:.16s}
+.pb-liq{margin-left:auto;flex-shrink:0;padding:5px 10px;border:1px solid var(--line2);border-radius:5px;background:var(--card2);color:var(--fg);font-size:11px;font-weight:800;cursor:pointer;transition:.15s;white-space:nowrap}
+.pb-liq:hover{border-color:var(--fg);background:var(--fg);color:#fff}
+.pb-liq:active{transform:scale(.96)}
 .pb-card:hover{border-color:var(--fg)}
 .pb-lg{display:flex;flex-shrink:0}
 .pb-lg .lg:first-child{margin-right:-9px;z-index:1;outline:2px solid #fff;outline-offset:-1px}
@@ -746,13 +789,9 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
       <div class="headside"><span class="synctag" id="syncTagPool"><i></i>同步中…</span><button class="btn ghost sm" onclick="refreshAll()">刷新</button><button class="btn ghost sm" onclick="openCfg()">配置</button></div>
     </div>
     <div class="stats" id="poolStats"></div>
-    <div class="panel" id="poolBrowse" style="margin-bottom:16px">
-      <h2><span class="bar"></span><span data-i18n="allpairs">全部交易对</span> <span id="pbCount" class="mono" style="color:var(--faint);font-weight:600;font-size:11px"></span></h2>
-      <div id="pbList" class="pb-grid"><div class="empty"><div class="big">◉</div><span data-i18n="lbload">连接钱包后加载全部交易对…</span></div></div>
-    </div>
     <div class="pool-duo">
     <div class="panel liq-panel">
-      <div class="liq-tabs">
+      <div class="liq-tabs" id="liqTabs" data-m="add">
         <button type="button" class="on" data-m="add" onclick="switchLiqMode('add')">添加流动性</button>
         <button type="button" data-m="rm" onclick="switchLiqMode('rm')">移除流动性</button>
       </div>
@@ -762,14 +801,16 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
           <div class="tokbtn" id="paBtn" onclick="pickToken('pa')"><span class="lg" id="paLg">?</span><span><span class="nm2" id="paNm">选择</span></span><span class="caret">▼</span></div>
         </div>
         <div class="liq-swap" onclick="swapPaPb()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L13 16M17 20L21 16"/></svg></div>
+        <div class="liq-ratio" id="liqRatio" style="display:none"><span id="liqRateTxt">—</span><button type="button" class="mini-btn" onclick="fillPairByPrice()" title="按当前池价格一键填满均衡配比">按当前价格填充</button></div>
         <div class="liq-row">
           <div class="amount-wrap"><label id="pbLbl" style="display:flex;justify-content:space-between;align-items:center;width:100%">代币 B <button type="button" class="mini-btn" onclick="maxPb()">MAX</button></label><input id="pbAmt" type="number" min="0" placeholder="0.0" oninput="pbTouched=true;dqPool()" onkeydown="if(event.key==='Enter')addLiqCta()"></div>
           <div class="tokbtn" id="pbBtn" onclick="pickToken('pb')"><span class="lg" id="pbLg">?</span><span><span class="nm2" id="pbNm">选择</span></span><span class="caret">▼</span></div>
         </div>
-        <div class="liq-meta">
+        <div class="liq-meta" id="liqMeta">
           <div class="m"><div class="k">池状态</div><div class="v" id="poolStatus">—</div></div>
           <div class="m"><div class="k">你的份额</div><div class="v" id="poolShare">—</div></div>
           <div class="m"><div class="k">我的 LP</div><div class="v" id="poolLp">—</div></div>
+          <div class="m guide"><div class="k">份额与 LP</div><div class="v">连接钱包查看</div></div>
         </div>
         <div id="poolErr" class="errbox"></div>
         <button class="btn gold wide" id="btnAddLiq" style="margin-top:14px" onclick="addLiqCta()">添加流动性</button>
@@ -798,6 +839,10 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
       <h2><span class="bar"></span>我的持仓</h2>
       <div id="myLiq" class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg></div>连接钱包并添加流动性后显示持仓</div>
     </div>
+    </div>
+    <div class="panel" id="poolBrowse" style="margin-top:16px">
+      <h2><span class="bar"></span><span data-i18n="allpairs">全部交易对</span> <span id="pbCount" class="mono" style="color:var(--faint);font-weight:600;font-size:11px"></span></h2>
+      <div id="pbList" class="pb-grid"><div class="empty"><div class="big">◉</div><span data-i18n="lbload">连接钱包后加载全部交易对…</span></div></div>
     </div>
   </section>
 
@@ -857,6 +902,10 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
       <div class="headside"><span class="synctag" id="syncTagAsset"><i></i>同步中…</span><button class="btn ghost sm" onclick="refreshAll()">刷新</button></div>
     </div>
     <div class="stats" id="assetStats"></div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2><span class="bar"></span>我的余额</h2>
+      <div id="balList" class="asset-grid"><div class="empty" style="grid-column:1/-1"><div class="big">◉</div>连接钱包后显示余额<button class="btn primary sm cta" onclick="connectWallet()">连接钱包</button></div></div>
+    </div>
     <div class="panel">
       <h2><span class="bar"></span>xStock 资产名录 · 已内置 <span id="assetCntTitle">63</span> 个可交易（区块浏览器 xLayer 收录）</h2>
       <div style="display:flex;gap:9px;align-items:center;margin-bottom:10px">
@@ -864,18 +913,23 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
         <button class="ico-btn" onclick="showAddAsset()" style="white-space:nowrap">+ <span data-i18n="addast">添加资产</span></button>
         <span id="assetCnt" style="font-size:12px;color:var(--dim);white-space:nowrap"></span>
       </div>
-      <div id="assetList" class="asset-grid"></div>
-    </div>
-    <div class="panel" style="margin-top:16px">
-      <h2><span class="bar"></span>我的余额</h2>
-      <div id="balList" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));display:grid;gap:10px">
-        <div class="empty" style="grid-column:1/-1"><div class="big">◉</div>连接钱包后显示余额<button class="btn primary sm cta" onclick="connectWallet()">连接钱包</button></div>
+      <div class="ast-tools">
+        <div class="ast-chips" id="astChips">
+          <span class="t on" data-f="all" onclick="setAstFilt('all')">全部</span>
+          <span class="t" data-f="held" onclick="setAstFilt('held')">持有</span>
+          <span class="t" data-f="fav" onclick="setAstFilt('fav')">收藏</span>
+          <span class="t" data-f="div" onclick="setAstFilt('div')">分红币</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-left:auto;align-items:center">
+          <span class="seg" id="astView"><div class="on" data-v="grid" onclick="setAstView('grid')">▦ 网格</div><div data-v="list" onclick="setAstView('list')">≡ 列表</div></span>
+        </div>
       </div>
+      <div id="assetList" class="asset-grid"></div>
     </div>
     <div class="panel" id="walletTokPanel" style="margin-top:16px;display:none">
       <h2><span class="bar"></span>钱包内其他代币 <span id="walletTokCnt" class="mono" style="color:var(--faint);font-weight:600;font-size:11px"></span></h2>
       <p style="font-size:11px;color:var(--faint);margin-bottom:10px">自动扫描钱包收币记录发现的清单外 ERC20 · 每 5 分钟刷新 · 余额大于 0 才展示</p>
-      <div id="walletTok" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px"></div>
+      <div id="walletTok" class="asset-grid"></div>
     </div>
   </section>
 </main>
@@ -1587,6 +1641,18 @@ async function launchAll(){
 /* ============ 资产名录 ============ */
 function saveAssets(){localStorage.setItem(STORAGE+"assets",JSON.stringify(assets));}
 function removeAsset(a){assets=assets.filter(x=>x.addr.toLowerCase()!==a.toLowerCase());saveAssets();renderAssetList();renderStats();}
+let astFilt="all",astView="grid";
+function setAstFilt(v){
+  astFilt=v;
+  document.querySelectorAll("#astChips .t").forEach(b=>b.classList.toggle("on",b.dataset.f===v));
+  renderAssetList();
+}
+function setAstView(v){
+  astView=v;
+  document.querySelectorAll("#astView div").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  const g=$("assetList");if(g)g.classList.toggle("ast-list",v==="list");
+  renderAssetList();
+}
 function renderAssetList(){
   const el=$("assetList");if(!el)return;
   const tit=$("assetCntTitle");if(tit)tit.textContent=XSTOCKS.length;
@@ -1598,39 +1664,56 @@ function renderAssetList(){
   assets.forEach(a=>{if(a.addr)u[a.addr.toLowerCase()]=a;});
   XSTOCKS.forEach(x=>{if(x.addr&&!u[x.addr.toLowerCase()])u[x.addr.toLowerCase()]={addr:x.addr,sym:x.sym,name:x.name,dec:18,builtin:true,nat:x.nat};});
   const all=Object.values(u);
-  const list=all.filter(a=>!q||(a.sym||"").toLowerCase().includes(q)||(a.name||"").toLowerCase().includes(q)||(a.addr||"").toLowerCase().includes(q));
+  let list=all.filter(a=>!q||(a.sym||"").toLowerCase().includes(q)||(a.name||"").toLowerCase().includes(q)||(a.addr||"").toLowerCase().includes(q));
+  const heldOf=a=>{const v=balCache[a.sym];return v&&v>0;};
+  if(astFilt==="held")list=list.filter(a=>heldOf(a));
+  else if(astFilt==="fav")list=list.filter(a=>isFav(a.addr));
+  else if(astFilt==="div")list=list.filter(a=>a.div||a.sym==="XPRS");
   if(walletAddr&&Object.keys(balCache).length){
     const rank=a=>{const v=balCache[a.sym];return v?v:0;};
-    list.sort((a,b)=>rank(b)-rank(a)||(a.sym||"").localeCompare(b.sym||""));
+    list.sort((a,b)=>(rank(b)>0?1:0)-(rank(a)>0?1:0)||rank(b)-rank(a)||(isFav(b.addr)?1:0)-(isFav(a.addr)?1:0)||(a.sym||"").localeCompare(b.sym||""));
   }else if(list.length>1){
     list.sort((a,b)=>(isFav(b.addr)?1:0)-(isFav(a.addr)?1:0));
   }
   const cnt=$("assetCnt");if(cnt)cnt.textContent=list.length+"/"+all.length+" 项";
-  const shown=list.slice(0,astPage*60);
-  el.innerHTML=shown.length?shown.map(a=>a.addr?`    <div class="asset-card">
-      <div class="ac-hd">${logoSvg(a.sym||"?","",a.logo)}
-        <div class="ac-id"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")}${a.div?'<span style="margin-left:5px;padding:1px 5px;border-radius:6px;background:var(--card2);border:1px solid var(--line2);color:var(--acc);font-size:9.5px;font-weight:700">分红 XPR</span>':''}</span></div>
-      </div>
-      <div class="ac-addr">${a.nat?"X Layer 原生 Gas 币":`<span class="cp" data-copy="${a.addr}" title="点击复制合约地址">${shortAddr(a.addr)}</span>`}</div>
-      <div class="ac-bal" ${walletAddr?"":`onclick="connectWallet()" style="cursor:pointer" title="点击连接钱包查看余额"`}><span class="k">余额</span><span class="v" id="bal${(a.sym||'?').replace(/\W/g,'')}">${walletAddr?"…":"— 连接查看"}</span></div>
-      <div class="ac-cp" id="cp${(a.sym||'?').replace(/\W/g,'')}"></div>
-      <div class="ac-ops">
-        <a class="op" href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a>
-        <button class="op" onclick="copyText('${a.addr}')">复制</button>
-        ${a.addr?`<button class="op" onclick="toggleFav('${a.addr}')" title="收藏/取消收藏">${isFav(a.addr)?"★":"☆"}</button>`:""}
-        ${a.builtin?"":`<button class="op danger" onclick="removeAsset('${a.addr}')">移除</button>`}
-      </div>
-    </div>`
-  :`
-    <div class="item" style="flex-wrap:wrap;border-style:dashed">
-      ${logoSvg(a.sym||"?","",a.logo)}
-      <div class="nm"><b>${esc(a.sym||"?")}</b><span style="color:var(--gold);font-family:var(--sans)">待配置合约地址</span></div>
-      <div style="display:flex;gap:6px;flex:1;min-width:230px;align-items:center">
-        <input class="mono" data-xaddr="${a.sym}" placeholder="0x… 粘贴 ${a.sym} 合约地址" style="flex:1;font-size:12px">
-        <button class="btn primary sm" onclick="setXAddr('${a.sym}')">保存</button>
-      </div>
-    </div>`).join("")+(list.length>shown.length?`<div style="text-align:center;padding:10px 0 2px"><button class="btn ghost sm" onclick="astPage++;renderAssetList()">显示更多 ${list.length-shown.length} 项</button></div>`:"")
-  :`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg></div>暂无资产</div>`;
+  const sid=s=>String(s||"?").replace(/\W/g,'');
+  const divTag=a=>(a.div||a.sym==="XPRS")?'<span style="margin-left:5px;padding:1px 5px;border-radius:6px;background:var(--card2);border:1px solid var(--line2);color:var(--acc);font-size:9.5px;font-weight:700">分红 XPR</span>':'';
+  const ops=a=>`<span class="ac-ops">
+    <a class="op" href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a>
+    <button class="op" onclick="copyText('${a.addr}')">复制</button>
+    <button class="op ${isFav(a.addr)?"fav-on":""}" onclick="toggleFav('${a.addr}')" title="收藏/取消收藏">${isFav(a.addr)?"★":"☆"}</button>
+    ${a.builtin?"":`<button class="op danger" onclick="removeAsset('${a.addr}')">移除</button>`}
+  </span>`;
+  const card=a=>a.addr?`<div class="asset-card ${heldOf(a)?"held":""}">
+    <div class="ac-hd">${logoSvg(a.sym||"?","",a.logo)}
+      <div class="ac-id"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")}${divTag(a)}</span></div>
+      <button class="op ac-star ${isFav(a.addr)?"fav-on":""}" onclick="toggleFav('${a.addr}')" title="收藏/取消收藏">${isFav(a.addr)?"★":"☆"}</button>
+    </div>
+    <div class="ac-mid">
+      <span class="ac-bal" ${walletAddr?"":`onclick="connectWallet()" style="cursor:pointer" title="点击连接钱包查看余额"`}><span class="k">余额</span><span class="v" id="bal${sid(a.sym)}">${walletAddr?"…":"— 连接查看"}</span></span>
+      <span class="ac-cp" id="cp${sid(a.sym)}"></span>
+      <span class="ac-addr">${a.nat?"X Layer 原生 Gas 币":`<span class="cp" data-copy="${a.addr}" title="点击复制合约地址">${shortAddr(a.addr)}</span>`}</span>
+    </div>
+    ${ops(a)}
+  </div>`
+  :`<div class="item" style="flex-wrap:wrap;border-style:dashed">
+    ${logoSvg(a.sym||"?","",a.logo)}
+    <div class="nm"><b>${esc(a.sym||"?")}</b><span style="color:var(--gold);font-family:var(--sans)">待配置合约地址</span></div>
+    <div style="display:flex;gap:6px;flex:1;min-width:230px;align-items:center">
+      <input class="mono" data-xaddr="${a.sym}" placeholder="0x… 粘贴 ${a.sym} 合约地址" style="flex:1;font-size:12px">
+      <button class="btn primary sm" onclick="setXAddr('${a.sym}')">保存</button>
+    </div>
+  </div>`;
+  const row=a=>a.addr?`<div class="ast-row ${heldOf(a)?"held":""}">
+    <span class="ar-lg">${logoSvg(a.sym||"?","",a.logo)}</span>
+    <b class="ar-sym">${esc(a.sym||"?")}</b>
+    <span class="ar-name">${esc(a.name||"")}${divTag(a)}</span>
+    <span class="ar-addr">${a.nat?"原生 Gas 币":`<span class="cp" data-copy="${a.addr}" title="点击复制">${shortAddr(a.addr)}</span>`}</span>
+    <span class="ar-bal" ${walletAddr?"":`onclick="connectWallet()" style="cursor:pointer" title="连接钱包查看余额"`}><span id="bal${sid(a.sym)}">${walletAddr?"…":"— 连接查看"}</span><span class="ac-cp" id="cp${sid(a.sym)}"></span></span>
+    ${ops(a)}
+  </div>`
+  :`<div class="ast-row"><span class="ar-sym">${esc(a.sym||"?")}</span><span style="color:var(--gold);font-family:var(--sans)">待配置</span><span style="flex:1;min-width:220px;display:flex;gap:6px;align-items:center"><input class="mono" data-xaddr="${a.sym}" placeholder="0x…" style="flex:1;font-size:12px"><button class="btn primary sm" onclick="setXAddr('${a.sym}')">保存</button></span></div>`;
+  el.innerHTML=list.length?list.map(astView==="list"?row:card).join(""):`<div class="empty"><div class="big"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg></div>暂无资产</div>`;
   loadAssetBals();
   if(walletAddr){setTimeout(discoverWalletTokens,900);setTimeout(loadCosts,1400);}
 }
@@ -1751,12 +1834,14 @@ async function discoverWalletTokens(){
       });
       rows.sort((x,y)=>x.sym.localeCompare(y.sym));
       if(cnt)cnt.textContent=rows.length+" 个";
-      if(box)box.innerHTML=rows.map(r=>`    <div class="asset-card">
+      if(box)box.innerHTML=rows.map(r=>`    <div class="asset-card held">
         <div class="ac-hd">${logoSvg(r.sym,"", "")}
           <div class="ac-id"><b>${esc(r.sym)}</b><span style="font-size:9.5px">钱包发现 · 未收录清单</span></div>
         </div>
-        <div class="ac-addr"><span class="cp" data-copy="${r.addr}" title="点击复制合约地址">${shortAddr(r.addr)}</span></div>
-        <div class="ac-bal"><span class="k">余额</span><span class="v" id="wbal${r.addr.slice(2,8)}">…</span></div>
+        <div class="ac-mid">
+          <span class="ac-bal"><span class="k">余额</span><span class="v" id="wbal${r.addr.slice(2,8)}">…</span></span>
+          <span class="ac-addr"><span class="cp" data-copy="${r.addr}" title="点击复制合约地址">${shortAddr(r.addr)}</span></span>
+        </div>
         <div class="ac-ops">
           <a class="op" href="${EXPLORER}address/${r.addr}" target="_blank" rel="noopener">查看 ↗</a>
           <button class="op" onclick="copyText('${r.addr}')">复制</button>
@@ -1799,6 +1884,7 @@ async function fetchBalsChunked(p,erc,addrs,onProg,owner){
 }
 async function loadAssetBals(){
   const t=$("syncTagAsset");
+  const markHeld=(el,n)=>{const c=el?el.closest(".asset-card,.ast-row"):null;if(!c)return;c.classList.toggle("held",!!(n>0));};
   if(!walletAddr){if(t){t.style.display="none";}return;}
   setAssetSync("load","同步中…");
   withRPC(async p=>{
@@ -1814,7 +1900,7 @@ async function loadAssetBals(){
     if(balCache._t&&Date.now()-balCache._t<45e3){
       entries.forEach(([sym,addr])=>{
         const el=$("bal"+sym.replace(/\W/g,''));
-        if(el&&balCache[sym]!==undefined)el.textContent=fmt(balCache[sym]);
+        if(el&&balCache[sym]!==undefined){el.textContent=fmt(balCache[sym]);markHeld(el,balCache[sym]);}
       });
       setAssetSync("ok");
       return;
@@ -1830,6 +1916,7 @@ async function loadAssetBals(){
         if(v!==undefined){
           const n=Number(fromWei(BigInt(v),18));
           if(el)el.textContent=fmt(n);
+          markHeld(el,n);
           balCache[sym]=n;
         }
       });
@@ -1839,7 +1926,7 @@ async function loadAssetBals(){
     for(const [sym,addr] of entries){
       const el=$("bal"+sym.replace(/\W/g,''));
       if(!el)continue;
-      try{const b=await new ethers.Contract(addr,ERC20_ABI,p).balanceOf(walletAddr);el.textContent=fmt(fromWei(b,18));balCache[sym]=Number(fromWei(b,18));}catch(e){}
+      try{const b=await new ethers.Contract(addr,ERC20_ABI,p).balanceOf(walletAddr);const n=Number(fromWei(b,18));el.textContent=fmt(n);markHeld(el,n);balCache[sym]=n;}catch(e){}
     }
     setAssetSync("ok");
   }).catch(()=>setAssetSync("lag"));
@@ -2247,6 +2334,7 @@ function rmPctOn(v){
 
 function poolSelR(t){pR=t;renderPoolSel();removeQuote();}
 function switchLiqMode(m){
+  const tabs=$("liqTabs");if(tabs)tabs.dataset.m=m;
   document.querySelectorAll(".liq-tabs button").forEach(b=>b.classList.toggle("on",b.dataset.m===m));
   const a=$("liqAdd"),r=$("liqRm");
   if(a)a.style.display=m==="add"?"":"none";
@@ -2261,14 +2349,28 @@ function swapPaPb(){
 }
 function renderPoolSel(){
   setTokBtn("paBtn","paLg","paNm",pA);setTokBtn("pbBtn","pbLg","pbNm",pB);setTokBtn("prBtn","prLg","prNm",pR);
+  const lm=$("liqMeta");
   if(!walletAddr){
+    if(lm)lm.classList.add("off");
     const ps=$("poolStatus");if(ps)ps.textContent="连接钱包后预估";
-    const sh=$("poolShare");if(sh)sh.textContent="连接钱包后显示";
-    const lp=$("poolLp");if(lp)lp.textContent="连接钱包后显示";
+    const sh=$("poolShare");if(sh)sh.textContent="—";
+    const lp=$("poolLp");if(lp)lp.textContent="—";
     const pl=$("prLp");if(pl)pl.textContent="LP: 连接钱包后查询";
-  }
+  }else if(lm)lm.classList.remove("off");
   if(pA&&pB){$("paLbl").textContent="代币 A · "+pA.sym;$("pbLbl").textContent="代币 B · "+pB.sym;}
   updateAddLiqCta();updateRmLiqCta();
+}
+let lastPoolRes=null;
+function fillPairByPrice(){
+  if(!lastPoolRes){toast("请先选择交易对","err");return;}
+  const {rA,rB}=lastPoolRes;
+  if(!(rA>0&&rB>0)){toast("池暂无价格","err");return;}
+  const pa=Number($("paAmt").value||0),pb=Number($("pbAmt").value||0);
+  const ratio=rB/rA,t6=x=>String(Math.round(x*1e6)/1e6);
+  if(pa>0){$("pbAmt").value=t6(pa*ratio);}
+  else if(pb>0){$("paAmt").value=t6(pb/ratio);}
+  else{maxPa().then(()=>{const pa2=Number($("paAmt").value||0);if(pa2>0)$("pbAmt").value=t6(pa2*ratio);pbTouched=false;dqPool();});return;}
+  pbTouched=false;dqPool();
 }
 async function poolQuote(){
   if(!cfg.factory){const el=$("poolStatus");if(el)el.textContent=walletAddr?"未配置 Factory 合约 · 点击下方按钮配置":"连接钱包后即可配置 Factory 合约";updateAddLiqCta();return;}
@@ -2289,9 +2391,13 @@ async function poolQuote(){
       }
       return{pair,t0,r0:Number(r[0]),r1:Number(r[1]),lp};
     });
-    if(!info){$("poolStatus").textContent="新交易对 · 首次添加定价";$("poolShare").textContent="—";const lpEl0=$("poolLp");if(lpEl0)lpEl0.textContent="—";pbTouched=false;updateAddLiqCta();return;}
+    if(!info){$("poolStatus").textContent="新交易对 · 首次添加定价";$("poolShare").textContent="—";const lpEl0=$("poolLp");if(lpEl0)lpEl0.textContent="—";pbTouched=false;lastPoolRes=null;const lr=$("liqRatio");if(lr)lr.style.display="none";updateAddLiqCta();return;}
     const[rA,rB]=info.t0.toLowerCase()===pA.addr.toLowerCase()?[info.r0,info.r1]:[info.r1,info.r0];
+    lastPoolRes={rA,rB,pA,pB};
     $("poolStatus").textContent=fmtPrice(fromWei(rA,pA.dec))+" "+pA.sym+" / "+fmtPrice(fromWei(rB,pB.dec))+" "+pB.sym;
+    const rt=$("liqRateTxt");
+    if(rt)rt.textContent="1 "+pA.sym+" = "+fmtPrice(rA>0&&rB>0?(rB/rA):0)+" "+pB.sym;
+    const lr2=$("liqRatio");if(lr2&&rA>0&&rB>0)lr2.style.display="flex";
     const lpEl=$("poolLp");
     if(lpEl)lpEl.textContent=info.lp&&info.lp.bal>0n?fmt(fromWei(info.lp.bal,18))+" LP · 占比 "+(info.lp.tot>0n?(Number(info.lp.bal)/Number(info.lp.tot)*100).toFixed(2)+"%":"—"):"—";
     if(a>0&&rA>0){
@@ -2553,7 +2659,7 @@ async function renderFarm(){
     el.innerHTML=`<div class="farm-filt" id="farmFilt">
       <span class="t on" data-f="all" onclick="setFarmFilt('all')">全部 <em>${data.length}</em></span>
       <span class="t" data-f="live" onclick="setFarmFilt('live')">挖矿中 <em>${liveN}</em></span>
-      <span class="t" data-f="mine" onclick="setFarmFilt('mine')">我的质押</span>
+      <span class="t" data-f="mine" onclick="setFarmFilt('mine')">我的质押 <em></em></span>
       <span class="srt${farmSort==="rate"?" on":""}" data-s="rate" onclick="setFarmSort('rate')">奖励高→低</span>
       <span class="srt${farmSort!=="rate"?" on":""}" data-s="def" onclick="setFarmSort('def')">默认</span>
     </div>`+ds.map(p=>{
@@ -2561,7 +2667,7 @@ async function renderFarm(){
       const aprPct=Math.min(100,Math.max(0,aprRaw*100));
       const aprTxt=aprRaw>99999?"∞":(aprRaw<0.01?"<0.01":(aprRaw<1?aprRaw.toFixed(2):Math.round(aprRaw)))+"%";
       return `
-      <div class="poolcard" data-live="${p.active?"1":"0"}">
+      <div class="poolcard collapsed" data-live="${p.active?"1":"0"}">
         <div class="top" style="cursor:pointer" onclick="togglePoolCard(this)">
           <div class="pair">${logoSvg(p.lpLg?p.lpLg.sym:p.sym,"",p.lpLg?p.lpLg.logo:p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?`<span class="xlptag">XLP</span> · `:""}#${p.pid} · <span class="cp" data-copy="${p.tok}" title="点击复制代币地址">${shortAddr(p.tok)}</span></div></div></div>
           <div style="display:flex;align-items:center;gap:9px">
@@ -2611,8 +2717,15 @@ async function renderFarm(){
           if(u[0]>0n){const pc=$("myStk"+pg.pid);if(pc)pc.closest(".poolcard").dataset.mine="1";}
           if(e3){try{const wb=await new ethers.Contract(pg.tok,ERC20_ABI,p).balanceOf(walletAddr);e3.innerHTML=fmt(fromWei(wb,pg.dec))+" "+pg.sym+(wb>0n?`<span class="can-stake">可质押 ✓</span>`:"");e3.style.color=wb>0n?"var(--ok)":"var(--faint)";}catch(err){e3.textContent="—";}}
           if(e2)e2.innerHTML=pend>0n?`<span class="badge-gold claim-glow">${fmt(fromWei(pend,18))} XPR</span>`:fmt(fromWei(pend,18))+" XPR";
-          const cb=$("claimBtn"+pg.pid);if(cb){if(pend>0n)cb.classList.add("claim-avail");else cb.classList.remove("claim-avail");}
+          const cb=$("claimBtn"+pg.pid);if(cb){if(pend>0n){cb.classList.add("claim-avail");cb.textContent="⚡ 快速领取";}else{cb.classList.remove("claim-avail");cb.textContent="领取";}}
         });
+      /* v32-两档密度: 参与池展开全操作区, 其余折叠为核心视图(pair+APR+每秒奖励); 同步「我的」计数 */
+      document.querySelectorAll("#farmList .poolcard").forEach(c=>{
+        if(c.dataset.mine==="1")c.classList.remove("collapsed");
+        else c.classList.add("collapsed");
+      });
+      const _cur=document.querySelector('#farmFilt .t.on');
+      if(_cur)setFarmFilt(_cur.dataset.f);
         if(cfg.xstork){
           const poolXprBal=await new ethers.Contract(cfg.xstork,ERC20_ABI,p).balanceOf(cfg.staking);
           const sumRate=data.reduce((a,b)=>a+b.rate,0);
@@ -2906,11 +3019,17 @@ async function renderAssets(){
     held.sort((p,q)=>q.bal>p.bal?1:-1);
     rows.push(...held);
     balEl.innerHTML=rows.length>1?rows.map(r=>`
-      <div class="bal-card">
-        <div class="symrow">${logoSvg(r.sym,"",r.logo)}<b>${esc(r.sym)}</b><span style="color:var(--faint);font-size:11.5px">${esc(r.name||"")}</span></div>
-        <div class="amt ${r.sym==="XPR"?"grad-txt":""}">${fmt(fromWei(r.bal,r.dec))}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--faint)"><span>${esc(r.sym)} 余额</span>${r.addr?`<span class="mono cp" data-copy="${r.addr}" title="点击复制合约地址">${shortAddr(r.addr)}</span>`:"<span>原生币 · 无需合约</span>"}</div>
-        ${r.addr&&r.sym==="XPR"?`<button class="btn ghost sm" style="margin-top:4px" onclick="copyAddr('${r.addr}')">${r.bal>0n?"复制合约地址":"复制地址 · 钱包若未显示 XPR 请手动添加代币"}</button>`:""}
+      <div class="asset-card held">
+        <div class="ac-hd">${logoSvg(r.sym,"",r.logo)}
+          <div class="ac-id"><b>${esc(r.sym)}</b><span>${esc(r.name||"")}</span></div>
+        </div>
+        <div class="ac-mid">
+          <span class="ac-bal"><span class="k">余额</span><span class="v ${r.sym==="XPR"?"grad-txt":""}">${fmt(fromWei(r.bal,r.dec))}</span></span>
+          <span class="ac-addr">${r.addr?`<span class="cp" data-copy="${r.addr}" title="点击复制合约地址">${shortAddr(r.addr)}</span>`:"原生 Gas 币"}</span>
+        </div>
+        <div class="ac-ops">
+          ${r.addr?`<a class="op" href="${EXPLORER}address/${r.addr}" target="_blank" rel="noopener">查看 ↗</a><button class="op" onclick="copyText('${r.addr}')">复制</button>`:`<span class="op" style="border:none;background:transparent">X Layer 原生币</span>`}
+        </div>
       </div>`).join("")
     :`<div class="empty" style="grid-column:1/-1"><div class="big">◉</div>钱包中暂无资产 · 可在「名录」中选择交易或到 Pool 添加流动性</div>`;
     $("assetStats").innerHTML=`
@@ -3407,6 +3526,7 @@ async function loadPairBrowse(){
         <span class="pb-lg">${lg(x.s0,x.lg0)}${lg(x.s1,x.lg1)}</span>
         <span class="pb-info"><b>${esc(x.s0)} / ${esc(x.s1)}</b><span>${shortAddr(x.addr)}</span></span>
         <span class="pb-res"><b>${fmtPrice(spot)}</b><span>${esc(x.s1)} / ${esc(x.s0)}</span></span>
+        <button type="button" class="pb-liq" onclick="event.stopPropagation();addLiqFromPair('${x.addr}')" title="预选此交易对去添加流动性">＋ 去添加流动性</button>
       </div>`;
     }).join("");
   }catch(e){el.innerHTML=`<div class="empty">交易对读取失败 · <a href="javascript:loadPairBrowse()" style="color:var(--acc);font-weight:800">重试</a></div>`;}
@@ -3422,6 +3542,21 @@ async function openPair(addr){
     sB=d1?{addr:x.t1,sym:d1.sym,name:d1.name,dec:d1.dec,logo:d1.logo,nat:!!d1.nat}:{addr:x.t1,sym:shortAddr(x.t1),name:"",dec:18,logo:"",nat:0};
     renderSwapSel();quoteSwap();go("swap");
   }catch(e){toast("进入交易对失败","err");}
+}
+function addLiqFromPair(addr){
+  if(!cfg.factory){toast("请先配置合约","err");return;}
+  getAllPairs().then(list=>{
+    const x=list.find(q=>q.addr.toLowerCase()===addr.toLowerCase());
+    if(!x){toast("交易对不存在","err");return;}
+    const d0=x.d0,d1=x.d1;
+    pA=d0?{addr:x.t0,sym:d0.sym,name:d0.name,dec:d0.dec,logo:d0.logo,nat:!!d0.nat}:{addr:x.t0,sym:shortAddr(x.t0),name:"",dec:18,logo:"",nat:0};
+    pB=d1?{addr:x.t1,sym:d1.sym,name:d1.name,dec:d1.dec,logo:d1.logo,nat:!!d1.nat}:{addr:x.t1,sym:shortAddr(x.t1),name:"",dec:18,logo:"",nat:0};
+    renderPoolSel();
+    go("pool");
+    switchLiqMode("add");
+    setTimeout(()=>{const t=$("liqAdd");if(t)t.scrollIntoView({behavior:"smooth",block:"start"});},350);
+    poolQuote();
+  }).catch(e=>toast("进入交易对失败","err"));
 }
 async function renderPoolTvl(){
   const el=$("poolTvl");if(!el)return;
