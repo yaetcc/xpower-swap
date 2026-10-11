@@ -2400,20 +2400,17 @@ async function renderAssets(){
   const balEl=$("balList");
   balEl.innerHTML=`<div class="empty" style="grid-column:1/-1">查询余额中… <span id="balProg" style="color:var(--gold)"></span></div>`;
   try{
-    /* 去重地址池：自定义 + 全量内置（OKB 原生币无合约地址，跳过） */
+    /* 去重地址池：自定义 + 全量内置 + XPR + XPRS（OKB 原生币无合约地址，跳过） */
     const xs=XSTOCKS.filter(x=>x.addr&&!x.nat);
     const metaByAddr={};
     for(const x of xs)metaByAddr[x.addr.toLowerCase()]={sym:x.sym,name:x.name,logo:x.logo};
     for(const a of assets)metaByAddr[a.addr.toLowerCase()]={sym:a.sym,name:a.name,logo:a.logo};
     if(isAddr(cfg.xprs))metaByAddr[cfg.xprs.toLowerCase()]={sym:"XPRS",name:"XPRS 分红币",logo:XPRS_LOGO};
+    if(isAddr(cfg.xstork))metaByAddr[cfg.xstork.toLowerCase()]={sym:"XPR",name:"平台奖励币",logo:XPR_LOGO};
     const addrs=Object.keys(metaByAddr);
-    /* XPR 奖励币余额 */
-    let xb=0n;
-    if(cfg.xstork){try{xb=await withRPC(async p=>new ethers.Contract(cfg.xstork,ERC20_ABI,p).balanceOf(walletAddr));}catch(e){}}
+    /* OKB 原生余额（唯一不能走 Multicall 的方法） */
     let okb=0n;
     try{okb=await withRPC(async p=>p.getBalance(walletAddr));}catch(e){}
-    let xprsB=0n;
-    if(isAddr(cfg.xprs)){try{xprsB=await withRPC(async p=>new ethers.Contract(cfg.xprs,ERC20_ABI,p).balanceOf(walletAddr));}catch(e){}}
     /* 余额缓存（45s TTL）避免每次切页全量重查 */
     const ckey=STORAGE+"bals";
     let balCache={};
@@ -2421,22 +2418,38 @@ async function renderAssets(){
     const now=Date.now();
     const todo=addrs.filter(a=>!balCache[a]||now-balCache[a].t>45e3);
     const found={};
-    let done=0,total=todo.length;
-    const pr=$("balProg");if(pr)pr.textContent=total?`0/${total}`:"读取缓存…";
-    await Promise.all(Array.from({length:5},async()=>{
-      while(todo.length){
-        const chunk=todo.splice(0,25);
-        try{
-          await withRPC(async p=>{
-            for(const a of chunk){
-              try{found[a]=(await new ethers.Contract(a,ERC20_ABI,p).balanceOf(walletAddr)).toString();}catch(e){}
-            }
-          });
-        }catch(e){}
-        done+=chunk.length;
-        const e=$("balProg");if(e)e.textContent=total?`${done}/${total}`:"";
+    if(todo.length){
+      const pr=$("balProg");if(pr)pr.textContent=`0/${todo.length}`;
+      const erc=new ethers.Contract(todo[0],ERC20_ABI);
+      try{
+        /* 主路径：Multicall3 单次批量 —— 1 次 eth_call 拿全量余额（≤100/批防 payload 超限） */
+        await withRPC(async p=>{
+          for(let i=0;i<todo.length;i+=100){
+            const chunk=todo.slice(i,i+100);
+            const res=await mcBatch(p,erc,"balanceOf",chunk.map(a=>[walletAddr]));
+            chunk.forEach((a,idx)=>{const r=res[idx];if(r!==null)found[a]=r.toString();});
+            const e=$("balProg");if(e)e.textContent=`${Math.min(i+100,todo.length)}/${todo.length}`;
+          }
+        });
+      }catch(e){
+        /* 回退：逐地址并发读取（MC3 异常时兜底） */
+        let done=0,total=todo.length;
+        await Promise.all(Array.from({length:5},async()=>{
+          while(todo.length){
+            const chunk=todo.splice(0,25);
+            try{
+              await withRPC(async p=>{
+                for(const a of chunk){
+                  try{found[a]=(await new ethers.Contract(a,ERC20_ABI,p).balanceOf(walletAddr)).toString();}catch(e){}
+                }
+              });
+            }catch(e){}
+            done+=chunk.length;
+            const e=$("balProg");if(e)e.textContent=total?`${done}/${total}`:"";
+          }
+        }));
       }
-    }));
+    }
     for(const a of addrs){if(!found[a]&&balCache[a])found[a]=balCache[a].v;}
     try{
       const nc={};
@@ -2444,11 +2457,14 @@ async function renderAssets(){
       localStorage.setItem(ckey,JSON.stringify(nc));
     }catch(e){}
     /* 组装：只显示余额 > 0 的持仓 */
+    const xb=isAddr(cfg.xstork)?BigInt(found[cfg.xstork.toLowerCase()]||0):0n;
+    const xprsB=isAddr(cfg.xprs)?BigInt(found[cfg.xprs.toLowerCase()]||0):0n;
     const rows=[{sym:"XPR",name:"平台奖励币",dec:18,bal:xb,addr:cfg.xstork,logo:XPR_LOGO},
                 {sym:"OKB",name:"X Layer 原生 Gas 币",dec:18,bal:okb,addr:"",logo:null},
                 ...(isAddr(cfg.xprs)?[{sym:"XPRS",name:"XPRS 分红币",dec:18,bal:xprsB,addr:cfg.xprs,logo:XPRS_LOGO}]:[])];
     const held=[];
     for(const a of addrs){
+      if(a===String(cfg.xstork||"").toLowerCase()||a===String(cfg.xprs||"").toLowerCase())continue;
       const b=BigInt(found[a]||0);
       if(b>0n){
         const m=metaByAddr[a];
