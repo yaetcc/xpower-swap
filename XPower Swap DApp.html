@@ -309,6 +309,43 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 .poolreward{display:flex;align-items:center;justify-content:space-between;gap:8px;background:linear-gradient(90deg,rgba(245,25,123,.07),rgba(255,154,61,.04));border:1px dashed rgba(245,25,123,.16);border-radius:10px;padding:6px 10px;margin-bottom:7px}
 .poolreward .k{font-size:10px;color:var(--faint);font-weight:700;letter-spacing:.2px}
 .poolreward .v{font-size:12px;font-weight:800;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--dim)}
+/* ===== v23 美化 ===== */
+.stats{background:linear-gradient(150deg,rgba(245,25,123,.05),rgba(124,58,237,.05));border-color:var(--line2)}
+.stat{position:relative;overflow:hidden;background:linear-gradient(168deg,var(--card),rgba(255,255,255,.5))}
+.stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc-grad);opacity:.9}
+.stat .k{font-size:10px}
+.stat .v{font-size:19px}
+.annual-mini{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(255,154,61,.1);border:1px solid rgba(255,154,61,.28);font-size:10.5px;color:var(--gold);font-weight:800;font-family:var(--mono)}
+.poolcard .pair .lg{width:40px;height:40px;border-radius:12px;font-size:13px}
+.poolcard .pair b{font-size:15.5px}
+.xlptag{display:inline-flex;padding:1px 7px;border-radius:6px;background:var(--acc-soft);border:1px solid var(--acc-line);color:var(--acc);font-size:9.5px;font-weight:800;margin-right:2px}
+.badge.live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(22,163,74,.55);animation:pulse2 1.8s infinite}
+.badge.pause::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--dim);opacity:.7}
+@keyframes pulse2{0%{box-shadow:0 0 0 0 rgba(22,163,74,.5)}70%{box-shadow:0 0 0 6px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+.badge-gold.claim-glow{animation:glowg 2s infinite}
+@keyframes glowg{0%,100%{box-shadow:0 0 0 0 rgba(240,180,41,.4)}50%{box-shadow:0 0 10px 2px rgba(240,180,41,.45)}}
+.can-stake{color:var(--ok);font-size:9.5px;font-weight:700;margin-left:3px}
+.poolmeta .m .v .unit{color:var(--acc);font-size:10px;font-weight:800}
+.pmode{position:relative}
+.pmode button.on{background:var(--acc-grad);color:#fff;box-shadow:0 3px 10px rgba(245,25,123,.32)}
+.btn{overflow:hidden}
+.btn::after{content:"";position:absolute;left:50%;top:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,.4);transform:translate(-50%,-50%);transition:width .4s,height .4s,opacity .4s;opacity:0;pointer-events:none}
+.btn:active::after{width:200px;height:200px;opacity:1}
+.btn.ghost::after,.btn.gold::after{background:rgba(245,25,123,.15)}
+.poolcard{background:linear-gradient(180deg,var(--card),rgba(255,255,255,.5))}
+.poolcard:hover{border-color:var(--line2);transform:translateY(-3px);box-shadow:0 14px 30px rgba(20,20,43,.12)}
+.skel-farm{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.skel-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px}
+.skel{background:linear-gradient(90deg,var(--card2) 25%,#f1eef7 50%,var(--card2) 75%);background-size:200% 100%;animation:sk 1.2s infinite;border-radius:8px;height:14px;margin-bottom:10px}
+.skel.lg{width:40px;height:40px;border-radius:12px}
+.skel.w60{width:60%}.skel.w40{width:40%}.skel.w80{width:80%}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media(max-width:760px){.skel-farm{grid-template-columns:1fr}}
+.empty .big{width:54px;height:54px;border-radius:16px;background:linear-gradient(150deg,rgba(245,25,123,.12),rgba(124,58,237,.12));border:1px solid var(--acc-line);font-size:22px;color:var(--acc);opacity:1;box-shadow:0 6px 18px rgba(245,25,123,.1)}
+.navlinks .n.on{border-radius:14px}
+.apy-ring{width:48px;height:48px;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--p,0)*1%),rgba(255,154,61,.14) 0);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+.apy-ring::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--card)}
+.apy-ring span{position:relative;font-size:9px;font-weight:800;color:var(--gold);font-family:var(--mono)}
 .poolacts{display:flex;flex-direction:column;gap:6px}
 #view-farm .pmode{width:auto;margin-bottom:0}
 .pmode{display:flex;gap:2px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:2px;width:100%}
@@ -1848,7 +1885,7 @@ async function renderFarm(){
   let data=null;
   try{const _j=JSON.parse(sessionStorage.getItem(_ck)||"null");if(_j&&_j.t>_now-300000&&Array.isArray(_j.data))data=_j.data;}catch(e){}
   if(!data){
-    el.innerHTML=`<div class="empty">读取质押池…</div>`;
+    el.innerHTML=`<div class="skel-farm">${'<div class="skel-card"><div class="skel lg"></div><div class="skel w60"></div><div class="skel w40"></div><div class="skel w80"></div></div>'.repeat(4)}</div>`;
     try{
       data=await withRPC(async p=>{
         const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
@@ -1908,18 +1945,25 @@ async function renderFarm(){
       <span class="t" data-f="mine" onclick="setFarmFilt('mine')">我的质押</span>
       <span class="srt${farmSort==="rate"?" on":""}" data-s="rate" onclick="setFarmSort('rate')">奖励高→低</span>
       <span class="srt${farmSort!=="rate"?" on":""}" data-s="def" onclick="setFarmSort('def')">默认</span>
-    </div>`+ds.map(p=>`
+    </div>`+ds.map(p=>{
+      const aprRaw=(p.total>0)?(p.rate*31536000)/(p.total):0;
+      const aprPct=Math.min(100,Math.max(0,aprRaw*100));
+      const aprTxt=aprRaw>99999?"∞":(aprRaw<0.01?"<0.01":(aprRaw<1?aprRaw.toFixed(2):Math.round(aprRaw)))+"%";
+      return `
       <div class="poolcard" data-live="${p.active?"1":"0"}">
         <div class="top">
-          <div class="pair">${logoSvg(p.lpLg?p.lpLg.sym:p.sym,"",p.lpLg?p.lpLg.logo:p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?"XLP · ":""}#${p.pid} · <span class="cp" data-copy="${p.tok}" title="点击复制代币地址">${shortAddr(p.tok)}</span></div></div></div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-            <span class="badge ${p.active?"live":"pause"}">${p.active?"挖矿中":"已暂停"}</span>
-            <div class="apr" style="text-align:right"><div class="k">每秒奖励</div><div class="v">${fmtPrice(fromWei(BigInt(p.rate),18))} <span style="font-size:11px;color:var(--gold)">XPR</span></div></div>
-            <div class="annual-mini">≈ ${fmtPrice(fromWei(BigInt(p.rate)*31536000n,18))} XPR / 年</div>
+          <div class="pair">${logoSvg(p.lpLg?p.lpLg.sym:p.sym,"",p.lpLg?p.lpLg.logo:p.logo)}<div><b>${esc(p.lp?p.lp.t0.sym+" / "+p.lp.t1.sym:p.sym)} 池</b><div class="mono" style="font-size:10px;color:var(--faint)">${p.lp?`<span class="xlptag">XLP</span> · `:""}#${p.pid} · <span class="cp" data-copy="${p.tok}" title="点击复制代币地址">${shortAddr(p.tok)}</span></div></div></div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div class="apy-ring" style="--p:${aprPct}" title="估算年化：每秒奖励×31536000÷当前总质押，实际随质押量变化"><span>${aprTxt}</span></div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              <span class="badge ${p.active?"live":"pause"}">${p.active?"挖矿中":"已暂停"}</span>
+              <div class="apr"><div class="k">每秒奖励</div><div class="v">${fmtPrice(fromWei(BigInt(p.rate),18))} <span style="font-size:11px;color:var(--gold)">XPR</span></div></div>
+              <div class="annual-mini" title="按当前每秒奖励估算的年度释放量">≈ ${fmtPrice(fromWei(BigInt(p.rate)*31536000n,18))} XPR / 年</div>
+            </div>
           </div>
         </div>
         <div class="poolmeta">
-          <div class="m"><div class="k">总质押</div><div class="v">${fmt(fromWei(p.total,p.dec))} ${esc(p.lp?"XLP":p.sym)}</div></div>
+          <div class="m"><div class="k">总质押</div><div class="v">${fmt(fromWei(p.total,p.dec))} <span class="unit">${esc(p.lp?"XLP":p.sym)}</span></div></div>
           <div class="m"><div class="k">我的质押</div><div class="v" id="myStk${p.pid}">—</div></div>
           <div class="m"><div class="k">待领取</div><div class="v" id="pend${p.pid}">—</div></div>
           <div class="m"><div class="k">钱包余额</div><div class="v" id="wbal${p.pid}">—</div></div>
@@ -1937,7 +1981,7 @@ async function renderFarm(){
             <button class="btn gold sm" id="claimBtn${p.pid}" onclick="doClaim(${p.pid})">领取</button>
           </div>
         </div>
-      </div>`).join("");
+      </div>`;}).join("");
     if(walletAddr){
       withRPC(async p=>{
         const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
@@ -1953,8 +1997,8 @@ async function renderFarm(){
           const e1=$("myStk"+pg.pid),e2=$("pend"+pg.pid),e3=$("wbal"+pg.pid);
           if(e1)e1.textContent=fmt(fromWei(u[0],pg.dec))+" "+pg.sym;
           if(u[0]>0n){const pc=$("myStk"+pg.pid);if(pc)pc.closest(".poolcard").dataset.mine="1";}
-          if(e3){try{const wb=await new ethers.Contract(pg.tok,ERC20_ABI,p).balanceOf(walletAddr);e3.textContent=fmt(fromWei(wb,pg.dec))+" "+pg.sym;e3.style.color=wb>0n?"var(--ok)":"var(--faint)";}catch(err){e3.textContent="—";}}
-          if(e2)e2.innerHTML=pend>0n?`<span class="badge-gold">${fmt(fromWei(pend,18))} XPR</span>`:fmt(fromWei(pend,18))+" XPR";
+          if(e3){try{const wb=await new ethers.Contract(pg.tok,ERC20_ABI,p).balanceOf(walletAddr);e3.innerHTML=fmt(fromWei(wb,pg.dec))+" "+pg.sym+(wb>0n?`<span class="can-stake">可质押 ✓</span>`:"");e3.style.color=wb>0n?"var(--ok)":"var(--faint)";}catch(err){e3.textContent="—";}}
+          if(e2)e2.innerHTML=pend>0n?`<span class="badge-gold claim-glow">${fmt(fromWei(pend,18))} XPR</span>`:fmt(fromWei(pend,18))+" XPR";
           const cb=$("claimBtn"+pg.pid);if(cb){if(pend>0n)cb.classList.add("claim-avail");else cb.classList.remove("claim-avail");}
         });
         if(cfg.xstork){
