@@ -456,6 +456,21 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
 .ast-row .bal{min-width:96px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--dim)}
 .ast-row .bal .s{display:block;font-size:9.5px;color:var(--faint);font-weight:600;font-family:var(--sans)}
 .ast-row:hover .bal{color:var(--fg)}
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;max-height:56vh;overflow:auto;padding-right:4px}
+.asset-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;transition:.16s;box-shadow:var(--shadow)}
+.asset-card:hover{border-color:var(--acc-line);transform:translateY(-1px);box-shadow:0 8px 20px rgba(245,25,123,.07),var(--shadow)}
+.asset-card .ac-hd{display:flex;align-items:center;gap:9px}
+.asset-card .ac-hd .lg{width:34px;height:34px}
+.asset-card .ac-id b{font-size:13.5px}
+.asset-card .ac-id span{display:block;font-size:10px;color:var(--faint);margin-top:1px;line-height:1.3}
+.asset-card .ac-addr{font-size:10px;font-family:var(--mono);color:var(--faint)}
+.asset-card .ac-bal{display:flex;justify-content:space-between;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:7px 9px}
+.asset-card .ac-bal .k{font-size:10px;color:var(--faint);font-weight:700}
+.asset-card .ac-bal .v{font-size:12.5px;font-weight:800;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--dim)}
+.asset-card .ac-ops{display:flex;gap:6px}
+.asset-card .ac-ops .op{flex:1;text-align:center;font-size:11px;font-weight:800;padding:6px 0;border-radius:8px;border:1px solid var(--line);color:var(--dim);background:var(--card2);cursor:pointer;text-decoration:none;transition:.15s}
+.asset-card .ac-ops .op:hover{color:var(--acc);border-color:var(--acc-line)}
+.asset-card .ac-ops .op.danger{color:#dc2626;border-color:rgba(220,38,38,.25)}
 #view-assets .th-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;padding:0 14px 8px;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
 #view-assets .th-row span:nth-child(3){min-width:96px;text-align:right}
 .grid2 .amount-wrap{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:7px 11px;transition:.16s}
@@ -650,8 +665,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(245,25,123,.09),tra
         <input id="assetSearch" placeholder="搜索 xStock：符号 / 名称 / 地址" oninput="renderAssetList()" style="flex:1;min-width:220px">
         <span id="assetCnt" style="font-size:12px;color:var(--dim);white-space:nowrap"></span>
       </div>
-      <div class="th-row"><span class="lg" style="width:34px"></span><span class="nm">资产 / 地址</span><span>余额</span><span>操作</span></div>
-      <div id="assetList" class="list" style="max-height:56vh;overflow:auto"></div>
+      <div id="assetList" class="asset-grid"></div>
     </div>
     <div class="panel" style="margin-top:16px">
       <h2><span class="bar"></span>我的余额</h2>
@@ -1135,13 +1149,16 @@ function renderAssetList(){
   const list=all.filter(a=>!q||(a.sym||"").toLowerCase().includes(q)||(a.name||"").toLowerCase().includes(q)||(a.addr||"").toLowerCase().includes(q));
   const cnt=$("assetCnt");if(cnt)cnt.textContent=list.length+"/"+all.length+" 项";
   const shown=list.slice(0,astPage*60);
-  el.innerHTML=shown.length?shown.map(a=>a.addr?`    <div class="item ast-row">
-      ${logoSvg(a.sym||"?","",a.logo)}
-      <div class="nm"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")}${a.div?'<span style="margin-left:6px;padding:1px 6px;border-radius:6px;background:linear-gradient(135deg,#FF9A3D22,#F5197B22);color:var(--acc);font-size:10px;font-weight:700">持币分红 XPR</span>':''} · ${a.nat?"原生 Gas · X Layer":`<span class="cp" data-copy="${a.addr}" title="点击复制合约地址">${shortAddr(a.addr)}</span>`} · <a href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a></span></div>
-      <div class="bal" id="bal${(a.sym||'?').replace(/\W/g,'')}">${walletAddr?"…":"—"}<span class="s">${a.nat?"OKB 余额":"链上余额"}</span></div>
-      <div style="display:flex;gap:6px">
-        <button class="btn ghost sm" onclick="copyText('${a.addr}')">复制</button>
-        ${a.builtin?"":`<button class="btn danger sm" onclick="removeAsset('${a.addr}')">移除</button>`}
+  el.innerHTML=shown.length?shown.map(a=>a.addr?`    <div class="asset-card">
+      <div class="ac-hd">${logoSvg(a.sym||"?","",a.logo)}
+        <div class="ac-id"><b>${esc(a.sym||"?")}</b><span>${esc(a.name||"")}${a.div?'<span style="margin-left:5px;padding:1px 5px;border-radius:6px;background:linear-gradient(135deg,#FF9A3D22,#F5197B22);color:var(--acc);font-size:9.5px;font-weight:700">分红 XPR</span>':''}</span></div>
+      </div>
+      <div class="ac-addr">${a.nat?"X Layer 原生 Gas 币":`<span class="cp" data-copy="${a.addr}" title="点击复制合约地址">${shortAddr(a.addr)}</span>`}</div>
+      <div class="ac-bal"><span class="k">余额</span><span class="v" id="bal${(a.sym||'?').replace(/\W/g,'')}">${walletAddr?"…":"—"}</span></div>
+      <div class="ac-ops">
+        <a class="op" href="${EXPLORER}address/${a.addr}" target="_blank" rel="noopener">查看 ↗</a>
+        <button class="op" onclick="copyText('${a.addr}')">复制</button>
+        ${a.builtin?"":`<button class="op danger" onclick="removeAsset('${a.addr}')">移除</button>`}
       </div>
     </div>`
   :`
@@ -1162,7 +1179,7 @@ async function loadAssetBals(){
   if(!walletAddr)return;
   withRPC(async p=>{
     const okb=$("balOKB");
-    if(okb){try{const b=await p.getBalance(walletAddr);okb.innerHTML=`${fmt(fromWei(b,18))}<span class="s">OKB 余额</span>`;}catch(e){}}
+    if(okb){try{const b=await p.getBalance(walletAddr);okb.textContent=fmt(fromWei(b,18));}catch(e){}}
     const syms={};
     if(cfg.xstork)syms.XPR=cfg.xstork;
     if(cfg.xprs)syms.XPRS=cfg.xprs;
@@ -1170,7 +1187,7 @@ async function loadAssetBals(){
     for(const [sym,addr] of Object.entries(syms)){
       const el=$("bal"+sym.replace(/\W/g,''));
       if(!el)continue;
-      try{const b=await new ethers.Contract(addr,ERC20_ABI,p).balanceOf(walletAddr);el.innerHTML=`${fmt(fromWei(b,18))}<span class="s">${esc(sym)} 余额</span>`;}catch(e){}
+      try{const b=await new ethers.Contract(addr,ERC20_ABI,p).balanceOf(walletAddr);el.textContent=fmt(fromWei(b,18));}catch(e){}
     }
   }).catch(()=>{});
 }
