@@ -530,6 +530,15 @@ html[data-theme="dark"] input[type=text],html[data-theme="dark"] input[type=numb
 html[data-theme="dark"] .amt-body input[type=text],html[data-theme="dark"] .amt-body input[type=number]{background:transparent;border:none!important}
 html[data-theme="dark"] .pagehead h1 .ico,html[data-theme="dark"] .fa-ico,html[data-theme="dark"] .empty .big,html[data-theme="dark"] .logo .mark{background:#f5f5f5;color:#0a0a0a}
 html[data-theme="dark"] .lg,html[data-theme="dark"] .pb-lg .lg{box-shadow:0 0 0 1px rgba(255,255,255,.14)}
+/* 暗色美化批次：微渐变背景 / 输入聚焦态 / 主卡浮起 / 滚动条 / 标题提亮 */
+html[data-theme="dark"] body{background:radial-gradient(1200px 480px at 50% -10%,#131318 0%,#0a0a0a 60%)}
+html[data-theme="dark"] input:focus,html[data-theme="dark"] select:focus{outline:none;border-color:rgba(255,255,255,.6)!important;box-shadow:0 0 0 3px rgba(255,255,255,.07)}
+html[data-theme="dark"] .swap-card{box-shadow:0 0 0 1px rgba(255,255,255,.05),0 18px 50px rgba(0,0,0,.55)}
+html[data-theme="dark"] ::-webkit-scrollbar{width:10px;height:10px}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#2c2c2c;border-radius:5px;border:2px solid #0a0a0a}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover{background:#3a3a3a}
+html[data-theme="dark"] ::-webkit-scrollbar-track{background:transparent}
+html[data-theme="dark"] .pagehead h1{color:#ffffff}
 html[data-theme="dark"] input::placeholder{color:#9a9a9a}
 html[data-theme="dark"] ::selection{background:#f7f7f7;color:#0a0a0a}
 /* ===== 钱包菜单/确认弹窗 ===== */
@@ -881,7 +890,7 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
     <div class="pagehead">
       <div><h1><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg></span><span data-i18n="k48">Farm · 质押挖矿</span></h1>
       <p data-i18n="k49">质押 xStock 资产或 LP 凭证，按份额每秒获得 XPR 奖励</p></div>
-      <div class="headside"><span class="synctag" id="syncTagFarm"><i></i><span data-i18n="k26">同步中…</span></span><button class="btn ghost sm" onclick="refreshAll()">刷新</button></div>
+      <div class="headside"><span class="synctag" id="syncTagFarm"><i></i><span data-i18n="k26">同步中…</span></span><button class="btn ghost sm" onclick="refreshAll()" data-i18n="k27">刷新</button></div>
     </div>
     <div class="stats" id="farmStats"></div>
     <div id="farmDivCard" style="margin-bottom:12px"></div>
@@ -929,7 +938,7 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
     <div class="pagehead">
       <div><h1><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg></span><span data-i18n="k62">资产 · 我的持仓</span></h1>
       <p data-i18n="k63">xStock 股票资产 / XPR / LP / 质押明细</p></div>
-      <div class="headside"><span class="synctag" id="syncTagAsset"><i></i><span data-i18n="k26">同步中…</span></span><button class="btn ghost sm" onclick="refreshAll()">刷新</button></div>
+      <div class="headside"><span class="synctag" id="syncTagAsset"><i></i><span data-i18n="k26">同步中…</span></span><button class="btn ghost sm" onclick="refreshAll()" data-i18n="k27">刷新</button></div>
     </div>
     <div class="stats" id="assetStats"></div>
     <div class="panel" style="margin-bottom:16px">
@@ -1098,11 +1107,11 @@ function renderShareCard(){
   if(!HAS_SHARE&&!needCfg()){el.style.display="none";return;}
   if(!cfg.factory&&!cfg.router&&!cfg.staking&&!cfg.xstork){el.style.display="none";return;}
   const rows=[
-    ["Factory 交易对工厂",cfg.factory],
-    ["Router 路由",cfg.router],
-    ["Staking 矿池",cfg.staking],
-    ["XPR 平台奖励币",cfg.xstork],
-    ["XPRS 分红币",cfg.xprs]
+    [T("k168"),cfg.factory],
+    [T("k169"),cfg.router],
+    [T("k170"),cfg.staking],
+    [T("k171"),cfg.xstork],
+    [T("k172"),cfg.xprs]
   ].filter(r=>isAddr(r[1]));
   el.style.display="block";
   el.innerHTML=`<div style="max-width:1240px;margin:0 auto;padding:10px 16px">
@@ -1121,7 +1130,7 @@ function renderShareCard(){
             <a href="${EXPLORER}address/${r[1]}" target="_blank" rel="noopener" style="color:var(--dim);flex-shrink:0">↗</a>
           </div>`).join("")}
         </div>
-        <div style="padding:0 14px 12px;font-size:10.5px;color:var(--faint);line-height:1.5">⚠ 合约地址来自分享链接 / 项目官方配置 · 请核对后交易。本项目为 DeFi 实验性产品，合约未经第三方审计，请仅投入可承受损失的资金。</div>
+        <div style="padding:0 14px 12px;font-size:10.5px;color:var(--faint);line-height:1.5">${T("k173")}</div>
       </div></div>
     </div>
   </div>`;
@@ -1591,7 +1600,7 @@ function openCfg(){
     <div id="deploySteps" style="display:grid;gap:6px;margin-top:4px"></div>
 
     <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:4px">⚡ 一键起盘 · 部署合约 + OKB × xStock 组 LP</div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">⚡ ${T("k177")}</div>
       <div style="font-size:11.5px;color:var(--dim);margin-bottom:8px;line-height:1.6">首次起盘自动部署 4 合约（XPR / Factory / Router / Staking）；默认 OKB + 你指定的 xStock 资产组成 LP 交易对；注入奖励从你的钱包直接冲入矿池（奖励币默认 XPR，可指定其他 ERC-20）</div>
       <div style="display:grid;gap:8px">
         <input id="lgTok" list="lgTokList" placeholder="选择 xStock 资产（如 XAAPL）· 与 OKB 自动组 LP" class="mono" style="font-size:12.5px">
@@ -1599,7 +1608,7 @@ function openCfg(){
         <input id="lgReward" placeholder="奖励币地址 · 留空默认 XPR" class="mono" style="font-size:12.5px">
         <input id="lgRate" type="number" placeholder="每秒奖励（如 0.000001）" style="font-size:12.5px">
         <input id="lgFund" type="number" placeholder="冲入奖励数量 · 从钱包转入矿池（如 100000）" style="font-size:12.5px">
-        <button class="btn gold wide" onclick="launchAll()">⚡ 一键起盘：部署合约 → 组 LP 交易对 → 质押池 → 冲入奖励</button>
+        <button class="btn gold wide" onclick="launchAll()">⚡ ${T("k178")}</button>
         <button class="btn wide" onclick="deployOnlyCta()" style="margin-top:8px">仅部署 4 合约（先上链合约层，之后随时起盘）</button>
       </div>
       <div id="lgLog" style="display:grid;gap:6px;margin-top:8px;font-size:12px"></div>
@@ -1661,7 +1670,7 @@ async function launchAll(){
         pair=await f.getPair(tok.addr,WOKB_ADDR);
       }
       pairAddr=pair;
-      return`<span class="cp" data-copy="${pair}" title="点击复制 LP 地址">LP 合约 ${shortAddr(pair)}</span>`;
+      return`<span class="cp" data-copy="${pair}" title="点击复制 LP 地址">${T("k176")} ${shortAddr(pair)}</span>`;
     });
     qAdd("创建质押池（质押 LP 凭证）",async()=>{
       const tx=await st.createPool(pairAddr,toWei(rate,18));await tx.wait();
@@ -1872,7 +1881,7 @@ async function discoverWalletTokens(){
         return {addr:a,sym:sym,dec:dec};
       });
       rows.sort((x,y)=>x.sym.localeCompare(y.sym));
-      if(cnt)cnt.textContent=rows.length+" 个";
+      if(cnt)cnt.textContent=rows.length+" "+T("k174");
       if(box)box.innerHTML=rows.map(r=>`    <div class="asset-card held">
         <div class="ac-hd">${logoSvg(r.sym,"", "")}
           <div class="ac-id"><b>${esc(r.sym)}</b><span style="font-size:9.5px">钱包发现 · 未收录清单</span></div>
@@ -2061,7 +2070,7 @@ function farmTokInput(){
 }
 function farmRateHint(){
   const r=Number($("poolRate").value),h=$("poolRateHint");if(!h)return;
-  h.textContent=r>0?`年化 ≈ ${fmtPrice(r*31536000)} XPR / 年`:"年化 ≈ — XPR";
+  h.textContent=r>0?`${T("k167")} ${fmtPrice(r*31536000)} XPR / ${T("k166")}`:T("k167")+"— XPR";
 }
 function swapSel(k,t){if(k==="from")sA=t;else sB=t;renderSwapSel();quoteSwap();}
 function flipSwap(){
@@ -2714,7 +2723,7 @@ async function renderFarm(){
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
               <span class="badge ${p.active?"live":"pause"}">${p.active?T("k106"):T("k136")}</span>
               <div class="apr"><div class="k">${T("k54")}</div><div class="v">${fmtPrice(fromWei(BigInt(p.rate),18))} <span style="font-size:11px;color:var(--gold)">XPR</span></div></div>
-              <div class="annual-mini" title="按当前每秒奖励估算的年度释放量">≈ ${fmtPrice(fromWei(BigInt(p.rate)*31536000n,18))} XPR / 年</div>
+              <div class="annual-mini" title="按当前每秒奖励估算的年度释放量">≈ ${fmtPrice(fromWei(BigInt(p.rate)*31536000n,18))} XPR / ${T("k166")}</div>
             </div>
           </div>
           <span class="pf-new" onclick="event.stopPropagation();togglePoolCard(this.closest('.top'))">${T("k107")} ▾</span>
@@ -3104,7 +3113,7 @@ async function renderXprsDivCard(){
   const host=$("farmDivCard");if(!host)return;
   if(!isAddr(cfg.xprs)&&!isAddr(cfg.xprsDiv)){host.innerHTML="";return;}
   let pend=0n,totalStaked=0n,xprsB=0n,rate=0n,divBal=0n;
-  if(!walletAddr){host.innerHTML=`<div class="panel" style="padding:14px;text-align:center;color:var(--faint);font-size:12.5px">${logoSvg("XPRS","",XPRS_LOGO)} <b>${T("k147")}</b> · ${T("k148")} · ${T("k149")}${isAddr(cfg.xprs)?`<div style="display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;font-size:11px"><span class="mono cp" data-copy="${cfg.xprs}" title="点击复制合约地址">合约 ${shortAddr(cfg.xprs)}</span><a href="https://ignix.bot/launch?token=${cfg.xprs}" target="_blank" rel="noopener" style="color:var(--acc)">${T("k152")} ↗</a><a href="https://web3.okx.com/zh-hans/token/x-layer/${cfg.xprs.toLowerCase()}" target="_blank" rel="noopener" style="color:var(--acc)">${T("k153")} ↗</a></div>`:""}</div>`;return;}
+  if(!walletAddr){host.innerHTML=`<div class="panel" style="padding:14px;text-align:center;color:var(--faint);font-size:12.5px">${logoSvg("XPRS","",XPRS_LOGO)} <b>${T("k147")}</b> · ${T("k148")} · ${T("k149")}${isAddr(cfg.xprs)?`<div style="display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;font-size:11px"><span class="mono cp" data-copy="${cfg.xprs}" title="点击复制合约地址">${T("k175")} ${shortAddr(cfg.xprs)}</span><a href="https://ignix.bot/launch?token=${cfg.xprs}" target="_blank" rel="noopener" style="color:var(--acc)">${T("k152")} ↗</a><a href="https://web3.okx.com/zh-hans/token/x-layer/${cfg.xprs.toLowerCase()}" target="_blank" rel="noopener" style="color:var(--acc)">${T("k153")} ↗</a></div>`:""}</div>`;return;}
   if(isAddr(cfg.xprs)){try{xprsB=await withRPC(async p=>new ethers.Contract(cfg.xprs,ERC20_ABI,p).balanceOf(walletAddr));}catch(e){}}
   if(isAddr(cfg.xprsDiv)){
     try{await withRPC(async p=>{
@@ -3132,7 +3141,7 @@ async function renderXprsDivCard(){
       <button class="btn gold sm" onclick="claimXprs()" ${pend>0n?"":"disabled"}>${pend>0n?`领取 ${fmt(fromWei(pend,18))} XPR`:"暂无待领"}</button>
     </div>
     <div style="display:flex;gap:12px;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);flex-wrap:wrap;font-size:11px;align-items:center">
-      ${isAddr(cfg.xprs)?`<span class="mono cp" data-copy="${cfg.xprs}" title="点击复制合约地址" style="color:var(--dim)">合约 ${shortAddr(cfg.xprs)}</span>`:""}
+      ${isAddr(cfg.xprs)?`<span class="mono cp" data-copy="${cfg.xprs}" title="点击复制合约地址" style="color:var(--dim)">${T("k175")} ${shortAddr(cfg.xprs)}</span>`:""}
       ${isAddr(cfg.xprs)?`<a href="https://ignix.bot/launch?token=${cfg.xprs}" target="_blank" rel="noopener" style="color:var(--acc);font-weight:700">${T("k152")} ↗</a><a href="https://web3.okx.com/zh-hans/token/x-layer/${cfg.xprs.toLowerCase()}" target="_blank" rel="noopener" style="color:var(--acc);font-weight:700">${T("k153")} ↗</a>`:""}
       <span style="color:var(--faint)">持 XPRS 即自动分红 · 领取按秒结算</span>
     </div>
@@ -3164,7 +3173,7 @@ async function renderStats(){
     <div class="stat">${sico("wallet")}<div class="k">钱包</div><div class="v g" style="font-size:15px">${walletAddr?`<span class="cp" data-copy="${walletAddr}" title="${T("k117")}">${shortAddr(walletAddr)}</span>`:"—"}</div><div class="d">${walletAddr?T("k125"):T("k126")}</div></div>`;
   if(pv){pv.innerHTML=`
     <div class="stat">${sico("pairs")}<div class="k">${T("k128")}</div><div class="v c">${d.pairs}</div><div class="d">${T("k142")}</div></div>
-    <div class="stat">${sico("fee")}<div class="k">${T("k137")}</div><div class="v g">0.3%</div><div class="d">全部归 LP</div></div>
+    <div class="stat">${sico("fee")}<div class="k">${T("k137")}</div><div class="v g">0.3%</div><div class="d">${T("k138")}</div></div>
     <div class="stat">${sico("coin")}<div class="k">TVL ≈</div><div class="v" id="poolTvl">—</div><div class="d">${T("k139")}</div></div>
     <div class="stat">${sico("usr")}<div class="k">${T("k105")}</div><div class="v" style="font-size:15px">${walletAddr?`<span class="cp" data-copy="${walletAddr}" title="${T("k117")}">${shortAddr(walletAddr)}</span>`:"—"}</div><div class="d">${walletAddr?T("k125"):T("k126")}</div></div>
     <div class="stat">${sico("slip")}<div class="k">${T("k140")}</div><div class="v">${slipPct*100}%</div><div class="d">${T("k141")}</div></div>`;renderPoolTvl();loadPairBrowse();}
@@ -3304,7 +3313,7 @@ function refreshView(){
 let lastSync=0;
 function renderSyncTags(){
   const s=Date.now()-lastSync;
-  const txt=s<5000?"刚刚更新":s<60000?Math.floor(s/1000)+"s 前":Math.floor(s/60000)+"m 前";
+  const txt=s<5000?T("k158"):s<60000?Math.floor(s/1000)+" "+T("k179"):Math.floor(s/60000)+" "+T("k180");
   document.querySelectorAll(".synctag").forEach(el=>{el.innerHTML=`<i></i>${txt}`;});
 }
 function refreshAll(){lastSync=0;renderSyncTags();try{if(cfg.staking)sessionStorage.removeItem("xps_pools_"+cfg.staking.toLowerCase());}catch(e){}refreshView();if(curView==="swap")quoteSwap();}
@@ -3312,7 +3321,7 @@ function renderCfgInfo(){
   const el=$("cfgInfo");if(!el)return;
   el.innerHTML=needCfg()
     ?`<button class="btn ghost sm" onclick="openCfg()">未配置合约 · 点击配置</button>`
-    :`<div class="verify-line"><span class="ok-badge">● <span data-i18n="live">已发盘 · 合约已部署</span></span><span style="color:var(--faint)" data-i18n="k164">点击合约卡复制 · 右侧 ↗ 查看链上源码</span></div>
+    :`<div class="verify-line"><span class="ok-badge">● <span data-i18n="live">${T("live")}</span></span><span style="color:var(--faint)" data-i18n="k164">${T("k164")}</span></div>
       <div class="big-cfg">
         <span class="cfgcard" onclick="copyAddr('${cfg.factory}')" title="点击复制 Factory 地址"><span class="ck">F</span>Factory · ${shortAddr(cfg.factory)} <a style="margin-left:4px;text-decoration:none;color:var(--acc)" href="${EXPLORER}address/${cfg.factory}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a></span>
         <span class="cfgcard" onclick="copyAddr('${cfg.router}')" title="点击复制 Router 地址"><span class="ck">R</span>Router · ${shortAddr(cfg.router)} <a style="margin-left:4px;text-decoration:none;color:var(--acc)" href="${EXPLORER}address/${cfg.router}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a></span>
@@ -3326,10 +3335,10 @@ function renderCfgInfo(){
 
 /* ============ v29 专业改进：i18n / 分享 / 添加资产 / 交易对浏览器 / TVL / 价格影响 ============ */
 let LANG=(()=>{try{return localStorage.getItem(STORAGE+"lang")||"zh";}catch(e){return"zh";}})();
-const L_ZH={swap:"兑换",pool:"流动性",farm:"质押",assets:"资产",allpairs:"全部交易对",addast:"添加资产",live:"已发盘 · 合约已部署",lbload:"连接钱包后加载全部交易对…",auth:"授权管理",alarm:"价格提醒",sharec:"项目已发盘",safew:"DeFi 实验产品 · 合约未经审计 · 请核对地址后交易",k101:"通过分享链接进入 · 合约配置已自动载入",k102:"质押池",k103:"奖励代币",k104:"按秒释放",k105:"我的地址",k106:"挖矿中",k107:"展开操作",k108:"我的质押",k109:"待领取",k110:"钱包余额",k111:"矿池奖励 XPR · 可分余额",k112:"内置资产名录",k113:"已配置地址",k114:"查看 ↗",k115:"复制",k116:"移除",k117:"点击复制",k118:"— 连接查看",k119:"奖励高→低",k120:"默认",k121:"XPR 池余额",k122:"Staking 持有",k123:"个可交易 xStock：符号 / 名称 / 地址",k124:"搜索",k125:"已连接",k126:"未连接",k127:"全部",k128:"交易对",k129:"区块浏览器查看",sell:"卖出",buy:"买入",slipsafe:"滑点保护",slipdesc:"滑点 = 成交价相对报价的最大允许偏移；超出则交易自动回滚保护",rpcdown:"RPC 节点暂不可用 · 数据读取可能失败，正在自动重试 — 请检查网络",k03:"连接钱包",k04:"当前网络不是 X Layer（chainId 196）—— 兑换 / 添加流动性 / 质押均无法正常提交",k05:"切换到 X Layer",k07:"重试",k08:"兑换",k10:"自定义",k11:"应用",k14:"选择代币",k15:"点击选择",k17:"⇅ 反向",k18:"最少获得",k19:"池储备",k20:"交易费",k21:"0.3% → 流动池",k22:"滑点",k23:"价格由池内储备实时决定 · 首次兑换自动创建交易对",k24:"Pool · 流动性池",k25:"添加 / 移除双币流动性，赚取 0.3% 兑换手续费",k26:"同步中…",k27:"刷新",k28:"配置",k29:"添加流动性",k30:"移除流动性",k31:"代币 A",k32:"选择",k33:"按当前价格填充",k34:"代币 B",k35:"池状态",k36:"你的份额",k37:"我的 LP",k38:"份额与 LP",k39:"连接钱包查看",k40:"交易对",k41:"选择资产",k42:"移除比例",k43:"预计收到",k44:"我的持仓",k45:"连接钱包并添加流动性后显示持仓",k46:"全部交易对",k47:"连接钱包后加载全部交易对…",k48:"Farm · 质押挖矿",k49:"质押 xStock 资产或 LP 凭证，按份额每秒获得 XPR 奖励",k50:"矿池管理 · owner",k51:"创建质押池",k52:"质押资产",k53:"支持 XPR / OKB / 全部 xStock 股票资产 · XLP 池凭证已自动列出（免粘贴）",k54:"每秒奖励",k55:"年化 ≈ — XPR",k56:"注入矿池奖励",k57:"注入数量",k58:"可用：—",k59:"注入奖励",k60:"一键创建推荐池",k61:"已配置地址 0 个 · 先到「资产」页粘贴 xStock 合约地址，再批量建池",k62:"资产 · 我的持仓",k63:"xStock 股票资产 / XPR / LP / 质押明细",k64:"我的余额",k65:"连接钱包后显示余额",k66:"xStock 资产名录 · 已内置",k67:" 个可交易（区块浏览器 xLayer 收录）",k68:"添加资产",k69:"全部",k70:"持有",k71:"收藏",k72:"分红币",k73:"▦ 网格",k74:"≡ 列表",k75:"钱包内其他代币",k76:"自动扫描钱包收币记录发现的清单外 ERC20 · 每 5 分钟刷新 · 余额大于 0 才展示",k77:"+ 添加自定义资产",k78:"名称 / 符号",k79:"ERC20 合约地址",k80:"添加",k81:"连接钱包后自动读取该地址余额 · 支持 XLayer 上任意 ERC20（含 XLP 凭证）",k82:"授权管理",k83:"查看 DApp 对 Router 的授权额度 · 可一键撤销（approve 0）· 撤销后下次交易会自动重新授权",k84:"撤销全部授权",k85:"完成",k86:"价格提醒",k87:"以 OKB 计价 · 每 20 秒轮询 · 触发时站内提示 + 浏览器通知（需授权）",k88:"代币",k89:"目标价（OKB）",k90:"方向",k91:"高于",k92:"低于",k93:"提醒为本地浏览器记录 · 页面需保持打开才会触发",k94:"确认交易",k95:"取消",k96:"确认",k97:"操作队列",k98:"终止",k99:"重试失败",k100:"收起",k130:"份合约",k132:"总质押",k136:"已暂停",k137:"池手续费",k138:"全部归 LP",k139:"OKB 计价 · 自动刷新",k140:"滑点模式",k141:"Swap 保护",k142:"Factory 登记",k143:"内置资产",k144:"内置 + 自定义",k145:"余额",k146:"＋ 去添加流动性",k147:"XPRS 分红",k148:"持币分红 XPR",k149:"连接钱包查看分红",k150:"显示更多",k151:"项",k152:"ignix 购买",k153:"OKX 行情",k154:"个 · 将逐个创建质押池",k155:"原生 Gas",k156:"X Layer 原生 Gas 币",k157:"原生 Gas 币",k158:"刚刚更新",k159:"Staking 池",k160:"X Layer 可交易 xStock",k161:"池",k162:"分红 XPR",k163:"奖励速率取上方输入",k164:"点击合约卡复制 · 右侧 ↗ 查看链上源码",k165:"XPower · 股票资产 Swap & DeFi — xStock 1:1 真实股票背书资产 · 恒定乘积 AMM · 质押挖矿",k165:"股票资产 Swap & DeFi — xStock 1:1 真实股票背书资产 · 恒定乘积 AMM · 质押挖矿",};
-const L_EN={swap:"Swap",pool:"Liquidity",farm:"Farm",assets:"Assets",allpairs:"All Pairs",addast:"Add Asset",live:"LIVE · Contracts Deployed",lbload:"Connect wallet to load all pairs…",auth:"Token Approval",alarm:"Price Alerts",sharec:"Project LIVE",safew:"Experimental DeFi · Contracts unaudited · Verify addresses before trading",k101:"Via share link · contracts auto-loaded",k102:"Staking Pools",k103:"Reward Token",k104:"Per Second",k105:"My Address",k106:"Mining",k107:"Expand",k108:"My Stake",k109:"Pending",k110:"Wallet Bal",k111:"Pool Rewards XPR · Available",k112:"Built-in Assets",k113:"Configured",k114:"View ↗",k115:"Copy",k116:"Remove",k117:"Click to copy",k118:"— connect to view",k119:"APR high→low",k120:"Default",k121:"XPR Pool Bal",k122:"Staking Held",k123:"tradable xStock: symbol / name / address",k124:"Search",k125:"Connected",k126:"Not connected",k127:"All",k128:"Pair",k129:"Explorer",sell:"Sell",buy:"Buy",slipsafe:"Slippage Protection",slipdesc:"Slippage = max allowed deviation from quoted price; trade auto-reverts if exceeded",rpcdown:"RPC nodes unavailable · data reads may fail — retrying automatically, check your network",k03:"Connect Wallet",k04:"Not on X Layer (chainId 196) — Swap / Add Liquidity / Stake won't submit",k05:"Switch to X Layer",k07:"Retry",k08:"Swap",k10:"Custom",k11:"Apply",k14:"Select Token",k15:"Tap to select",k17:"⇅ Reverse",k18:"Minimum received",k19:"Pool reserve",k20:"Fee",k21:"0.3% → LP pool",k22:"Slippage",k23:"Price set by pool reserves · first swap auto-creates the pair",k24:"Pool · Liquidity",k25:"Add / remove dual-token liquidity, earn 0.3% swap fees",k26:"Syncing…",k27:"Refresh",k28:"Config",k29:"Add Liquidity",k30:"Remove Liquidity",k31:"Token A",k32:"Select",k33:"Fill at current price",k34:"Token B",k35:"Pool status",k36:"Your share",k37:"My LP",k38:"Share & LP",k39:"Connect to view",k40:"Pair",k41:"Select asset",k42:"Remove %",k43:"Estimated receive",k44:"My Positions",k45:"Connect & add liquidity to see positions",k46:"All Pairs",k47:"Connect wallet to load all pairs…",k48:"Farm · Staking",k49:"Stake xStock or LP tokens to earn XPR per second by share",k50:"Pool Admin · Owner",k51:"Create Staking Pool",k52:"Stake Asset",k53:"XPR / OKB / all xStock supported · XLP tokens auto-listed",k54:"Reward / sec",k55:"APR ≈ — XPR",k56:"Deposit Pool Rewards",k57:"Amount",k58:"Available: —",k59:"Deposit Rewards",k60:"One-click Create Pools",k61:"0 configured · paste xStock addresses in Assets first",k62:"Assets · My Portfolio",k63:"xStock / XPR / LP / staking",k64:"My Balance",k65:"Connect wallet to view balance",k66:"xStock Assets · built-in",k67:" tradable (XLayer explorer)",k68:"Add Asset",k69:"All",k70:"Held",k71:"Favorites",k72:"Dividend",k73:"▦ Grid",k74:"≡ List",k75:"Other wallet tokens",k76:"ERC20 found in wallet history · refresh 5min · shown if balance > 0",k77:"+ Add Custom Asset",k78:"Name / Symbol",k79:"ERC20 Contract",k80:"Add",k81:"Reads balance after connect · any XLayer ERC20 (incl. XLP)",k82:"Token Approval",k83:"Check Router allowance · revoke in one click (approve 0)",k84:"Revoke All",k85:"Done",k86:"Price Alerts",k87:"Priced in OKB · polls every 20s · in-app + browser notify",k88:"Token",k89:"Target (OKB)",k90:"Direction",k91:"Above",k92:"Below",k93:"Local browser alerts · page must stay open",k94:"Confirm Trade",k95:"Cancel",k96:"Confirm",k97:"Tx Queue",k98:"Stop",k99:"Retry Failed",k100:"Collapse",k130:"Contracts",k132:"Total Staked",k136:"Paused",k137:"Pool Fee",k138:"All to LP",k139:"Priced in OKB · auto-refresh",k140:"Slippage Mode",k141:"Swap guard",k142:"Factory pairs",k143:"Built-in",k144:"Built-in + custom",k145:"Balance",k146:"＋ Add Liquidity",k147:"XPRS Dividends",k148:"hold & earn XPR",k149:"connect to view",k150:"Show more",k151:"items",k152:"Buy on ignix",k153:"OKX Market",k154:" · creating pools one by one",k155:"Native gas",k156:"X Layer native gas",k157:"Native gas",k158:"Just updated",k159:"Staking Pools",k160:"X Layer tradable xStock",k161:"Pool",k162:"dividend XPR",k163:"reward rate from input above",k164:"Click a contract card to copy · ↗ view on-chain source",k165:"XPower · Stock-backed Swap & DeFi — xStock 1:1 real-stock-backed assets · constant-product AMM · staking mining",k165:"Stock-backed Swap & DeFi — xStock 1:1 real-stock-backed assets · constant-product AMM · staking mining",};
+const L_ZH={swap:"兑换",pool:"流动性",farm:"质押",assets:"资产",allpairs:"全部交易对",addast:"添加资产",live:"已发盘 · 合约已部署",lbload:"连接钱包后加载全部交易对…",auth:"授权管理",alarm:"价格提醒",sharec:"项目已发盘",safew:"DeFi 实验产品 · 合约未经审计 · 请核对地址后交易",k101:"通过分享链接进入 · 合约配置已自动载入",k102:"质押池",k103:"奖励代币",k104:"按秒释放",k105:"我的地址",k106:"挖矿中",k107:"展开操作",k108:"我的质押",k109:"待领取",k110:"钱包余额",k111:"矿池奖励 XPR · 可分余额",k112:"内置资产名录",k113:"已配置地址",k114:"查看 ↗",k115:"复制",k116:"移除",k117:"点击复制",k118:"— 连接查看",k119:"奖励高→低",k120:"默认",k121:"XPR 池余额",k122:"Staking 持有",k123:"个可交易 xStock：符号 / 名称 / 地址",k124:"搜索",k125:"已连接",k126:"未连接",k127:"全部",k128:"交易对",k129:"区块浏览器查看",sell:"卖出",buy:"买入",slipsafe:"滑点保护",slipdesc:"滑点 = 成交价相对报价的最大允许偏移；超出则交易自动回滚保护",rpcdown:"RPC 节点暂不可用 · 数据读取可能失败，正在自动重试 — 请检查网络",k03:"连接钱包",k04:"当前网络不是 X Layer（chainId 196）—— 兑换 / 添加流动性 / 质押均无法正常提交",k05:"切换到 X Layer",k07:"重试",k08:"兑换",k10:"自定义",k11:"应用",k14:"选择代币",k15:"点击选择",k17:"⇅ 反向",k18:"最少获得",k19:"池储备",k20:"交易费",k21:"0.3% → 流动池",k22:"滑点",k23:"价格由池内储备实时决定 · 首次兑换自动创建交易对",k24:"Pool · 流动性池",k25:"添加 / 移除双币流动性，赚取 0.3% 兑换手续费",k26:"同步中…",k27:"刷新",k28:"配置",k29:"添加流动性",k30:"移除流动性",k31:"代币 A",k32:"选择",k33:"按当前价格填充",k34:"代币 B",k35:"池状态",k36:"你的份额",k37:"我的 LP",k38:"份额与 LP",k39:"连接钱包查看",k40:"交易对",k41:"选择资产",k42:"移除比例",k43:"预计收到",k44:"我的持仓",k45:"连接钱包并添加流动性后显示持仓",k46:"全部交易对",k47:"连接钱包后加载全部交易对…",k48:"Farm · 质押挖矿",k49:"质押 xStock 资产或 LP 凭证，按份额每秒获得 XPR 奖励",k50:"矿池管理 · owner",k51:"创建质押池",k52:"质押资产",k53:"支持 XPR / OKB / 全部 xStock 股票资产 · XLP 池凭证已自动列出（免粘贴）",k54:"每秒奖励",k55:"年化 ≈ — XPR",k56:"注入矿池奖励",k57:"注入数量",k58:"可用：—",k59:"注入奖励",k60:"一键创建推荐池",k61:"已配置地址 0 个 · 先到「资产」页粘贴 xStock 合约地址，再批量建池",k62:"资产 · 我的持仓",k63:"xStock 股票资产 / XPR / LP / 质押明细",k64:"我的余额",k65:"连接钱包后显示余额",k66:"xStock 资产名录 · 已内置",k67:" 个可交易（区块浏览器 xLayer 收录）",k68:"添加资产",k69:"全部",k70:"持有",k71:"收藏",k72:"分红币",k73:"▦ 网格",k74:"≡ 列表",k75:"钱包内其他代币",k76:"自动扫描钱包收币记录发现的清单外 ERC20 · 每 5 分钟刷新 · 余额大于 0 才展示",k77:"+ 添加自定义资产",k78:"名称 / 符号",k79:"ERC20 合约地址",k80:"添加",k81:"连接钱包后自动读取该地址余额 · 支持 XLayer 上任意 ERC20（含 XLP 凭证）",k82:"授权管理",k83:"查看 DApp 对 Router 的授权额度 · 可一键撤销（approve 0）· 撤销后下次交易会自动重新授权",k84:"撤销全部授权",k85:"完成",k86:"价格提醒",k87:"以 OKB 计价 · 每 20 秒轮询 · 触发时站内提示 + 浏览器通知（需授权）",k88:"代币",k89:"目标价（OKB）",k90:"方向",k91:"高于",k92:"低于",k93:"提醒为本地浏览器记录 · 页面需保持打开才会触发",k94:"确认交易",k95:"取消",k96:"确认",k97:"操作队列",k98:"终止",k99:"重试失败",k100:"收起",k130:"份合约",k132:"总质押",k136:"已暂停",k137:"池手续费",k138:"全部归 LP",k139:"OKB 计价 · 自动刷新",k140:"滑点模式",k141:"Swap 保护",k142:"Factory 登记",k143:"内置资产",k144:"内置 + 自定义",k145:"余额",k146:"＋ 去添加流动性",k147:"XPRS 分红",k148:"持币分红 XPR",k149:"连接钱包查看分红",k150:"显示更多",k151:"项",k152:"ignix 购买",k153:"OKX 行情",k154:"个 · 将逐个创建质押池",k155:"原生 Gas",k156:"X Layer 原生 Gas 币",k157:"原生 Gas 币",k158:"刚刚更新",k159:"Staking 池",k160:"X Layer 可交易 xStock",k161:"池",k162:"分红 XPR",k163:"奖励速率取上方输入",k164:"点击合约卡复制 · 右侧 ↗ 查看链上源码",k165:"XPower · 股票资产 Swap & DeFi — xStock 1:1 真实股票背书资产 · 恒定乘积 AMM · 质押挖矿",k165:"股票资产 Swap & DeFi — xStock 1:1 真实股票背书资产 · 恒定乘积 AMM · 质押挖矿",k166:"年",k167:"年化 ≈ ",k168:"Factory 交易对工厂",k169:"Router 路由",k170:"Staking 矿池",k171:"XPR 平台奖励币",k172:"XPRS 分红币",k173:"合约地址来自分享链接 / 项目官方配置 · 请核对后交易。本项目为 DeFi 实验性产品，合约未经第三方审计，请仅投入可承受损失的资金。",k174:"个",k175:"合约",k176:"LP 合约",k177:"一键起盘 · 部署合约 + OKB × xStock 组 LP",k178:"一键起盘：部署合约 → 组 LP 交易对 → 质押池 → 冲入奖励",k179:"s 前",k180:"m 前",};
+const L_EN={swap:"Swap",pool:"Liquidity",farm:"Farm",assets:"Assets",allpairs:"All Pairs",addast:"Add Asset",live:"LIVE · Contracts Deployed",lbload:"Connect wallet to load all pairs…",auth:"Token Approval",alarm:"Price Alerts",sharec:"Project LIVE",safew:"Experimental DeFi · Contracts unaudited · Verify addresses before trading",k101:"Via share link · contracts auto-loaded",k102:"Staking Pools",k103:"Reward Token",k104:"Per Second",k105:"My Address",k106:"Mining",k107:"Expand",k108:"My Stake",k109:"Pending",k110:"Wallet Bal",k111:"Pool Rewards XPR · Available",k112:"Built-in Assets",k113:"Configured",k114:"View ↗",k115:"Copy",k116:"Remove",k117:"Click to copy",k118:"— connect to view",k119:"APR high→low",k120:"Default",k121:"XPR Pool Bal",k122:"Staking Held",k123:"tradable xStock: symbol / name / address",k124:"Search",k125:"Connected",k126:"Not connected",k127:"All",k128:"Pair",k129:"Explorer",sell:"Sell",buy:"Buy",slipsafe:"Slippage Protection",slipdesc:"Slippage = max allowed deviation from quoted price; trade auto-reverts if exceeded",rpcdown:"RPC nodes unavailable · data reads may fail — retrying automatically, check your network",k03:"Connect Wallet",k04:"Not on X Layer (chainId 196) — Swap / Add Liquidity / Stake won't submit",k05:"Switch to X Layer",k07:"Retry",k08:"Swap",k10:"Custom",k11:"Apply",k14:"Select Token",k15:"Tap to select",k17:"⇅ Reverse",k18:"Minimum received",k19:"Pool reserve",k20:"Fee",k21:"0.3% → LP pool",k22:"Slippage",k23:"Price set by pool reserves · first swap auto-creates the pair",k24:"Pool · Liquidity",k25:"Add / remove dual-token liquidity, earn 0.3% swap fees",k26:"Syncing…",k27:"Refresh",k28:"Config",k29:"Add Liquidity",k30:"Remove Liquidity",k31:"Token A",k32:"Select",k33:"Fill at current price",k34:"Token B",k35:"Pool status",k36:"Your share",k37:"My LP",k38:"Share & LP",k39:"Connect to view",k40:"Pair",k41:"Select asset",k42:"Remove %",k43:"Estimated receive",k44:"My Positions",k45:"Connect & add liquidity to see positions",k46:"All Pairs",k47:"Connect wallet to load all pairs…",k48:"Farm · Staking",k49:"Stake xStock or LP tokens to earn XPR per second by share",k50:"Pool Admin · Owner",k51:"Create Staking Pool",k52:"Stake Asset",k53:"XPR / OKB / all xStock supported · XLP tokens auto-listed",k54:"Reward / sec",k55:"APR ≈ — XPR",k56:"Deposit Pool Rewards",k57:"Amount",k58:"Available: —",k59:"Deposit Rewards",k60:"One-click Create Pools",k61:"0 configured · paste xStock addresses in Assets first",k62:"Assets · My Portfolio",k63:"xStock / XPR / LP / staking",k64:"My Balance",k65:"Connect wallet to view balance",k66:"xStock Assets · built-in",k67:" tradable (XLayer explorer)",k68:"Add Asset",k69:"All",k70:"Held",k71:"Favorites",k72:"Dividend",k73:"▦ Grid",k74:"≡ List",k75:"Other wallet tokens",k76:"ERC20 found in wallet history · refresh 5min · shown if balance > 0",k77:"+ Add Custom Asset",k78:"Name / Symbol",k79:"ERC20 Contract",k80:"Add",k81:"Reads balance after connect · any XLayer ERC20 (incl. XLP)",k82:"Token Approval",k83:"Check Router allowance · revoke in one click (approve 0)",k84:"Revoke All",k85:"Done",k86:"Price Alerts",k87:"Priced in OKB · polls every 20s · in-app + browser notify",k88:"Token",k89:"Target (OKB)",k90:"Direction",k91:"Above",k92:"Below",k93:"Local browser alerts · page must stay open",k94:"Confirm Trade",k95:"Cancel",k96:"Confirm",k97:"Tx Queue",k98:"Stop",k99:"Retry Failed",k100:"Collapse",k130:"Contracts",k132:"Total Staked",k136:"Paused",k137:"Pool Fee",k138:"All to LP",k139:"Priced in OKB · auto-refresh",k140:"Slippage Mode",k141:"Swap guard",k142:"Factory pairs",k143:"Built-in",k144:"Built-in + custom",k145:"Balance",k146:"＋ Add Liquidity",k147:"XPRS Dividends",k148:"hold & earn XPR",k149:"connect to view",k150:"Show more",k151:"items",k152:"Buy on ignix",k153:"OKX Market",k154:" · creating pools one by one",k155:"Native gas",k156:"X Layer native gas",k157:"Native gas",k158:"Just updated",k159:"Staking Pools",k160:"X Layer tradable xStock",k161:"Pool",k162:"dividend XPR",k163:"reward rate from input above",k164:"Click a contract card to copy · ↗ view on-chain source",k165:"XPower · Stock-backed Swap & DeFi — xStock 1:1 real-stock-backed assets · constant-product AMM · staking mining",k165:"Stock-backed Swap & DeFi — xStock 1:1 real-stock-backed assets · constant-product AMM · staking mining",k166:"yr",k167:"APR ≈ ",k168:"Pair Factory",k169:"Router",k170:"Staking",k171:"XPR",k172:"XPRS",k173:"Contract addresses come from the share link / project official config · verify before trading. Experimental DeFi product · contracts unaudited · only risk what you can afford.",k174:"pairs",k175:"Contract",k176:"LP contract",k177:"One-click Launch · deploy contracts + OKB × xStock LP pair",k178:"One-click Launch: deploy contracts → pair LP → staking pools → inject rewards",k179:"s ago",k180:"m ago",};
 function T(k){const d=LANG==="en"?L_EN:L_ZH;return d[k]||L_ZH[k]||k;}
-function dispName(a){if(LANG!=="en")return a.name||"";const EN={OKB:"OKB · X Layer native gas",XPR:"XPR · platform reward",XPRS:"XPRS · dividend coin"};const s=(a.sym||"").toUpperCase();if(EN[s])return EN[s];const i=(a.name||"").indexOf(" · ");return i>0?(a.name||"").slice(i+3):(a.name||"");}
+function dispName(a){if(LANG!=="en")return a.name||"";const EN={OKB:"OKB · X Layer native gas",XPR:"XPR · platform reward",XPRS:"XPRS · dividend coin"};const s=(a.sym||"").toUpperCase();if(EN[s])return EN[s];const i=(a.name||"").indexOf(" · ");if(i>0)return (a.name||"").slice(i+3);if(/[\u4e00-\u9fff]/.test(a.name||""))return a.sym||"?";return a.name||"";}
 function buildNav(){
   const def=[["swap",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg>',"swap"],["pool",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg>',"pool"],["farm",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg>',"farm"],["assets",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg>',"assets"]];
   $("nav").innerHTML=def.map(([v,ic,k])=>`<div class="n" data-v="${v}" onclick="go('${v}')">${ic}${T(k)}</div>`).join("");
@@ -3665,7 +3674,7 @@ buildTab();
 applyLang();
   route();
   loadRemoteCfg();
-  setTimeout(applyLang,600);
+  let langT=setInterval(applyLang,1200);setTimeout(()=>clearInterval(langT),15000);
   setTimeout(()=>{if(!rpcProbed){rpcProbed=true;probeRPCs();}},1200);
   setInterval(renderSyncTags,30000);
   window.addEventListener("hashchange",route);
