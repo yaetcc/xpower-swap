@@ -864,6 +864,15 @@ const OFFICIAL_XSTOCK={
 };
 /* XPRS 分红合约标准接口：XPRS 持币 → 按持仓比例累积 XPR 分红 → 手动 claim */
 const DIV_ABI=["function userPending(address) view returns (uint256)","function claim() returns (uint256)","function stakedToken() view returns (address)","function rewardToken() view returns (address)","function totalStaked() view returns (uint256)","function rewardPerSecond() view returns (uint256)","function rewardBalance() view returns (uint256)"];
+/* Multicall3 聚合读取：一批 RPC 请求并行读取多条链上数据 */
+const MC3="0xcA11bde05977b3631167028862bE2a173976CA11";
+const MC3_ABI=["function aggregate3(tuple(address target,bytes callData)[] calls) payable returns (tuple(bool success,bytes returnData)[])"];
+async function mcBatch(p,ct,frag,argsList){
+  const mc=new ethers.Contract(MC3,MC3_ABI,p);
+  const calls=argsList.map(a=>({target:ct.target,callData:ct.interface.encodeFunctionData(frag,a)}));
+  const res=await mc.aggregate3(calls);
+  return res.map((r,i)=>r.success?ct.interface.decodeFunctionResult(frag,r.returnData):null);
+}
 function setCfgF(k,v){
   v=(v||"").trim();
   cfg[k]=isAddr(v)?v.toLowerCase():(v?v:"");
@@ -913,7 +922,7 @@ function probeRPCs(){
   }).catch(()=>{});
 }
 /* 并发读取（限制并发数，避免 RPC 限流） */
-async function mapLimit(arr,n,fn){const out=new Array(arr.length);let i=0;async function w(){while(i<arr.length){const j=i++;out[j]=await fn(arr[j]);}}await Promise.all(Array.from({length:Math.min(n,arr.length)},w));return out;}
+async function mapLimit(arr,n,fn){const out=new Array(arr.length);let i=0;async function w(){while(i<arr.length){const j=i++;out[j]=await fn(arr[j],j);}}await Promise.all(Array.from({length:Math.min(n,arr.length)},w));return out;}
 function withRPC(fn){return new Promise((res,rej)=>{
   if(!rpcProbed){rpcProbed=true;probeRPCs();}
   let t=0,round=0;const go=()=>{t++;
@@ -1728,14 +1737,20 @@ async function renderFarm(){
             pairs.forEach(x=>{if(x)lpMap[x[0]]=x[1];});
           }catch(e){}
         }
-        const infos=await mapLimit(Array.from({length:Number(len)},(_,i)=>i),4,async i=>{
-          const info=await st.poolInfo(i);
+        const infos=await (async()=>{
+          try{
+            const mr=await mcBatch(p,st,"poolInfo",Array.from({length:Number(len)},(_,i)=>[i]));
+            if(mr&&mr.length===Number(len)&&mr.every(x=>x))return mr;
+          }catch(e){}
+          return await mapLimit(Array.from({length:Number(len)},(_,i)=>i),4,async i=>st.poolInfo(i));
+        })();
+        const out=infos.map((info,i)=>{
           const known=XSTOCKS.find(x=>x.addr&&x.addr.toLowerCase()===info[0].toLowerCase());
           let meta=known?{sym:known.sym,name:known.name,dec:18,logo:known.logo}:tokenCache[info[0]];
           if(!meta){
             const tk=new ethers.Contract(info[0],ERC20_ABI,p);
-            const [sym,nm,dc]=await Promise.all([tk.symbol().catch(()=>"?"),tk.name().catch(()=>"?"),tk.decimals().catch(()=>18)]);
-            meta={sym,name:nm,dec:dc};
+            meta={sym:"?",name:"?",dec:18};
+            Promise.all([tk.symbol().catch(()=>"?"),tk.name().catch(()=>"?"),tk.decimals().catch(()=>18)]).then(([sym,nm,dc])=>{meta.sym=sym;meta.name=nm;meta.dec=dc;});
             if(info[0].toLowerCase()===WOKB_ADDR){meta.sym="OKB";meta.nat=1;}
             if(cfg.xstork&&info[0].toLowerCase()===cfg.xstork.toLowerCase()){meta.sym="XPR";meta.logo=XPR_LOGO;}
           }
@@ -1745,7 +1760,7 @@ async function renderFarm(){
           const lpLg=lpObj?(lpObj.t0.nat&&!lpObj.t1.nat)?lpObj.t1:(lpObj.t1.nat&&!lpObj.t0.nat)?lpObj.t0:lpObj.t0:null;
           return {pid:i,tok:info[0],sym:meta.sym,name:meta.name,dec:Number(meta.dec),rate:Number(info[1]),total:Number(info[4]),active:info[5],logo:meta.logo,lp:lpObj,lpLg};
         });
-        return infos;
+        return out;
       });
       try{sessionStorage.setItem(_ck,JSON.stringify({t:_now,data}));}catch(e){}
     }catch(e){el.innerHTML=`<div class="empty">读取失败：${esc(e.message)}<br><br><button class="btn ghost sm" onclick="renderFarm()">重试</button></div>`;return;}
@@ -1788,9 +1803,15 @@ async function renderFarm(){
     if(walletAddr){
       withRPC(async p=>{
         const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
-        await mapLimit(data,4,async pg=>{
-          const u=await st.userInfo(pg.pid,walletAddr);
-          const pend=await st.pendingReward(pg.pid,walletAddr);
+        const args=data.map(d=>[d.pid,walletAddr]);
+        let us=null,pds=null;
+        try{
+          const [ru,rp]=await Promise.all([mcBatch(p,st,"userInfo",args),mcBatch(p,st,"pendingReward",args)]);
+          if(ru&&ru.length===data.length&&ru.every(x=>x)&&rp&&rp.length===data.length&&rp.every(x=>x)){us=ru;pds=rp;}
+        }catch(e){}
+        await mapLimit(data,4,async (pg,i)=>{
+          const u=us&&us[i]?us[i]:await st.userInfo(pg.pid,walletAddr);
+          const pend=pds&&pds[i]?pds[i]:await st.pendingReward(pg.pid,walletAddr);
           const e1=$("myStk"+pg.pid),e2=$("pend"+pg.pid),e3=$("wbal"+pg.pid);
           if(e1)e1.textContent=fmt(fromWei(u[0],pg.dec))+" "+pg.sym;
           if(u[0]>0n){const pc=$("myStk"+pg.pid);if(pc)pc.closest(".poolcard").dataset.mine="1";}
