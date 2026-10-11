@@ -1209,9 +1209,8 @@ function walletClick(){
   setTimeout(()=>{document.addEventListener("click",function h(e){if(!e.target.closest("#walletMenu")&&!e.target.closest("#wbtn")){const mm=$("walletMenu");if(mm)mm.style.display="none";}document.removeEventListener("click",h);});},0);
 }
 function disconnectWallet(){
-  walletAddr=null;chainOk=true;updateChainWarn();
-  const wb=$("wbtn"),wt=$("wbtnTxt");
-  if(wb)wb.classList.remove("ok");if(wt)wt.textContent="连接钱包";
+  walletAddr=null;chainOk=true;
+  applyWalletUI();
   const hb=$("hdrBal");if(hb){hb.style.display="none";hb.textContent="";}
   const mm=$("walletMenu");if(mm)mm.style.display="none";
   toast("已断开连接","ok");refreshAll();
@@ -1237,21 +1236,31 @@ async function connectWallet(){
     walletAddr=acc[0].toLowerCase();
     const ch=await window.ethereum.request({method:"eth_chainId"});
     chainOk=parseInt(ch,16)===CHAIN_ID;
-    updateChainWarn();
+    applyWalletUI();
     if(!chainOk){toast("当前网络不是 X Layer，请切换网络","err");}
-    $("wbtnTxt").textContent=shortAddr(walletAddr);
-    $("wbtn").classList.add("ok");
     refreshAll();
     loadHdrBal();
     startAutoRefresh();
   }catch(e){toast("连接失败："+errMsg(e),"err");}
-  finally{wConnectBusy=false;if(wb)wb.classList.remove("busy");if(wt)wt.textContent=walletAddr?shortAddr(walletAddr):"连接钱包";}
+  finally{wConnectBusy=false;if(wb)wb.classList.remove("busy");applyWalletUI();}
+}
+function applyWalletUI(){
+  const wb=$("wbtn");if(wb)wb.classList.toggle("ok",!!walletAddr);
+  const wt=$("wbtnTxt");if(wt)wt.textContent=walletAddr?shortAddr(walletAddr):"连接钱包";
+  updateChainWarn();
 }
 function updateChainWarn(){
   const e=$("chainWarn");if(e)e.style.display=(walletAddr&&!chainOk)?"flex":"none";
 }
 if(window.ethereum&&window.ethereum.on){
-  window.ethereum.on("accountsChanged",()=>{walletAddr=null;chainOk=true;updateChainWarn();$("wbtnTxt").textContent="连接钱包";$("wbtn").classList.remove("ok");const hb=$("hdrBal");if(hb){hb.style.display="none";hb.textContent="";}refreshAll();});
+  /* accountsChanged 必须按事件参数处理：带地址=切换账户（更新），空数组=真正断开（清空）。
+     无条件清空会让 OKX 钱包初始化/切链广播时误杀已连接状态，页面显示「连接钱包」 */
+  window.ethereum.on("accountsChanged",accs=>{
+    const hb=$("hdrBal");if(hb){hb.style.display="none";hb.textContent="";}
+    if(accs&&accs.length){walletAddr=accs[0].toLowerCase();}
+    else{walletAddr=null;chainOk=true;}
+    applyWalletUI();refreshAll();loadHdrBal();startAutoRefresh();
+  });
   window.ethereum.on("chainChanged",()=>connectWallet());
 }
 /* 头部钱包 OKB 余额（连接后显示） */
@@ -2785,7 +2794,14 @@ function initSlip(){
 
 /* ============ 初始化 ============ */
 window.addEventListener("load",()=>{
-  if(window.ethereum)connectWallet().catch(()=>{});
+  /* 静默恢复已授权连接（eth_accounts 不弹窗）：OKX 内嵌浏览器/已授权钱包刷新后自动恢复，
+     未授权则保持「连接钱包」按钮，避免 eth_requestAccounts 在加载时打扰 */
+  if(window.ethereum){
+    window.ethereum.request({method:"eth_accounts"}).then(a=>{
+      if(a&&a[0])walletAddr=a[0].toLowerCase();
+      return window.ethereum.request({method:"eth_chainId"}).then(ch=>{chainOk=parseInt(ch,16)===CHAIN_ID;});
+    }).then(()=>{applyWalletUI();refreshAll();loadHdrBal();startAutoRefresh();}).catch(()=>{applyWalletUI();});
+  }
   renderAssetList();
   initSlip();
   const okbDef=XSTOCKS.find(x=>x.nat);if(okbDef&&!pA)pA=okbDef;
