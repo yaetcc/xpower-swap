@@ -1134,7 +1134,7 @@ async function launchAll(){
 
 /* ============ 资产名录 ============ */
 function saveAssets(){localStorage.setItem(STORAGE+"assets",JSON.stringify(assets));}
-function removeAsset(a){assets=assets.filter(x=>x.addr.toLowerCase()!==a.toLowerCase());saveAssets();renderAssetList();}
+function removeAsset(a){assets=assets.filter(x=>x.addr.toLowerCase()!==a.toLowerCase());saveAssets();renderAssetList();renderStats();}
 function renderAssetList(){
   const el=$("assetList");if(!el)return;
   const tit=$("assetCntTitle");if(tit)tit.textContent=XSTOCKS.length;
@@ -2275,6 +2275,12 @@ async function renderStats(){
       if(el)el.textContent=fmt(fromWei(xb,18))+" XPR";
     }).catch(()=>{});
   }
+  const av=$("assetStats");
+  if(av)av.innerHTML=`
+    <div class="stat"><div class="k">内置资产</div><div class="v">${XSTOCKS.length}</div><div class="d">X Layer 可交易 xStock</div></div>
+    <div class="stat"><div class="k">已配置地址</div><div class="v o">${assets.length+XSTOCKS.filter(x=>x.addr).length}</div><div class="d">内置 + 自定义</div></div>
+    <div class="stat"><div class="k">交易对</div><div class="v c">${d.pairs}</div><div class="d">Factory 登记</div></div>
+    <div class="stat"><div class="k">我的地址</div><div class="v g" style="font-size:15px">${walletAddr?`<span class="cp" data-copy="${walletAddr}" title="点击复制">${shortAddr(walletAddr)}</span>`:"—"}</div><div class="d">${walletAddr?"已连接":"未连接"}</div></div>`;
 }
 
 /* ============ 队列 ============ */
