@@ -1041,11 +1041,15 @@ function fromWei(v,d){return Number(v)/10**(d==null?18:d);}
 function toWei(n,d){return BigInt(Math.round(n*10**(d==null?18:d)));}
 function isAddr(s){return/^0x[0-9a-fA-F]{40}$/.test(String(s||"").trim());}
 function deadline(){return Math.floor(Date.now()/1000)+1800;}
-function pickProvider(){return new ethers.JsonRpcProvider(RPCS[rpcIdx],CHAIN_ID,{staticNetwork:true});}
+function pickProvider(){const p=new ethers.JsonRpcProvider(RPCS[rpcIdx],CHAIN_ID,{staticNetwork:true});try{p.getFetchRequest().timeout=6000;}catch(e){}return p;}
 function rpcHost(u){try{return new URL(u).host;}catch(e){return u;}}
-function probeRPCs(){
+const rpcFail={};let lastProbeTs=0;
+function probeRPCs(force){
+  if(!force&&Date.now()-lastProbeTs<30000)return;
+  lastProbeTs=Date.now();
   Promise.all(RPCS.map(u=>new Promise(r=>{
     const p=new ethers.JsonRpcProvider(u,CHAIN_ID,{staticNetwork:true});
+    try{p.getFetchRequest().timeout=2500;}catch(e){}
     const t0=Date.now();
     Promise.race([p.getBlockNumber(),new Promise(res=>setTimeout(()=>res(-1),2500))])
       .then(bn=>r({u,bn,ms:Date.now()-t0}))
@@ -1057,6 +1061,7 @@ function probeRPCs(){
     RPCS.forEach(u=>{if(!order.includes(u))order.push(u);});
     RPCS.splice(0,RPCS.length,...order);
     rpcIdx=0;
+    Object.keys(rpcFail).forEach(k=>delete rpcFail[k]);
   }).catch(()=>{});
 }
 /* 并发读取（限制并发数，避免 RPC 限流） */
@@ -1064,13 +1069,19 @@ async function mapLimit(arr,n,fn){const out=new Array(arr.length);let i=0;async 
 function withRPC(fn){return new Promise((res,rej)=>{
   if(!rpcProbed){rpcProbed=true;probeRPCs();}
   let t=0,round=0;const go=()=>{t++;
-    Promise.race([fn(pickProvider()),new Promise((_,r)=>setTimeout(()=>r(new Error("RPC timeout")),10000))]).then(res).catch(e=>{
-      if(t>=RPCS.length&&round>=1)return rej(e);
-      if(t>=RPCS.length){round++;t=0;}
-      rpcIdx=(rpcIdx+1)%RPCS.length;
+    Promise.race([fn(pickProvider()),new Promise((_,r)=>setTimeout(()=>r(new Error("RPC timeout")),9000))]).then(res).catch(e=>{
+      rpcFail[rpcIdx]=(rpcFail[rpcIdx]||0)+1;
+      if(rpcFail[rpcIdx]>=2){
+        const bad=RPCS.splice(rpcIdx,1)[0];RPCS.push(bad);rpcIdx=0;Object.keys(rpcFail).forEach(k=>delete rpcFail[k]);
+      }else{rpcIdx=(rpcIdx+1)%RPCS.length;}
+      if(round>=1&&t>=RPCS.length){
+        if(Date.now()-lastProbeTs>30000)probeRPCs(true);
+        return rej(e);
+      }
+      if(t>=RPCS.length){round++;t=0;rpcIdx=0;}
       const now=Date.now();
-      if(now-lastRpcToast>8000){lastRpcToast=now;toast("RPC 波动，已自动切换节点","warn");}
-      setTimeout(go,300);
+      if(now-lastRpcToast>8000){lastRpcToast=now;toast("RPC 波动，已切换 "+rpcHost(RPCS[rpcIdx]||""),"warn");}
+      setTimeout(go,250);
     });
   };go();});}
 async function getSigner(){if(!window.ethereum)throw new Error("未检测到钱包");return new ethers.BrowserProvider(window.ethereum).getSigner();}
@@ -2570,6 +2581,7 @@ window.addEventListener("load",()=>{
 $("nav").innerHTML=[["swap",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg>',"兑换"],["pool",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg>',"流动性"],["farm",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg>',"质押"],["assets",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg>',"资产"]].map(([v,ic,zh])=>`<div class="n" data-v="${v}" onclick="go('${v}')">${ic}${zh}</div>`).join("");
   route();
   loadRemoteCfg();
+  setTimeout(()=>{if(!rpcProbed){rpcProbed=true;probeRPCs();}},1200);
   window.addEventListener("hashchange",route);
   if(needCfg())setTimeout(()=>{if(needCfg())toast("当前为未发盘状态 · 官方入口见项目官方链接 / 联系运营获取","warn");},600);
 
