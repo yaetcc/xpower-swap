@@ -59,6 +59,9 @@ header{position:sticky;top:0;z-index:90;background:#fff;border-bottom:1px solid 
 .wbtn.ok{border-color:var(--line2)}
 .chainpill{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:var(--r);border:1px solid var(--line);font-size:11px;color:var(--dim);background:#fff;font-weight:700;flex-shrink:0}
 .chainpill i{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.chainpill.warn i{background:#f59e0b}
+.chainpill.down i{background:#ef4444;animation:pillPulse 1.2s ease-in-out infinite}
+.chainpill.warn i,.chainpill.down i{box-shadow:none}
 /* ===== 主区 ===== */
 main{width:100%;padding:28px 26px 84px}
 .view{display:none}
@@ -105,6 +108,14 @@ main{width:100%;padding:28px 26px 84px}
 .swap-card{padding:26px 24px;background:#fff;border:1px solid var(--fg);border-radius:var(--r-lg);box-shadow:var(--shadow);position:relative}
 .swap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:8px}
 .swap-head b{font-size:20px;font-weight:800;letter-spacing:-.4px}
+.slip-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:20px;border:1px solid var(--line2);background:var(--card);color:var(--fg);cursor:pointer;font-size:12px;font-weight:800;font-family:var(--mono);transition:.15s;flex-shrink:0}
+.slip-btn:hover{border-color:var(--fg)}
+.slip-panel{position:absolute;right:24px;top:54px;z-index:30;width:250px;background:var(--card);border:1px solid var(--fg);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:14px 14px 12px}
+.slip-panel-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;color:var(--dim);margin-bottom:10px}
+.slip-x{cursor:pointer;color:var(--faint);font-size:11px;padding:2px;line-height:1}
+.slip-x:hover{color:var(--fg)}
+.slip-cus{color:var(--acc);cursor:pointer;border:1px dashed var(--acc-line);border-radius:6px;padding:3px 8px;box-sizing:border-box;font-size:11.5px;font-weight:700}
+.slip-desc{font-size:10.5px;color:var(--faint);margin-top:9px;line-height:1.5}
 .swap-row{display:flex;gap:10px;align-items:flex-end;margin-top:14px}
 .swap-row .amt{flex:1;min-width:0;position:relative}
 .swap-row .amt input{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;padding:12px 56px 12px 14px;border-radius:6px;letter-spacing:-.4px;background:#fff}
@@ -506,6 +517,12 @@ html[data-theme="dark"] .liq-swap svg{background:#f5f5f5;color:#0a0a0a}
 html[data-theme="dark"] .apy-ring::before{background:#101010}
 html[data-theme="dark"] .item:hover{background:#1a1a1a}
 html[data-theme="dark"] .chainpill{color:var(--gold)}
+html[data-theme="dark"] .slip-btn{background:#101010;border-color:rgba(255,255,255,.25);color:var(--fg)}
+html[data-theme="dark"] .slip-btn:hover{border-color:#f5f5f5}
+html[data-theme="dark"] .slip-panel{background:#101010;border-color:rgba(255,255,255,.4);box-shadow:0 12px 40px rgba(0,0,0,.6)}
+html[data-theme="dark"] .slip-cus{color:var(--acc)}
+html[data-theme="dark"] #rpcWarn,html[data-theme="dark"] #chainWarn{background:#1a1505;color:#eab308;border-bottom-color:#3d3210}
+html[data-theme="dark"] #rpcWarn button,html[data-theme="dark"] #chainWarn button{background:#d4a017;border-color:#d4a017;color:#0a0a0a}
 html[data-theme="dark"] .stat{background:#101010}
 html[data-theme="dark"] .stat:hover{background:#1a1a1a}
 html[data-theme="dark"] .stat::before{background:#f5f5f5}
@@ -730,6 +747,11 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
     <span>当前网络不是 X Layer（chainId 196）—— 兑换 / 添加流动性 / 质押均无法正常提交</span>
     <button class="btn sm" style="background:var(--acc-grad);color:#fff;border:none;font-weight:800" onclick="switchChain()">切换到 X Layer</button>
   </div>
+<div id="rpcWarn" style="display:none;align-items:center;justify-content:center;gap:8px;background:#fff;color:#b45309;font-size:13px;font-weight:600;padding:9px 16px;border-bottom:1px solid #d9b45b">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/></svg>
+    <span data-i18n="rpcdown">RPC 节点暂不可用 · 数据读取可能失败，正在自动重试 — 请检查网络</span>
+    <button class="btn sm" style="background:var(--acc-grad);color:#fff;border:none;font-weight:800" onclick="refreshAll()">重试</button>
+  </div>
   <div id="toasts"></div>
   <div id="walletMenu" class="wmenu" style="display:none"></div>
 
@@ -742,12 +764,17 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
           <b>兑换</b>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="badge x" id="swapDir" style="display:none">A → B</span>
-            <div class="seg" id="slipSeg"><div class="on" data-s="0.5">0.5%</div><div data-s="1">1%</div><div data-s="3">3%</div><div id="slipCus" style="color:var(--acc);cursor:pointer;border:1px dashed var(--acc-line);border-radius:8px;padding:3px 9px;box-sizing:border-box">自定义</div></div>
-            <div id="slipCustom" style="display:none;align-items:center;gap:8px;margin-top:8px"><input id="slipInput" type="number" step="0.1" min="0.01" max="10" placeholder="0.01–10" style="flex:1;min-width:0;font-family:var(--mono)"><button class="btn sm" onclick="applySlip()">应用</button></div>
+            <button class="slip-btn" id="slipBtn" onclick="toggleSlipPanel()" title="滑点设置 · 保护兑换价格"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><b id="slipBtnTxt">0.5%</b></button>
           </div>
         </div>
+        <div id="slipPanel" class="slip-panel" style="display:none">
+          <div class="slip-panel-head"><span data-i18n="slipsafe">滑点保护</span><span class="slip-x" onclick="toggleSlipPanel()" title="关闭">✕</span></div>
+          <div class="seg" id="slipSeg"><div class="on" data-s="0.1">0.1%</div><div data-s="0.5">0.5%</div><div data-s="1">1%</div><div data-s="3">3%</div><div id="slipCus" class="slip-cus">自定义</div></div>
+          <div id="slipCustom" style="display:none;align-items:center;gap:8px;margin-top:10px"><input id="slipInput" type="number" step="0.1" min="0.01" max="10" placeholder="0.01–10" style="flex:1;min-width:0;font-family:var(--mono)"><button class="btn sm" onclick="applySlip()">应用</button></div>
+          <div class="slip-desc" data-i18n="slipdesc">滑点 = 成交价相对报价的最大允许偏移；超出则交易自动回滚保护</div>
+        </div>
         <div class="amt-in">
-          <div class="amt-head"><span>从 · 卖出</span><span class="bal" id="fromBal"></span></div>
+          <div class="amt-head"><span data-i18n="sell">卖出</span><span class="bal" id="fromBal"></span></div>
           <div class="amt-body">
             <input id="inAmt" type="number" value="" min="0" placeholder="0.0" oninput="dqSwap()" onkeydown="if(event.key==='Enter')swapCta()">
             <div class="tokbtn" id="fromBtn" onclick="pickToken('from')"><span class="lg" id="fromLg">?</span><span><span class="nm2" id="fromNm">选择代币</span><span class="sub2" id="fromSub">点击选择</span></span><span class="caret">▼</span></div>
@@ -761,7 +788,7 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
         </div>
         <div class="arrow-mid"><button onclick="flipSwap()" title="交换方向">⇅</button></div>
         <div class="amt-in">
-          <div class="amt-head"><span>到 · 买入</span><span class="bal" id="toBal"></span></div>
+          <div class="amt-head"><span data-i18n="buy">买入</span><span class="bal" id="toBal"></span></div>
           <div class="amt-body">
             <input id="outAmt" type="text" readonly placeholder="0.0">
             <div class="tokbtn" id="toBtn" onclick="pickToken('to')"><span class="lg" id="toLg">?</span><span><span class="nm2" id="toNm">选择代币</span><span class="sub2" id="toSub">点击选择</span></span><span class="caret">▼</span></div>
@@ -1403,27 +1430,36 @@ function isAddr(s){return/^0x[0-9a-fA-F]{40}$/.test(String(s||"").trim());}
 function deadline(){return Math.floor(Date.now()/1000)+1800;}
 function pickProvider(){const p=new ethers.JsonRpcProvider(RPCS[rpcIdx],CHAIN_ID,{staticNetwork:true});try{p.getFetchRequest().timeout=6000;}catch(e){}return p;}
 function rpcHost(u){try{return new URL(u).host;}catch(e){return u;}}
-const rpcFail={};let lastProbeTs=0;
+const rpcFail={};let lastProbeTs=0,rpcFailCount=0;
 let rpcReady=false;
 function updateChainPill(){
   const c=$("chainPill");if(!c)return;
   c.classList.toggle("conn",rpcReady);
-  c.title=rpcReady?"当前节点 · "+rpcHost(RPCS[rpcIdx%RPCS.length]):"正在连接节点…";
+  c.classList.toggle("warn",!rpcReady&&rpcFailCount>0);
+  c.classList.toggle("down",!rpcReady&&rpcFailCount===0&&rpcProbed);
+  let tip="X Layer";
+  if(rpcReady)tip="当前节点 · "+rpcHost(RPCS[rpcIdx%RPCS.length])+(rpcFailCount>0?" · 已自动切换 "+rpcFailCount+" 次":"");
+  else if(rpcFailCount>0)tip="节点波动 · 已自动切换 "+rpcFailCount+" 次 · 当前 "+rpcHost(RPCS[rpcIdx%RPCS.length]);
+  else if(rpcProbed)tip="节点暂不可用 · 正在自动重试";
+  else tip="正在连接节点…";
+  c.title=tip;
 }
 function probeRPCs(force){
   if(!force&&Date.now()-lastProbeTs<30000)return;
   lastProbeTs=Date.now();
   updateChainPill();
   /* 预热官方主 RPC（固定 rpc.xlayer.tech），不做数组重排——主节点恒定最靠谱 */
-  try{const p=new ethers.JsonRpcProvider(RPCS[0],CHAIN_ID,{staticNetwork:true});try{p.getFetchRequest().timeout=2500;}catch(e){}p.getBlockNumber().then(()=>{rpcReady=true;updateChainPill();}).catch(()=>{});}catch(e){}
+  try{const p=new ethers.JsonRpcProvider(RPCS[0],CHAIN_ID,{staticNetwork:true});try{p.getFetchRequest().timeout=2500;}catch(e){}p.getBlockNumber().then(()=>{rpcReady=true;updateChainPill();hideRpcWarn();}).catch(()=>{});}catch(e){}
 }
+function showRpcWarn(){const w=$("rpcWarn");if(w)w.style.display="flex";}
+function hideRpcWarn(){const w=$("rpcWarn");if(w)w.style.display="none";}
 /* 并发读取（限制并发数，避免 RPC 限流） */
 async function mapLimit(arr,n,fn){const out=new Array(arr.length);let i=0;async function w(){while(i<arr.length){const j=i++;out[j]=await fn(arr[j],j);}}await Promise.all(Array.from({length:Math.min(n,arr.length)},w));return out;}
 function withRPC(fn){return new Promise((res,rej)=>{
   if(!rpcProbed){rpcProbed=true;probeRPCs();}
   let t=0,round=0,failSeq=0;const go=()=>{t++;
-    Promise.race([fn(pickProvider()),new Promise((_,r)=>setTimeout(()=>r(new Error("RPC timeout")),9000))]).then(res).catch(e=>{
-      failSeq++;
+    Promise.race([fn(pickProvider()),new Promise((_,r)=>setTimeout(()=>r(new Error("RPC timeout")),9000))]).then(v=>{hideRpcWarn();res(v);}).catch(e=>{
+      failSeq++;rpcFailCount++;
       rpcFail[rpcIdx]=(rpcFail[rpcIdx]||0)+1;
       if(rpcFail[rpcIdx]>=2){
         const bad=RPCS.splice(rpcIdx,1)[0];RPCS.push(bad);rpcIdx=0;Object.keys(rpcFail).forEach(k=>delete rpcFail[k]);
@@ -1431,11 +1467,11 @@ function withRPC(fn){return new Promise((res,rej)=>{
       updateChainPill();
       if(round>=1&&t>=RPCS.length){
         if(Date.now()-lastProbeTs>30000)probeRPCs(true);
+        showRpcWarn();
         return rej(e);
       }
       if(t>=RPCS.length){round++;t=0;rpcIdx=0;}
-      const now=Date.now();
-      if(failSeq>=4&&now-lastRpcToast>30000){lastRpcToast=now;toast("网络波动，已自动重试 · 请保持网络畅通","warn");}
+      /* 不再弹窗打断：波动状态由顶栏 chainPill 状态点(黄)展示 */
       setTimeout(go,250);
     });
   };go();});}
@@ -2945,7 +2981,7 @@ function copyAddr(a){
 async function renderAssets(){
   if(!walletAddr){$("assetStats").innerHTML="";$("balList").innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="big">◉</div>连接钱包后查看余额</div>`;return;}
   const balEl=$("balList");
-  balEl.innerHTML=`<div class="empty" style="grid-column:1/-1">查询余额中… <span id="balProg" style="color:var(--gold)"></span></div>`;
+  balEl.innerHTML=`<div class="skel-farm" style="grid-column:1/-1">${'<div class="skel-card"><div class="skel lg"></div><div class="skel w60"></div><div class="skel w40"></div><div class="skel w80"></div></div>'.repeat(6)}</div>`;
   try{
     /* 去重地址池：自定义 + 全量内置 + XPR + XPRS（OKB 原生币无合约地址，跳过） */
     const xs=XSTOCKS.filter(x=>x.addr&&!x.nat);
@@ -2972,7 +3008,7 @@ async function renderAssets(){
         /* 主路径：并行分批 MC3 —— ≤3 批同时发，每批完成即时推进进度（告别 0/N 卡死） */
         await withRPC(async p=>{
           const found2=await fetchBalsChunked(p,erc,todo,(d)=>{
-            const e=$("balProg");if(e)e.textContent=`${d}/${todo.length}`;
+            const e=$("balProg");if(e)e.textContent=`${d}/${todo.length} · ${Math.round(d/todo.length*100)}%`;
           });
           Object.assign(found,found2);
         });
@@ -2990,7 +3026,7 @@ async function renderAssets(){
               });
             }catch(e){}
             done+=chunk.length;
-            const e=$("balProg");if(e)e.textContent=total?`${done}/${total}`:"";
+            const e=$("balProg");if(e)e.textContent=total?`${done}/${total} · ${Math.round(done/total*100)}%`:"";
           }
         }));
       }
@@ -3287,8 +3323,8 @@ function renderCfgInfo(){
 
 /* ============ v29 专业改进：i18n / 分享 / 添加资产 / 交易对浏览器 / TVL / 价格影响 ============ */
 let LANG=(()=>{try{return localStorage.getItem(STORAGE+"lang")||"zh";}catch(e){return"zh";}})();
-const L_ZH={swap:"兑换",pool:"流动性",farm:"质押",assets:"资产",allpairs:"全部交易对",addast:"添加资产",live:"已发盘 · 合约已部署",lbload:"连接钱包后加载全部交易对…",auth:"授权管理",alarm:"价格提醒",sharec:"项目已发盘",safew:"DeFi 实验产品 · 合约未经审计 · 请核对地址后交易"};
-const L_EN={swap:"Swap",pool:"Liquidity",farm:"Farm",assets:"Assets",allpairs:"All Pairs",addast:"Add Asset",live:"LIVE · Contracts Deployed",lbload:"Connect wallet to load all pairs…",auth:"Token Approval",alarm:"Price Alerts",sharec:"Project LIVE",safew:"Experimental DeFi · Contracts unaudited · Verify addresses before trading"};
+const L_ZH={swap:"兑换",pool:"流动性",farm:"质押",assets:"资产",allpairs:"全部交易对",addast:"添加资产",live:"已发盘 · 合约已部署",lbload:"连接钱包后加载全部交易对…",auth:"授权管理",alarm:"价格提醒",sharec:"项目已发盘",safew:"DeFi 实验产品 · 合约未经审计 · 请核对地址后交易",sell:"卖出",buy:"买入",slipsafe:"滑点保护",slipdesc:"滑点 = 成交价相对报价的最大允许偏移；超出则交易自动回滚保护",rpcdown:"RPC 节点暂不可用 · 数据读取可能失败，正在自动重试 — 请检查网络"};
+const L_EN={swap:"Swap",pool:"Liquidity",farm:"Farm",assets:"Assets",allpairs:"All Pairs",addast:"Add Asset",live:"LIVE · Contracts Deployed",lbload:"Connect wallet to load all pairs…",auth:"Token Approval",alarm:"Price Alerts",sharec:"Project LIVE",safew:"Experimental DeFi · Contracts unaudited · Verify addresses before trading",sell:"Sell",buy:"Buy",slipsafe:"Slippage Protection",slipdesc:"Slippage = max allowed deviation from quoted price; trade auto-reverts if exceeded",rpcdown:"RPC nodes unavailable · data reads may fail — retrying automatically, check your network"};
 function T(k){const d=LANG==="en"?L_EN:L_ZH;return d[k]||L_ZH[k]||k;}
 function buildNav(){
   const def=[["swap",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8"/><path d="M17 8V20M17 20L13 16M17 20L21 16"/></svg>',"swap"],["pool",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 3v18M5 7l7 4 7-4"/></svg>',"pool"],["farm",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V10l6-5 6 5v10M12 15v5"/></svg>',"farm"],["assets",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg>',"assets"]];
@@ -3578,17 +3614,19 @@ function initSlip(){
   const seg=$("slipSeg");if(!seg)return;
   const sc=$("slipCustom"),si=$("slipInput");
   const hideSlipCustom=()=>{if(sc)sc.style.display="none";};
+  const syncSlipTxt=()=>{const t=$("slipTxt");if(t)t.textContent=(slipPct*100)+"%";const b=$("slipBtnTxt");if(b)b.textContent=(slipPct*100)+"%";};
   window.showSlipCustom=()=>{if(sc)sc.style.display="flex";if(si)setTimeout(()=>si.focus(),50);};
+  window.toggleSlipPanel=()=>{const p=$("slipPanel");if(!p)return;p.style.display=p.style.display==="none"?"block":"none";};
   window.applySlip=()=>{
     const v=parseFloat(si.value);
     if(!v||v<0.01||v>10){toast("滑点需在 0.01%–10% 之间","err");return;}
     slipPct=v/100;hideSlipCustom();
     seg.querySelectorAll("div").forEach(x=>x.classList.remove("on"));
-    const t=$("slipTxt");if(t)t.textContent=(slipPct*100)+"%";
+    syncSlipTxt();
     quoteSwap();renderStats();
   };
   seg.querySelectorAll("div").forEach(d=>{
-    d.onclick=()=>{if(d.id==="slipCus"){window.showSlipCustom();return;}hideSlipCustom();seg.querySelectorAll("div").forEach(x=>x.classList.remove("on"));d.classList.add("on");slipPct=Number(d.dataset.s)/100;const t=$("slipTxt");if(t)t.textContent=(slipPct*100)+"%";quoteSwap();renderStats();};
+    d.onclick=()=>{if(d.id==="slipCus"){window.showSlipCustom();return;}hideSlipCustom();seg.querySelectorAll("div").forEach(x=>x.classList.remove("on"));d.classList.add("on");slipPct=Number(d.dataset.s)/100;syncSlipTxt();quoteSwap();renderStats();const p=$("slipPanel");if(p)p.style.display="none";};
   });
 }
 
