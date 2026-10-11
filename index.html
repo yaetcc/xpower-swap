@@ -299,6 +299,15 @@ input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outl
 #view-farm .poolmeta .m .v{font-size:12.5px}
 #view-farm .poolacts{gap:6px}
 #view-farm .pmode{margin-bottom:6px}
+#view-farm .poolmeta{grid-template-columns:repeat(4,1fr)}
+.poolreward{display:flex;align-items:center;justify-content:space-between;gap:8px;background:linear-gradient(90deg,rgba(245,25,123,.07),rgba(255,154,61,.04));border:1px dashed rgba(245,25,123,.16);border-radius:10px;padding:6px 10px;margin-bottom:7px}
+.poolreward .k{font-size:10px;color:var(--faint);font-weight:700;letter-spacing:.2px}
+.poolreward .v{font-size:12px;font-weight:800;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--dim)}
+.poolacts{display:flex;flex-direction:column;gap:6px}
+#view-farm .pmode{width:auto;margin-bottom:0}
+.pmode{display:flex;gap:2px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:2px;width:100%}
+.act-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.act-btns .btn{padding:8px 0;font-size:12.5px}
 #view-farm .fa-card{padding:12px;gap:8px}
 #view-farm .fa-row{gap:5px}
 #view-farm .fa-hint{font-size:10.5px}
@@ -1787,17 +1796,19 @@ async function renderFarm(){
           <div class="m"><div class="k">我的质押</div><div class="v" id="myStk${p.pid}">—</div></div>
           <div class="m"><div class="k">待领取</div><div class="v" id="pend${p.pid}">—</div></div>
           <div class="m"><div class="k">钱包余额</div><div class="v" id="wbal${p.pid}">—</div></div>
-          <div class="m" style="grid-column:1/4"><div class="k">矿池奖励 XPR（可分余额）</div><div class="v" id="poolXpr${p.pid}">…</div></div>
         </div>
+        <div class="poolreward"><span class="k">矿池奖励 XPR · 可分余额</span><span class="v" id="poolXpr${p.pid}">…</span></div>
         <div class="poolacts">
           <div class="pmode">
             <button type="button" class="on" data-m="stake" onclick="setPMode(${p.pid},this)">质押</button>
             <button type="button" data-m="withdraw" onclick="setPMode(${p.pid},this)">提取</button>
           </div>
           <div class="stake-row"><input id="stkAmt${p.pid}" type="number" min="0" placeholder="质押数量" onkeydown="if(event.key==='Enter')farmAct(${p.pid})"><button type="button" class="mini-btn" onclick="maxStake(${p.pid})">MAX</button></div>
-          <button class="btn primary sm" id="farmActBtn${p.pid}" onclick="farmAct(${p.pid})">质押</button>
-          <button class="btn ghost sm" onclick="doWithdraw(${p.pid})">全部提取</button>
-          <button class="btn gold sm" id="claimBtn${p.pid}" onclick="doClaim(${p.pid})">领取</button>
+          <div class="act-btns">
+            <button class="btn primary sm" id="farmActBtn${p.pid}" onclick="farmAct(${p.pid})">质押</button>
+            <button class="btn ghost sm" onclick="doWithdraw(${p.pid})">全部提取</button>
+            <button class="btn gold sm" id="claimBtn${p.pid}" onclick="doClaim(${p.pid})">领取</button>
+          </div>
         </div>
       </div>`).join("");
     if(walletAddr){
@@ -1825,9 +1836,9 @@ async function renderFarm(){
           for(const pg of data){
             const ex=$("poolXpr"+pg.pid);
             if(!ex)continue;
-            if(poolXprBal<=0n){ex.innerHTML="0 XPR · <span class='badge-gold'>尚未注入</span>";continue;}
+            if(poolXprBal<=0n){ex.innerHTML="0 XPR · 尚未注入";continue;}
             const share=sumRate>0?poolXprBal*BigInt(pg.rate)/BigInt(sumRate):0n;
-            ex.innerHTML=`<span class="badge-ok">${fmt(fromWei(share,18))} XPR</span> <span style="font-size:10px;color:var(--faint)">本池 · 全池 ${fmt(fromWei(poolXprBal,18))} XPR 按速率占比</span>`;
+            ex.innerHTML=`<b style="color:var(--acc)">${fmt(fromWei(share,18))} XPR</b> <span style="opacity:.55">/ 全池 ${fmt(fromWei(poolXprBal,18))} XPR</span>`;
           }
         }
       }).catch(()=>{});
