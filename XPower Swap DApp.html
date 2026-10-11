@@ -716,6 +716,10 @@ let rpcProbed=false,lastRpcToast=0;
 const EXPLORER = "https://web3.okx.com/zh-hans/explorer/x-layer/evm/";
 const STORAGE = "xp4s_";
 const tokenCache = {};
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+const lpMetaCache=lsGet("xps_lpmeta")||{};
+const tkMetaCache=lsGet("xps_tkmeta")||{};
 let walletAddr=null, provider=null, rpcIdx=0;
 let pickCtx=null, slipPct=0.005;
 let sA=null,sB=null,pA=null,pB=null,pR=null,curView="swap";
@@ -1842,29 +1846,13 @@ async function renderFarm(){
   renderXprsDivCard();
   const _now=Date.now(),_ck="xps_pools_"+(cfg.staking||"").toLowerCase();
   let data=null;
-  try{const _j=JSON.parse(sessionStorage.getItem(_ck)||"null");if(_j&&_j.t>_now-90000&&Array.isArray(_j.data))data=_j.data;}catch(e){}
+  try{const _j=JSON.parse(sessionStorage.getItem(_ck)||"null");if(_j&&_j.t>_now-300000&&Array.isArray(_j.data))data=_j.data;}catch(e){}
   if(!data){
     el.innerHTML=`<div class="empty">读取质押池…</div>`;
     try{
       data=await withRPC(async p=>{
         const st=new ethers.Contract(cfg.staking,STAKING_ABI,p);
         const len=await st.poolLength();
-        const lpMap={};
-        if(cfg.factory){
-          try{
-            const fc=new ethers.Contract(cfg.factory,FACTORY_ABI,p);
-            const fl=Number(await fc.allPairsLength());
-            const pairs=await mapLimit(Array.from({length:fl},(_,j)=>j),4,async j=>{
-              try{
-                const pa=await fc.allPairs(j);
-                const pc=new ethers.Contract(pa,PAIR_ABI,p);
-                const [t0,t1]=await Promise.all([pc.token0(),pc.token1()]);
-                return [pa.toLowerCase(),{t0,t1}];
-              }catch(e){return null;}
-            });
-            pairs.forEach(x=>{if(x)lpMap[x[0]]=x[1];});
-          }catch(e){}
-        }
         const infos=await (async()=>{
           try{
             const mr=await mcBatch(p,st,"poolInfo",Array.from({length:Number(len)},(_,i)=>[i]));
@@ -1872,18 +1860,35 @@ async function renderFarm(){
           }catch(e){}
           return await mapLimit(Array.from({length:Number(len)},(_,i)=>i),4,async i=>st.poolInfo(i));
         })();
+        const lpAddrs=[...new Set(infos.map(i=>String(i[0]).toLowerCase()))];
+        const lpMap={};
+        const lpFresh=lpAddrs.filter(a=>!lpMetaCache[a]);
+        if(lpFresh.length){
+          await mapLimit(lpFresh,4,async a=>{
+            try{
+              const pc=new ethers.Contract(a,PAIR_ABI,p);
+              const [t0,t1]=await Promise.all([pc.token0(),pc.token1()]);
+              lpMetaCache[a]={t0,t1};
+            }catch(e){}
+          });
+          lsSet("xps_lpmeta",lpMetaCache);
+        }
+        lpAddrs.forEach(a=>{if(lpMetaCache[a])lpMap[a]=lpMetaCache[a];});
         const out=infos.map((info,i)=>{
-          const known=XSTOCKS.find(x=>x.addr&&x.addr.toLowerCase()===info[0].toLowerCase());
-          let meta=known?{sym:known.sym,name:known.name,dec:18,logo:known.logo}:tokenCache[info[0]];
+          const a0=String(info[0]).toLowerCase();
+          const known=XSTOCKS.find(x=>x.addr&&x.addr.toLowerCase()===a0);
+          let meta=known?{sym:known.sym,name:known.name,dec:18,logo:known.logo}:(tokenCache[a0]||tkMetaCache[a0]||null);
           if(!meta){
-            const tk=new ethers.Contract(info[0],ERC20_ABI,p);
             meta={sym:"?",name:"?",dec:18};
-            Promise.all([tk.symbol().catch(()=>"?"),tk.name().catch(()=>"?"),tk.decimals().catch(()=>18)]).then(([sym,nm,dc])=>{meta.sym=sym;meta.name=nm;meta.dec=dc;});
-            if(info[0].toLowerCase()===WOKB_ADDR){meta.sym="OKB";meta.nat=1;}
-            if(cfg.xstork&&info[0].toLowerCase()===cfg.xstork.toLowerCase()){meta.sym="XPR";meta.logo=XPR_LOGO;}
+            if(a0===WOKB_ADDR){meta.sym="OKB";meta.nat=1;}
+            if(cfg.xstork&&a0===cfg.xstork.toLowerCase()){meta.sym="XPR";meta.logo=XPR_LOGO;}
+            else{
+              const tk=new ethers.Contract(info[0],ERC20_ABI,p);
+              Promise.all([tk.symbol().catch(()=>"?"),tk.name().catch(()=>"?"),tk.decimals().catch(()=>18)]).then(([sym,nm,dc])=>{meta.sym=sym;meta.name=nm;meta.dec=dc;tkMetaCache[a0]={sym,name:nm,dec:dc};lsSet("xps_tkmeta",tkMetaCache);});
+            }
           }
-          tokenCache[info[0]]=meta;
-          const lpk=lpMap[info[0].toLowerCase()];
+          tokenCache[a0]=meta;
+          const lpk=lpMap[a0];
           const lpObj=lpk?{t0:tokInfo(lpk.t0),t1:tokInfo(lpk.t1)}:null;
           const lpLg=lpObj?(lpObj.t0.nat&&!lpObj.t1.nat)?lpObj.t1:(lpObj.t1.nat&&!lpObj.t0.nat)?lpObj.t0:lpObj.t0:null;
           return {pid:i,tok:info[0],sym:meta.sym,name:meta.name,dec:Number(meta.dec),rate:Number(info[1]),total:Number(info[4]),active:info[5],logo:meta.logo,lp:lpObj,lpLg};
