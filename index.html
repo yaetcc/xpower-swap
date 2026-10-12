@@ -661,7 +661,6 @@ html[data-theme="dark"] .wbtn.ok .dot{animation-name:dotPulseD}
 main{max-width:1240px;margin:0 auto}
 header .nav{max-width:1188px;margin:0 auto;width:100%}
 .view.on{max-width:1240px;margin:0 auto;width:100%}
-#shareCard>div{max-width:1240px}
 @media(max-width:1240px){main{padding-left:16px;padding-right:16px}.nav{padding-left:16px;padding-right:16px}}
 /* 2. 价格行强化 */
 .pricebar{padding:11px 14px;gap:10px}
@@ -732,16 +731,13 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
     <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-shrink:0">
       <div class="chainpill" id="chainPill" title="正在连接节点…"><i></i>X Layer</div>
       <span id="hdrBal" style="display:none;padding:6px 11px;border-radius:20px;border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--dim);background:var(--card);font-family:var(--mono)"></span>
-      <button class="ico-btn" id="shareBtn" onclick="copyShareLink()" title="复制分享链接（含合约配置）">↗</button>
-      <button class="ico-btn" id="authBtn" onclick="openAuthPanel()" title="授权管理 · 查看/撤销授权">🔓</button>
-      <button class="ico-btn" id="alarmBtn" onclick="openAlarmPanel()" title="价格提醒">🔔</button>
       <button class="ico-btn" id="langBtn" onclick="toggleLang()" title="切换语言 / Language">中/EN</button>
       <button class="wbtn" id="themeBtn" onclick="toggleTheme()" title="切换深色/浅色" style="padding:8px 10px;font-size:13px;line-height:1">🌙</button>
       <button class="wbtn" id="wbtn" onclick="walletClick()"><span class="dot"></span><span id="wbtnTxt">连接钱包</span></button>
     </div>
   </div>
 </header>
-<div id="shareCard" style="display:none"></div>
+
 <div id="chainWarn" style="display:none;align-items:center;justify-content:center;gap:8px;background:#fff;color:#b45309;font-size:13px;font-weight:600;padding:9px 16px;border-bottom:1px solid #d9b45b">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.86L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
     <span>当前网络不是 X Layer（chainId 196）—— 兑换 / 添加流动性 / 质押均无法正常提交</span>
@@ -979,33 +975,7 @@ footer{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26
   </div>
 </div>
 
-<div class="mask" id="authMask">
-  <div class="box">
-    <button class="x" onclick="hideAuthPanel()">✕</button>
-    <h3 data-i18n="auth">授权管理</h3>
-    <p style="font-size:11px;color:var(--faint);margin:2px 0 12px">查看 DApp 对 Router 的授权额度 · 可一键撤销（approve 0）· 撤销后下次交易会自动重新授权</p>
-    <div id="authList" style="display:grid;gap:8px;max-height:50vh;overflow:auto"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:8px">
-      <button class="btn ghost sm" id="authRevAll" onclick="authRevokeAll()" style="color:var(--err);border-color:rgba(208,0,0,.4)">撤销全部授权</button>
-      <button class="btn primary sm" onclick="hideAuthPanel()">完成</button>
-    </div>
-  </div>
-</div>
 
-<div class="mask" id="alarmMask">
-  <div class="box">
-    <button class="x" onclick="hideAlarmPanel()">✕</button>
-    <h3 data-i18n="alarm">价格提醒</h3>
-    <p style="font-size:11px;color:var(--faint);margin:2px 0 12px">以 OKB 计价 · 每 20 秒轮询 · 触发时站内提示 + 浏览器通知（需授权）</p>
-    <div class="addrow">
-      <div><label>代币</label><select id="alarmSym" style="width:100%"></select></div>
-      <div><label>目标价（OKB）</label><input id="alarmPrice" type="number" step="any" min="0" placeholder="如 0.0001" style="font-family:var(--mono)"></div>
-      <div><label>方向</label><select id="alarmDir"><option value="above">高于</option><option value="below">低于</option></select></div>
-      <div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="addAlarm()">添加</button></div>
-    </div>
-    <div id="alarmList" style="display:grid;gap:8px;margin-top:14px;max-height:46vh;overflow:auto"></div>
-    <div style="margin-top:12px;font-size:10.5px;color:var(--faint)">提醒为本地浏览器记录 · 页面需保持打开才会触发</div>
-  </div>
 </div>
 
 <div class="tabbar" id="tabbar"></div>
@@ -1086,44 +1056,9 @@ async function loadRemoteCfg(){
       if(v&&/^0x[a-fA-F0-9]{40}$/.test(v)&&cfg[k]!==v.toLowerCase()){cfg[k]=v.toLowerCase();changed=true;}
     }
     if(changed){try{localStorage.setItem(STORAGE+"cfg",JSON.stringify(cfg));}catch(e){} refreshView();}
-    renderShareCard();
   }catch(e){}
 }
-/* P2-12 分享落地页信息卡：访客带合约参数进入时展示项目信息 */
-function renderShareCard(){
-  const el=$("shareCard");if(!el)return;
-  if(!HAS_SHARE&&!needCfg()){el.style.display="none";return;}
-  if(!cfg.factory&&!cfg.router&&!cfg.staking&&!cfg.xstork){el.style.display="none";return;}
-  const rows=[
-    ["Factory 交易对工厂",cfg.factory],
-    ["Router 路由",cfg.router],
-    ["Staking 矿池",cfg.staking],
-    ["XPR 平台奖励币",cfg.xstork],
-    ["XPRS 分红币",cfg.xprs]
-  ].filter(r=>isAddr(r[1]));
-  el.style.display="block";
-  el.innerHTML=`<div style="max-width:1240px;margin:0 auto;padding:10px 16px">
-    <div class="shc" id="shc" style="border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card)">
-      <div class="shc-head" style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 14px" onclick="toggleShc()">
-        <b style="font-size:13.5px;letter-spacing:-.2px"><span data-i18n="sharec">XPower · 项目已发盘</span></b>
-        <span style="font-size:10.5px;color:var(--faint);font-weight:700;flex:1;min-width:120px">通过分享链接进入 · 合约配置已自动载入</span>
-        <span style="font-size:10px;color:var(--dim);font-weight:800;font-family:var(--mono)">${rows.length} 份合约</span>
-        <span class="chev">▼</span>
-      </div>
-      <div class="shc-body"><div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:7px;padding:0 14px 11px">
-          ${rows.map(r=>`<div style="display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:10.5px;background:var(--card2)">
-            <span style="color:var(--dim);font-weight:700;flex-shrink:0">${esc(r[0])}</span>
-            <span class="mono cp" data-copy="${r[1]}" title="点击复制" style="flex:1;color:var(--acc);font-weight:700">${shortAddr(r[1])}</span>
-            <a href="${EXPLORER}address/${r[1]}" target="_blank" rel="noopener" style="color:var(--dim);flex-shrink:0">↗</a>
-          </div>`).join("")}
-        </div>
-        <div style="padding:0 14px 12px;font-size:10.5px;color:var(--faint);line-height:1.5">⚠ 合约地址来自分享链接 / 项目官方配置 · 请核对后交易。本项目为 DeFi 实验性产品，合约未经第三方审计，请仅投入可承受损失的资金。</div>
-      </div></div>
-    </div>
-  </div>`;
-}
-function toggleShc(){const s=$("shc");if(s)s.classList.toggle("open");}
+/* 
 /* 配置迁移 v2：新 XPR（含LOGO登记诉求）替换旧 XPR / 新 Staking（绑定新XPR）替换旧 Staking */
 const CFG_MIG={
   xstork:{
@@ -1361,7 +1296,6 @@ function startAutoRefresh(){
     if(!walletAddr)return;
     if(document.activeElement&&/input|textarea/i.test(document.activeElement.tagName))return;
     loadAssetBals();
-    checkAlarms();
     if(curView==="farm"&&$("farmList")&&$("farmList").children.length)renderFarm();
     else if(curView==="pool")renderStats();
     else if(curView==="swap")quoteSwap();
@@ -1402,8 +1336,6 @@ document.addEventListener("keydown",e=>{
     const c=$("cfgMask");if(c)c.remove();
     const am=$("addMask");if(am)am.classList.remove("on");
     const pm=$("pickMask");if(pm)pm.classList.remove("on");
-    const am2=$("authMask");if(am2)am2.classList.remove("on");
-    const rm=$("alarmMask");if(rm)rm.classList.remove("on");
     return;
   }
   if(location.hash==="#swap"&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
@@ -1559,21 +1491,6 @@ async function loadHdrBal(){
 /* ============ 配置 ============ */
 function needCfg(){return !cfg.factory||!cfg.router||!cfg.staking||!cfg.xstork;}
 function saveCfg(){localStorage.setItem(STORAGE+"cfg",JSON.stringify(cfg));}
-function copyShareLink(){
-  if(needCfg()){toast("请先部署/配置合约，再生成公开链接","err");return;}
-  try{
-    const u=new URL(location.href);
-    u.search="";
-    u.searchParams.set("fc",cfg.factory);u.searchParams.set("rt",cfg.router);
-    u.searchParams.set("st",cfg.staking);u.searchParams.set("xp",cfg.xstork);
-    if(cfg.xprs)u.searchParams.set("xr",cfg.xprs);
-    if(cfg.xprsDiv)u.searchParams.set("xd",cfg.xprsDiv);
-    const link=u.toString();
-    const done=()=>toast("公开链接已复制 · 其他人打开即可看到已发盘项目","ok");
-    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(link).then(done).catch(()=>{prompt("复制公开链接（发给用户）",link);});}
-    else prompt("复制公开链接（发给用户）",link);
-  }catch(e){toast("生成链接失败："+e.message,"err");}
-}
 function openCfg(){
   const d=document.createElement("div");
   d.innerHTML=`<div class="mask on" id="cfgMask" onclick="if(event.target===this)this.remove()">
@@ -1584,7 +1501,6 @@ function openCfg(){
       <input id="cfgXprs" placeholder="XPRS 合约地址（0x…）" class="mono" style="font-size:11.5px" value="${cfg.xprs||""}" onchange="setCfgF('xprs',this.value)">
       <input id="cfgDiv" placeholder="分红合约地址（0x…）· 留空则仅展示 XPRS 资产" class="mono" style="font-size:11.5px" value="${cfg.xprsDiv||""}" onchange="setCfgF('xprsDiv',this.value)">
     </div>
-    <button class="btn ghost sm" onclick="copyShareLink()" style="margin:4px 0 8px;width:100%">🔗 复制公开访问链接（发盘后分享给用户）</button>
     <div id="deploySteps" style="display:grid;gap:6px;margin-top:4px"></div>
 
     <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
@@ -3344,63 +3260,7 @@ function toggleLang(){LANG=LANG==="zh"?"en":"zh";try{localStorage.setItem(STORAG
 
 function showAddAsset(){$("addMask").classList.add("on");setTimeout(()=>$("addSym").focus(),60);}
 function hideAddAsset(){$("addMask").classList.remove("on");}
-/* P1-4 授权管理：查看 Router 授权额度 · 一键撤销 */
-let authCands=[];
-function openAuthPanel(){
-  const m=$("authMask");if(!m)return;
-  m.classList.add("on");
-  const el=$("authList");if(el)el.innerHTML=`<div class="empty">读取授权额度中…</div>`;
-  loadAuthList();
-}
-function hideAuthPanel(){const m=$("authMask");if(m)m.classList.remove("on");}
-async function loadAuthList(){
-  const el=$("authList");if(!el)return;
-  if(!walletAddr){el.innerHTML=`<div class="empty">请先连接钱包</div>`;return;}
-  if(needCfg()){el.innerHTML=`<div class="empty">未发盘 · 无 Router 配置</div>`;return;}
-  authCands=[];
-  if(cfg.xstork)authCands.push(["XPR",cfg.xstork]);
-  if(cfg.xprs)authCands.push(["XPRS",cfg.xprs]);
-  authCands.push(["OKB",WOKB_ADDR]);
-  assets.forEach(a=>{if(a.addr&&!authCands.find(c=>c[1].toLowerCase()===a.addr.toLowerCase()))authCands.push([a.sym,a.addr]);});
-  try{
-    await withRPC(async p=>{
-      const iface=new ethers.Interface(ERC20_ABI);
-      const mc=new ethers.Contract(MC3,MC3_ABI,p);
-      const calls=authCands.map(c=>({target:c[1],callData:iface.encodeFunctionData("allowance",[walletAddr,cfg.router])}));
-      const res=await mc.aggregate3(calls);
-      const rows=authCands.map((c,i)=>{
-        let v=0n,ok=false;
-        try{if(res[i]&&res[i].success){v=iface.decodeFunctionResult("allowance",res[i].returnData)[0];ok=true;}}catch(e){}
-        const inf=v>=ethers.MaxUint256-1000000n;
-        const txt=ok?(inf?"无限授权 · 建议撤销":(v>0n?fmtPrice(fromWei(v,18))+" "+c[0]:"未授权")):"读取失败";
-        return `<div style="display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--line);border-radius:6px">
-          ${logoSvg(c[0],"", "")}<div style="flex:1;min-width:0"><b style="font-size:12.5px">${esc(c[0])}</b><div style="font-size:10.5px;color:${inf?"var(--err)":(v>0n?"var(--gold)":"var(--faint)")};font-weight:700">${txt}</div></div>
-          ${v>0n?`<button class="btn ghost sm" style="color:var(--err);border-color:rgba(208,0,0,.4);flex-shrink:0" onclick="revokeAuth('${c[1]}','${esc(c[0])}')">撤销</button>`:""}
-        </div>`;
-      }).join("");
-      el.innerHTML=rows||`<div class="empty">暂无授权记录</div>`;
-    });
-  }catch(e){el.innerHTML=`<div class="empty">读取失败：${esc(errMsg(e))}</div>`;}
-}
-async function revokeAuth(addr,sym){
-  if(!walletAddr)return;
-  try{
-    const signer=await getSigner();
-    const tk=new ethers.Contract(addr,ERC20_ABI,signer);
-    const r=await tk.approve(cfg.router,0);
-    toast("已提交撤销 "+sym+" 授权 · 等待链上确认…","warn");
-    await r.wait();
-    toast(sym+" 授权已撤销（approve 0）","ok");
-    loadAuthList();
-  }catch(e){toast("撤销失败："+errMsg(e),"err");}
-}
-async function authRevokeAll(){
-  const btns=[...document.querySelectorAll("#authList button")];
-  if(!btns.length){toast("当前没有可撤销的授权","warn");return;}
-  if(!confirm("确认撤销全部授权？撤销后下次交易将自动重新授权"))return;
-  for(const b of btns)b.click();
-}
-/* P2-9 交易对收藏：本地持久化 · 池/资产卡 ☆ · 收藏置顶 */
+/* /* P2-9 交易对收藏：本地持久化 · 池/资产卡 ☆ · 收藏置顶 */
 function favList(){let a=[];try{a=JSON.parse(localStorage.getItem(STORAGE+"fav")||"[]")}catch(e){}return a;}
 function favSave(a){try{localStorage.setItem(STORAGE+"fav",JSON.stringify(a))}catch(e){}}
 function isFav(addr){return favList().includes((addr||"").toLowerCase());}
@@ -3417,81 +3277,6 @@ function toggleFav(addr){
   });}catch(e){}
   if(curView==="pool")loadPairBrowse();
   else if(curView==="assets")renderAssetList();
-}
-/* P2-8 价格提醒：本地目标价 · 每 20s 轮询 · 触发 toast+通知 */
-function alarmList(){let a=[];try{a=JSON.parse(localStorage.getItem(STORAGE+"alarm")||"[]")}catch(e){}return a;}
-function alarmSave(a){try{localStorage.setItem(STORAGE+"alarm",JSON.stringify(a))}catch(e){}}
-function openAlarmPanel(){
-  const m=$("alarmMask");if(!m)return;
-  m.classList.add("on");
-  const sel=$("alarmSym");
-  if(sel){
-    const cands=[];
-    if(cfg.xstork)cands.push("XPR");
-    XSTOCKS.forEach(x=>{if(x.addr)cands.push(x.sym);});
-    sel.innerHTML=cands.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("");
-    if(cands.length&&!cands.includes("XPR"))sel.value="XPR";
-  }
-  try{Notification&&Notification.requestPermission&&Notification.requestPermission();}catch(e){}
-  renderAlarmList();
-}
-function hideAlarmPanel(){const m=$("alarmMask");if(m)m.classList.remove("on");}
-function renderAlarmList(){
-  const el=$("alarmList");if(!el)return;
-  const a=alarmList();
-  el.innerHTML=a.length?a.map((x,i)=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--line);border-radius:6px">
-    <b style="font-size:12.5px;min-width:56px">${esc(x.symA)}</b>
-    <span style="font-size:10.5px;color:var(--dim);flex:1">${x.dir==="above"?"≥":"≤"} <b class="mono">${fmtPrice(x.price)}</b> OKB</span>
-    <button class="btn ghost sm" style="color:var(--err);border-color:rgba(208,0,0,.4)" onclick="delAlarm(${i})">删除</button>
-  </div>`).join(""):`<div class="empty">暂无提醒 · 选择代币与目标价后添加</div>`;
-}
-function addAlarm(){
-  const sym=$("alarmSym").value,pr=parseFloat($("alarmPrice").value),dir=$("alarmDir").value;
-  if(!sym){toast("请选择代币","err");return;}
-  if(!pr||pr<=0){toast("请输入目标价（OKB 计价）","err");return;}
-  const a=alarmList();
-  if(a.length>=12){toast("最多 12 条提醒","warn");return;}
-  a.push({symA:sym,price:pr,dir:dir});
-  alarmSave(a);
-  $("alarmPrice").value="";
-  renderAlarmList();
-  toast("已添加 "+sym+" 价格提醒","ok");
-}
-function delAlarm(i){
-  const a=alarmList();a.splice(i,1);alarmSave(a);renderAlarmList();
-}
-async function checkAlarms(){
-  const a=alarmList();
-  if(!a.length||!cfg.router||needCfg())return;
-  const toDel=[];
-  try{
-    await withRPC(async p=>{
-      const router=new ethers.Contract(cfg.router,ROUTER_ABI,p);
-      const one="0x"+ethers.parseEther("1").toString(16);
-      const toks=a.map(x=>tokOfSym(x.symA)).filter(Boolean);
-      const res=await mcBatch(p,router,"getAmountsOut",a.map(x=>[one,[WOKB_ADDR,tokOfSym(x.symA)]]));
-      a.forEach((x,i)=>{
-        try{
-          if(!res[i])return;
-          const cur=1/fromWei(res[i],18);
-          if(!isFinite(cur))return;
-          const hit=x.dir==="above"?cur>=x.price:cur<=x.price;
-          if(hit){
-            toast("价格提醒："+x.symA+" "+x.dir+" "+fmtPrice(x.price)+" OKB · 现价 "+fmtPrice(cur)+" OKB","ok");
-            try{if(Notification&&Notification.permission==="granted")new Notification("XPower 价格提醒",{body:x.symA+" 现价 "+fmtPrice(cur)+" OKB"});}catch(e){}
-            toDel.push(i);
-          }
-        }catch(e){}
-      });
-    });
-  }catch(e){}
-  if(toDel.length){
-    const a2=alarmList();
-    const keep=a2.filter((_,i)=>!toDel.includes(i));
-    alarmSave(keep);
-    const m=$("alarmMask");
-    if(m&&m.classList.contains("on"))renderAlarmList();
-  }
 }
 function addAsset(){
   const sym=($("addSym").value||"").trim().toUpperCase();
@@ -3632,7 +3417,6 @@ function initSlip(){
 
 /* ============ 初始化 ============ */
 window.addEventListener("load",()=>{
-  renderShareCard();
   /* 静默恢复已授权连接：等待钱包注入(部分环境 ethereum 晚于 load 注入) →
      eth_accounts 取已授权地址 → 空则补一次 requestAccounts(已授权时静默返回，不打扰) */
   function tryRestoreWallet(n){
